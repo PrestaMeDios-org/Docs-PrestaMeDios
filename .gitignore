@@ -1,0 +1,10 @@
+# Secretos y logs
+.env
+*.log
+*.err
+
+# Editores y sistema
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

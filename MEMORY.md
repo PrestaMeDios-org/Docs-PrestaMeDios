@@ -1,0 +1,186 @@
+# MEMORY.md — Memoria persistente del proyecto PrestaMeDios
+
+> Registro vivo del estado del proyecto, decisiones de arquitectura (ADR), deuda técnica y coordinación entre perfiles. Lo actualizan humanos y agentes de IA al cerrar cada tarea relevante. Entradas nuevas **arriba** dentro de cada sección.
+
+> **Última actualización:** 2026-10-23 · Perfil 2 (SPEC-04, Fase A)
+
+---
+
+## 1\. Estado actual (snapshot al 2026-10-23)
+
+| Ítem | Valor |
+| :---- | :---- |
+| Próxima entrega | A confirmar (la entrega parcial del 09/10/2026 ya pasó) |
+| Metodología | Scrum (ClickUp) \+ Spec-Driven Development |
+| Perfiles | Cinco, según `AGENTS.md` §3 y `docs/perfiles.md` (ADR-017, ADR-018). Hasta el 2026-10-23 los perfiles 2–5 trabajaron con sus agentes **sin** recibir la Constitución, `AGENTS.md` ni `MEMORY.md`; desde ahora se comparten |
+| Specs implementados | `spec-01` (v1.0.0) y `spec-02` (v1.0.1), ambos mergeados en `develop` (backend PR \#5, PR \#7 y `074158e`; frontend PR \#4). `spec-04` (inventory, v1.0.1, Fase A) implementado el 2026-10-23; ramas `feat/inventory-gestion` (backend) y `feat/inventory-catalogo` (frontend) publicadas, pendientes de revisión y PR hacia `develop` |
+| Specs de otros perfiles | Sólo `spec-04` (Perfil 2). `loans` llegó a `develop` sin spec (DT-16) |
+| Spec siguiente (Perfil 2) | **Fase B de SPEC-04** (disponibilidad por fechas e historial por unidad, INV-26): bloqueada hasta que `loans` publique sus funciones de lectura (ver §5). Mientras tanto no hay trabajo nuevo de spec para `inventory` |
+| Spec siguiente (Perfil 1\) | Propuesto: USR-02 (recuperación por email), almacenamiento de archivos (foto de perfil USR-03 \+ PDF de aval PRE-05, a coordinar con Perfil 3), refresh token / cookie HttpOnly. Luego USR-06…09, GLO-05 y despliegue (ADR-018) |
+| Constitución | v1.1.0 vigente, **sin ratificación del equipo registrada**. Enmienda 1.1.1 propuesta (ADR-019) |
+| Ramas backend | `main` \= PR \#8 (2026-10-08, anterior a SPEC-02) · `staging` \= PR \#13 (2026-10-14, incluye SPEC-02 y `loans`) · `develop` local con 4 commits sin push (incluye `1958feb`, que restaura `htmlcov/`, `*.err` y `*.log` en `.gitignore`) y un cambio sin commitear en `Backend-PrestaMeDios/docs/ERS.md` ("Operaciones de Pañol") |
+| Ramas frontend | `main` \= PR \#5 (2026-10-08) · `staging` \= PR \#8 (2026-10-22) · `develop` \= `origin/develop` |
+| Entorno local | Python ≥ 3.11 (validado con 3.12) · PostgreSQL local con `btree_gist` · base de tests `prestamedios_test` |
+
+### Backend (`develop`)
+
+| Módulo | Perfil | Estado | Notas |
+| :---- | :---- | :---- | :---- |
+| `core` | 1 | Implementado | `settings` (`ahora_lab`), `enums` (`SedeEnum`, `RolUsuario`), `errors` (`AppError`), `security` (Argon2id \+ JWT), `deps` (`get_current_user`, `require_roles`, `resolver_alcance_sede`, `sede_para_alta`) |
+| `users` | 1 | Implementado | Registro, login, `/auth/me` (GET/PATCH), cambio de contraseña, directorio, alta, edición y estados; CLI `crear-superadmin`. Migraciones `0005`, `0008` |
+| `config` | 1 | Implementado | Parámetros con bloqueo optimista e historial; `obtener_parametro()`; 8 claves semilla |
+| `inventory` | 2 | Implementado (SPEC-04 Fase A, rama `feat/inventory-gestion` `b93017f`, PR pendiente) | Auth, alcance de sede, vista reducida para estudiantes y docentes, edición y baja lógica de equipamiento y unidades, matriz de estados, `service.py` público para `loans`. Migraciones `0006` y `0010`. Falta la Fase B (disponibilidad por fechas e historial por unidad, depende de `loans`) |
+| `spaces` | 4 | Implementado | Con auth, alcance de sede y validaciones V1–V8 (SPEC-02); GIST con `tsrange`. Migraciones `0001`–`0004`, `0007` |
+| `loans` | 3 | Sólo contratos | Esquemas, modelos, migración `0009` (GIST con `tstzrange`) y 6 firmas en `/api/v1/loans`. Sin servicio, sin tests, auth simulada (DT-16…DT-20) |
+| `notifications`, `assistant` | 5 | No iniciado |  |
+| Tests | — | 320 en verde (corridos el 2026-10-23, con SPEC-04; cobertura de `inventory` 98 %) | `loans` no tiene tests |
+
+### Frontend (`develop`)
+
+| Feature | Perfil | Estado | Notas |
+| :---- | :---- | :---- | :---- |
+| `auth`, `users`, `config` | 1 | Implementado | Sesión real (`AuthContext` con `useAuth`/`useSede`), login, registro, perfil, gestión de usuarios, parámetros. Sin rol `icse` |
+| `inventory` | 2 | Implementado (SPEC-04 Fase A, rama `feat/inventory-catalogo` `128b749`, PR pendiente) | Catálogo conectado a la API, tabla de stock en `admin-stock`, alta, edición, baja lógica y estados (47 tests de frontend en verde). Se montó `StockPage` en `App.tsx` con la conformidad del Perfil 1 |
+| `spaces` | 4 | Implementado | Calendario conectado a la API, aprobación, bloqueos y alta de espacios |
+| `loans` | 3 | Placeholder | `.gitkeep` |
+| Notificaciones | 5 | Maqueta | Campanita con datos fijos en `Navbar.tsx` |
+
+---
+
+## 2\. Decisiones de arquitectura (ADR)
+
+| ID | Fecha | Decisión | Motivo | Estado |
+| :---- | :---- | :---- | :---- | :---- |
+| ADR-021 | 2026-10-27 | La documentación del proyecto (ERS, Constitución, `AGENTS.md`, `MEMORY.md`, perfiles y specs) se versiona en un repo propio, `Docs-PrestaMeDios`. El ERS pasa de `Backend-PrestaMeDios/docs/ERS.md` a `docs/ERS.md` de ese repo (copia sin historial; el historial anterior queda en el backend) y los cambios de requisitos se hacen por PR ahí | Que todo el equipo versione specs y memoria en un solo lugar, sin mezclarlos con el código. Constitución §1 y §6.1 actualizadas; falta registrar la versión en §10 | Vigente — pendiente de comunicar al equipo |
+| ADR-020 | 2026-10-23 | SPEC-04 (`inventory`): (D-02) `prestado` ya no se puede fijar por la API, sólo `loans` mediante `inventory/service.py`; (D-03) `baja` es terminal; (D-04) estudiantes y docentes reciben una vista reducida del catálogo, sin unidades, series ni códigos de inventario; (D-05) `equipamientos.es_notebook` decide el plazo por defecto (`prestamo.notebook.max_dias`); (D-06) un `ADMIN_LOCAL` edita ítems de su alcance pero sólo el `SUPERADMIN` da de baja un ítem con unidades en ambas sedes; (D-09) `mantenimiento` = "En Mantenimiento" (temporal) y `baja` = "Fuera de servicio" (definitivo); la categoría se filtra en la pantalla. Migración `0010` | Cerrar la doble fuente de verdad del estado de la unidad (DT-20), mínimo dato necesario (P4, P6) y reglas del ERS (PRE-14) | Vigente — aprobado por el Perfil 2 (SPEC-04 `IMPLEMENTADO`, Fase A) |
+| ADR-019 | 2026-10-23 | Enmienda 1.1.1 de la Constitución (aclaraciones): validaciones previas de solapamiento en el servicio permitidas, con `EXCLUDE` como garantía final para lo adjudicado (P7.2); `Usuario` devuelto por `get_current_user` y funciones de servicio públicas como excepciones explícitas al aislamiento de módulos (P3.3). La propone el Perfil 1 al equipo | El documento de perfiles prohibía literalmente lo que hacen SPEC-02 y `spaces/service.py`, y `core`, `config`, `inventory` y `spaces` ya importan `Usuario` | **Propuesta** — texto en `docs/constitution.md` §10.1 |
+| ADR-018 | 2026-10-23 | El Perfil 1 asume USR-06…09, GLO-05, GLO-06 y el despliegue (Docker, CI) | No tenían responsable en `AGENTS.md` | Vigente |
+| ADR-017 | 2026-10-23 | La división del trabajo es la de `AGENTS.md` §3: PRE-11, PRE-13 y PRE-15…18 (Módulo 3 del ERS) pertenecen a `loans` (Perfil 3), no al Perfil 2\. El documento externo "Perfiles de tareas v1" se incorpora adaptado como `docs/perfiles.md`, subordinado a `AGENTS.md` | El documento externo asignaba el Módulo 3 completo al Perfil 2 y se contradecía con su propio Perfil 3; el código de `loans` ya implementa PRE-15 y PRE-18 | Vigente |
+| ADR-016 | 2026-10-08 | El ERS pasa de `Backend-PrestaMeDios/README.md` a `Backend-PrestaMeDios/docs/ERS.md` (con `git mv`, conserva historial); cada repo tiene un README técnico. Constitución v1.1.0 | El README de un repo debe explicar cómo usarlo; el ERS es el documento académico | Vigente |
+| ADR-015 | 2026-10-08 | Token JWT del frontend en `sessionStorage` (SPEC-02 D-06) | Computadoras compartidas del laboratorio: cerrar la pestaña cierra la sesión | Vigente |
+| ADR-014 | 2026-10-08 | SPEC-02 se integra a `develop` **después de la demo del 09/10**, backend y frontend juntos, sin flag que desactive la seguridad (D-01) | Proteger endpoints sin el login del frontend rompe la demo; un flag de seguridad suele quedar olvidado | Vigente |
+| ADR-013 | 2026-10-07 | Tests de integración: esquema recreado por sesión con `create_all` \+ `TRUNCATE` por test; **una sesión por request** (como en producción) para poder probar concurrencia real. La migración se valida aparte con upgrade/downgrade/upgrade | El rollback por test con una sola conexión impedía probar `FOR UPDATE` y carreras de `UNIQUE` | Vigente |
+| ADR-012 | 2026-10-07 | Cobertura con `concurrency = greenlet` (`.coveragerc`) | SQLAlchemy async ejecuta en greenlets; sin esto la cobertura se subestima (\~78 % vs 95 % real) | Vigente |
+| ADR-011 | 2026-10-07 | **Anticipación mínima de solicitud \= 24 h** (D-07): "plazos mínimos (24 horas)" del ERS se interpreta como antelación mínima entre el envío de una solicitud (préstamo o reserva) y el inicio del retiro/turno. Parámetro `solicitud.anticipacion_min_horas` (reemplaza a `prestamo.min_horas` del borrador) | Definido por Perfil 1 en la revisión de SPEC-01 | Vigente — lo aplican `loans` y `spaces` |
+| ADR-010 | 2026-10-07 | **Cuentas rechazadas se conservan** en estado `RECHAZADO` con motivo obligatorio; se permite re-registro con el mismo email (vuelve a `PENDIENTE_APROBACION`). No hay borrado físico de usuarios (D-04) | Auditoría (USR-08) e integridad del historial. Se modificó el CU "Registro y validación de cuentas" del ERS (`Backend-PrestaMeDios/docs/ERS.md`, ex `README.md`) | Vigente |
+| ADR-009 | 2026-10-07 | **Sin restricción de dominio de email** para el registro (D-02); se acepta cualquier email válido | Estudiantes usan correos personales; la validación manual (USR-05) mitiga cuentas falsas | Vigente |
+| ADR-008 | 2026-10-07 | Resto de decisiones de SPEC-01: sede como `SedeEnum` textual (D-01); DNI numérico 7–8 (D-03); sólo `SUPERADMIN` edita parámetros (D-05); sólo access token 60 min (D-06); sancionado no inicia sesión (D-08); directorio paginado (D-09) | Ver `specs/01-auth-users/spec.md` §13 | Vigente |
+| ADR-007 | 2026-10-07 | Autenticación con JWT HS256 (PyJWT) \+ hash Argon2id (pwdlib); revocación por `token_version` | Librerías mantenidas; revocación inmediata ante sanciones sin lista negra | Vigente (SPEC-01) |
+| ADR-006 | 2026-10-07 | Parámetros globales como catálogo cerrado clave-valor tipado (`JSONB`) con bloqueo optimista e historial | GLO-03 sin claves huérfanas; auditable | Vigente (SPEC-01) |
+| ADR-005 | 2026-10-07 | Kernel compartido `app/core/` (settings, security, deps, errors, enums) | Evitar que cada módulo reimplemente auth y alcance de sede | Vigente (SPEC-01) |
+| ADR-004 | 2026-10-06 | Integridad temporal de reservas con `EXCLUDE USING gist` (requiere `btree_gist`), aplicada a estados `Aprobada` y `En_Uso` | ACID frente a concurrencia, sin lógica en Python | Vigente (`spaces`) |
+| ADR-003 | 2026-10-05 | SQLAlchemy 2.0 async \+ asyncpg; `NAMING_CONVENTION` común en `app/database.py` | Nombres de restricciones deterministas para migraciones | Vigente |
+| ADR-002 | Iteración 4 | Monolito Modular por Dominio, API-First (FastAPI \+ PostgreSQL; React \+ TS) | Desarrollo en paralelo de 5 integrantes; OpenAPI consumible por el agente MCP | Vigente |
+| ADR-001 | Iteración 2–3 | Roles: `SUPERADMIN` (ambas sedes), `ADMIN_LOCAL` (una sede), `DOCENTE`, `ESTUDIANTE`. Se elimina "Administrador ICSE" | Entrevistas con la referente (04/09 y 18–21/09/2026) | Vigente |
+
+---
+
+## 3\. Conocimiento de dominio clave
+
+- **Administradores reales:** Natalia Ader (Superadministradora, ambas sedes), Victoria (Admin Local Ushuaia), Facundo (Admin Local Río Grande).  
+- **Aprobación:** el estudiante solicita **directo al administrador**; el docente sólo observa y comenta (PRE-20). Ninguna aprobación es automática.  
+- **Plazos reglamentarios:** préstamo general ≤ 4 días; notebooks ≤ 15 días (renovación presencial); préstamos especiales/alta gama requieren PDF de aval (PRE-05).  
+- **Horario operativo:** 09:00–16:00 (supervisión presencial obligatoria).  
+- **Anticipación mínima:** toda solicitud de préstamo o reserva se envía con al menos 24 h de antelación (configurable, ADR-011).  
+- **Registro:** cualquier email válido; la cuenta queda "Pendiente en aprobación" hasta que un administrador con jurisdicción la valida. Un rechazo conserva la cuenta (ADR-010).  
+- **Lockers:** numerados 1–7 por sede.  
+- **Requisito futuro:** Isla de Digitalización de Archivos Físicos (VHS, S-VHS, Beta, Hi8).
+
+---
+
+## 4\. Deuda técnica e inconsistencias detectadas
+
+| ID | Severidad | Descripción | Ubicación | Responsable sugerido |
+| :---- | :---- | :---- | :---- | :---- |
+| DT-16 | Alta | `loans` está en `develop` y `staging` **sin spec** en `specs/` (Constitución P1.1): no hay criterios de aceptación ni trazabilidad | `specs/`, `app/modules/loans/` | Perfil 3 |
+| DT-17 | Alta | `loans/dependencies.py` es un placeholder: dice que `users` "todavía no existe", define un `RolEnum` propio (`estudiante`, `administrador`, `superadministrador`) distinto de `RolUsuario`, y `get_usuario_actual` lanza `NotImplementedError`. Los 6 endpoints montados responden **500** (no 501\) y no exigen sesión (P4.1). El OpenAPI publica roles incompatibles | `loans/dependencies.py`, `loans/router.py`, `app/main.py` | Perfil 3 |
+| DT-18 | Media | `loans` documenta errores como `{codigo, detalle}` (`ErrorConflictoReserva`, `ErrorLimiteDias`) y usa `HTTPException`, en vez de `AppError` → `{detail, code}` | `loans/schemas.py`, `loans/router.py` | Perfil 3 |
+| DT-19 | Baja | Tres estilos de valores de enum: `core` en MAYÚSCULAS (`ACTIVO`), `inventory`/`loans` en minúsculas (`disponible`, `pendiente`), `spaces` capitalizados (`Pendiente`). Requiere decisión del equipo antes de unificar | Varios módulos | Equipo |
+| DT-20 | Alta | **Parcial (2026-10-23, SPEC-04):** `inventory` publica `service.py` (`unidades_asignables`, `unidad_es_asignable`, `marcar_unidad_prestada`, `liberar_unidad`) y rechaza `prestado` por la API. **Pendiente en `loans`:** usar esas funciones y no asignar unidades en `mantenimiento`/`baja`; sigue habiendo dos fuentes (`PRESTADO` en `inventory` frente a `ENTREGADO` en `loans`) hasta que lo adopte | `inventory/service.py`, `loans/` | Perfil 3 |
+| DT-26 | Baja | `NAMING_CONVENTION` vuelve a prefijar los nombres de `CheckConstraint` pasados a `create_table` o `op.create_check_constraint`: las bases creadas con Alembic tienen `ck_<tabla>_ck_<tabla>_<x>` y las creadas con `create_all` (tests) `ck_<tabla>_<x>`. Afecta a `0006` y a cualquier migración con `CHECK`. `0010` lo evita con SQL directo y tolera ambos nombres | `alembic/versions/0006_inventory_init.py`, `app/database.py` | Perfil 1 |
+| DT-27 | Baja | Un ítem con todas sus unidades en `baja` se ve como "Ocupado" con 0/0 uds. para estudiantes y docentes; SPEC-04 RN-I5 pide "No disponible" | `components/ui/Badge.tsx` (`StatusBadge`), `inventory/pages/CatalogPage.tsx` | Perfil 2 |
+| DT-28 | Baja | La prueba de concurrencia a nivel API del cambio de estado (`test_cambios_concurrentes_de_estado`) tiene aserciones laxas y no detectaría una carrera; la serialización con `FOR UPDATE` sí está probada de forma efectiva en `test_service.py` | `tests/inventory/test_gestion.py` | Perfil 2 |
+| DT-21 | Media | El `.gitignore` de `origin/main` (backend) no tiene `.coverage` ni `htmlcov/` (sí están en `develop` y `staging`). Se resuelve con el próximo merge `develop` → `main` | `Backend-PrestaMeDios/.gitignore` | Perfil 1 |
+| ~~DT-22~~ | — | ~~El catálogo del frontend usa sólo `mockInventory.ts`~~ → **Resuelto 2026-10-23 (SPEC-04)**: el catálogo y la tabla de stock usan la API; el mock se eliminó | `features/inventory/` | Perfil 2 |
+| ~~DT-23~~ | — | ~~Locker sólo con `CHECK >= 1`~~ → **Resuelto 2026-10-23 (SPEC-04)**: migración `0010` con `CHECK` entre 1 y 7 (falla con los ids si hay datos fuera de rango) | `inventory/models.py`, `0010` | Perfil 2 |
+| DT-24 | Baja | El README del backend dice que `loans` está "Pendiente" y sin prefijo (está montado en `/api/v1/loans`) y le asigna "PRE-03…PRE-20" (se superpone con `inventory`); la descripción de `app/main.py` no menciona préstamos | `Backend-PrestaMeDios/README.md`, `app/main.py` | Perfil 1 (README) / Perfil 3 (`main.py`) |
+| DT-25 | Baja | IA-02 del ERS dice "acceso de lectura a la base de datos", lo que contradice la sección de Arquitectura del propio ERS y la Constitución P2.3 (prevalecen estas) | `docs/ERS.md` | Perfil 1 (PR al ERS) |
+| ~~DT-01~~ | — | ~~Ningún endpoint exige autenticación~~ → **Resuelto 2026-10-08 (SPEC-02)**: auth transversal en `spaces` e `inventory` | `inventory/`, `spaces/` | Perfil 1 |
+| ~~DT-02~~ | — | ~~Doble representación de sede~~ → **Resuelto 2026-10-08 (SPEC-02)**: migración `0007_spaces_sede_y_usuario` unifica en `SedeEnum` | `spaces/` | Perfil 1 |
+| ~~DT-03~~ | — | ~~`id_usuario` sin FK y recibido en el body~~ → **Resuelto 2026-10-08 (SPEC-02)**: FK a `usuarios` en migración `0007`; usuario tomado del token | `spaces/` | Perfil 1 |
+| ~~DT-04~~ | — | ~~`inventory` sin migración Alembic (500 en base nueva)~~ → **Resuelto 2026-10-07**: migración `0006_inventory_init`, idempotente (omite tablas ya creadas con `create_all`); esquema \= modelos sin diferencias | `alembic/versions/` | Perfil 1 (autorizado) |
+| ~~DT-05~~ | — | ~~Carpeta plantilla vacía `specs/001-nombre-spec/`~~ → **Resuelto 2026-10-07**: ya no existe en el workspace | `specs/` | Equipo |
+| ~~DT-06~~ | — | ~~Reglas fijas en código~~ → **Resuelto 2026-10-08 (SPEC-02)**: horario de `spaces` y plazo por defecto de `inventory` leídos desde `config` | `spaces/`, `inventory/` | Perfil 1 |
+| ~~DT-07~~ | — | ~~`uvicorn.log`/`uvicorn.err` versionados~~ → **Resuelto 2026-10-07**: `git rm --cached` en el commit `7b95956` (siguen en `.gitignore`; el historial anterior los conserva) | Raíz backend | Perfil 1 |
+| ~~DT-08~~ | — | ~~No existe `.env.example`~~ → **Resuelto 2026-10-07** | Raíz backend | Perfil 1 |
+| DT-09 | Baja | `spaces` usa `str, Enum` y estados como `String(20)`, distinto del patrón `StrEnum` \+ `SAEnum` de `inventory` | `spaces/` | `spaces` |
+| ~~DT-10~~ | — | ~~`spaces` no traducía IntegrityError~~ → **Resuelto 2026-10-08 (SPEC-02)**: AppError y manejo de concurrencia en `spaces/service.py` | `spaces/service.py` | Perfil 1 |
+| ~~DT-11~~ | — | ~~Título de la app sólo mencionaba inventario~~ → **Resuelto 2026-10-07** ("PrestaMeDios API") | `app/main.py` | Perfil 1 |
+| ~~DT-12 (parcial)~~ | Baja | El rol `icse` fue **eliminado** del frontend (SPEC-02 §6). Queda renombrar `figma-make-app` en `package.json` | `package.json` | Frontend |
+| ~~DT-13~~ | — | ~~El ERS describía que un rechazo "elimina la petición"~~ → **Resuelto 2026-10-07**: CU actualizado (ADR-010) | `Backend-PrestaMeDios/docs/ERS.md` (ex `README.md`) | Perfil 1 |
+| DT-15 | Baja | `app/database.py` lee `DATABASE_URL` por su cuenta y `app/core/settings.py` también (duplicación tolerada para no tocar el engine compartido) | `app/database.py` | Perfil 1 |
+| ~~DT-14~~ | — | ~~`spaces` no validaba anticipación mínima de 24 h~~ → **Resuelto 2026-10-08 (SPEC-02)**: V4 en `spaces/service.py` lee `solicitud.anticipacion_min_horas` | `spaces/service.py` | Perfil 1 |
+
+---
+
+## 5\. Coordinación pendiente entre perfiles
+
+| Fecha | De → Para | Pedido | Estado |
+| :---- | :---- | :---- | :---- |
+| 2026-10-23 | Perfil 2 → Perfil 1 | **Para revisar y resolver:** SPEC-04 Fase A quedó implementada, así que hay que actualizar los documentos que mantiene el Perfil 1: (a) `docs/perfiles.md` §4 Perfil 2 — backend: edición y baja lógica de equipamiento y unidades, matriz de estados, `inventory/service.py`, `CHECK` de locker 1–7 (migración `0010`); frontend: catálogo conectado a la API (se eliminó el mock), tabla de stock en `admin-stock`, alta, edición y baja; Pendiente: sólo la Fase B (disponibilidad por fechas e historial por unidad). (b) `AGENTS.md` §3, fila del Perfil 2: pasar de "El catálogo del frontend usa datos de ejemplo" a "Implementado (SPEC-04, Fase A); pendiente Fase B". (c) `docs/perfiles.md` §5: la interfaz "Estado de la unidad física" ya tiene el lado de `inventory` publicado | Abierto |
+| 2026-10-23 | Perfil 2 → Perfil 3 | **Para continuar cuando se avance con `loans`:** retomar la **Fase B de SPEC-04 (INV-26)**, hoy bloqueada. Requiere que `loans` publique: (1) lectura de ocupación por unidad y período, sin identidad de solicitantes (PRE-01); (2) historial de movimientos de una unidad, sólo para administradores con jurisdicción (PRE-12); (3) reservas futuras aprobadas por unidad (PRE-17). Con eso el Perfil 2 implementa `GET /equipamiento/{id}/disponibilidad`, `GET /unidades/{id}/historial`, el campo `reservas_afectadas` al pasar una unidad a mantenimiento y el mini-calendario del detalle (spec §5.4–5.5, plan §8). También queda pendiente definir con el Perfil 1 el parámetro de ventana máxima del calendario (SPEC-04 D-07) y que `loans` adopte `inventory/service.py` (DT-20) | Abierto — retomar al avanzar `loans` |
+| 2026-10-23 | Perfil 2 → Perfil 3 | SPEC-04 §6: usar `inventory/service.py` (`unidades_asignables`, `unidad_es_asignable`, `marcar_unidad_prestada`, `liberar_unidad`) en vez de escribir el estado de la unidad; no asignar unidades en `mantenimiento` o `baja`. Desde SPEC-04 un admin ya no puede poner `prestado` por la API (D-02) | Abierto |
+| 2026-10-23 | Perfil 2 → Perfil 3 | Exponer funciones públicas de lectura, sin identidad salvo para admins: (a) ocupación por unidad y período (PRE-01), (b) historial de movimientos de una unidad (PRE-12), (c) reservas futuras aprobadas por unidad (PRE-17). Bloquean la Fase B de SPEC-04. PRE-17 (cancelación forzada al pasar a mantenimiento) se resuelve en el spec de `loans` | Abierto |
+| 2026-10-23 | Perfil 2 → Perfil 1 | `config`: (a) parámetro de ventana máxima del calendario de disponibilidad (SPEC-04 D-07, Fase B); (b) el `CHECK` de `equipamientos.max_dias_prestamo` fija el tope 15 en la base (P8), evaluar si se parametriza | Abierto |
+| 2026-10-23 | Perfil 2 → Perfil 5 | Para consultas de stock y disponibilidad, el asistente usa `GET /api/v1/inventory/equipamiento` (respuesta reducida para no admins, SPEC-04 RN-I7); no hay endpoints especiales para IA | Informativo |
+| 2026-10-23 | Perfil 1 → Perfil 2 | Confirmado: el Perfil 2 puede modificar `src/App.tsx` para montar `StockPage` en `admin-stock` (cambio mínimo, SPEC-04 F-06) → **Completado 2026-10-23** (3 líneas en `App.tsx`) | Cerrado |
+| 2026-10-23 | Perfil 1 → Perfiles 2–5 | Compartir con cada integrante (y su agente) `docs/constitution.md`, `AGENTS.md`, `MEMORY.md` y `docs/perfiles.md`; trabajar con spec aprobado en `specs/` | Abierto |
+| 2026-10-23 | Perfil 1 → Perfil 3 | Redactar el spec de `loans` cubriendo lo ya hecho y resolviendo DT-16…DT-18 (usar `get_current_user`, `RolUsuario`, `AppError`); hasta tener la lógica, proteger los endpoints o quitar el router | Abierto |
+| 2026-10-23 | Perfil 1 → Perfiles 2 y 3 | Acordar en el spec de `loans` la interfaz de estado y disponibilidad de unidades (DT-20, PRE-01, PRE-13, PRE-14) | Abierto |
+| 2026-10-23 | Perfil 1 → Perfil 2 | Conectar el catálogo a la API (DT-22) y agregar el `CHECK` de locker 1–7 (DT-23) → **Completado 2026-10-23 (SPEC-04, Fase A)** | Cerrado |
+| 2026-10-23 | Perfil 1 → Perfiles 3 y 4 | Exponer funciones de lectura de solicitudes por usuario para USR-06…08 (`docs/perfiles.md` §5) | Abierto |
+| 2026-10-23 | Perfil 1 → Perfil 5 | Definir en el spec de `notifications` la función pública que llamarán `loans` y `spaces`; el asistente sólo consume REST | Abierto |
+| 2026-10-07 | Perfil 1 → `spaces` | Migrar `id_sede` a `SedeEnum`; FK `id_usuario`; tomar usuario del token; leer horario y anticipación → **Completado 2026-10-08 (SPEC-02)** en `feat/spec-02-integracion` | Cerrado |
+| 2026-10-07 | Perfil 1 → `loans` | Validar anticipación mínima con `solicitud.anticipacion_min_horas` y plazos con `prestamo.*.max_dias` | Abierto |
+| 2026-10-07 | Perfil 1 → `inventory` | `SedeEnum`, migración `0006`, `require_roles`, sede automática PRE-19 y plazo por defecto desde config → **Completado 2026-10-08 (SPEC-02)** en `feat/spec-02-integracion` | Cerrado |
+| 2026-10-07 | Perfil 1 → Frontend | DTOs espejo, sin `icse`, `AuthContext`, `SedeContext`, `lib/api.ts` con token y pantallas de identidad → **Completado 2026-10-08 (SPEC-02)** en `feat/login-auth-ui` | Cerrado |
+
+---
+
+## 6\. Preguntas abiertas para la referente (Natalia Ader)
+
+1. ¿Hay estudiantes sin DNI argentino? (D-03)  
+2. Un usuario sancionado, ¿debe poder ingresar para consultar su historial? (D-08)  
+3. ¿La anticipación mínima de 24 h aplica también a docentes y a reservas de espacios, o sólo a préstamos de estudiantes? (ADR-011 asume que aplica a toda solicitud)
+
+> Resueltas internamente el 2026-10-07: dominio de email (D-02 → sin restricción) e interpretación de las 24 h (D-07 → anticipación mínima).
+
+---
+
+## 7\. Bitácora
+
+| Fecha | Autor | Evento |
+| :---- | :---- | :---- |
+| 2026-10-27 | Perfil 1 | Reorganización de `specs/` (con asistencia de IA): una carpeta por spec, `specs/NN-<slug>/{spec,plan,tasks}.md`, en lugar de `specs/{spec,plan,tasks}-NN-<slug>.md`. Referencias actualizadas en `AGENTS.md`, `docs/constitution.md` §6, `docs/perfiles.md`, este archivo y los propios specs. Los identificadores cortos (`spec-01`, `plan-02` §6) se mantienen como nombres. Además, la documentación (`AGENTS.md`, `MEMORY.md`, `docs/`, `specs/`) pasa a un repo propio, `Docs-PrestaMeDios`, clonado junto a Backend y Frontend; la raíz del workspace lleva copias de `workspace/` (`CLAUDE.md` con `@` para Claude Code, `opencode.json` con `instructions` para OpenCode y un `AGENTS.md` puntero de respaldo) para que el agente cargue `Docs-PrestaMeDios/AGENTS.md` al iniciar |
+| 2026-10-23 | Perfil 2 | **SPEC-04 Fase A implementada** (con asistencia de IA) y publicada por `Farvi-1986` en `feat/inventory-gestion` (backend, `b93017f`) y `feat/inventory-catalogo` (frontend, `128b749`), sin PR todavía; el `package-lock.json` modificado del frontend no se incluyó: backend 320 tests en verde (63 nuevos, cobertura de `inventory` 98 %), migración `0010` validada con upgrade/downgrade/upgrade y con un locker inválido; frontend `typecheck`, `build` y 47 tests (31 nuevos); INV-24 e INV-25 verificados a mano en el navegador contra un backend local con base descartable. Ítems de coordinación registrados (§5), ADR-020, DT-22 y DT-23 cerradas, DT-26…DT-28 abiertas. Pendiente: Fase B (necesita funciones de lectura de `loans`), revisión y PR |
+| 2026-10-23 | Perfil 1 | Revisión de coherencia documental (con asistencia de IA): snapshot actualizado; `docs/perfiles.md` creado a partir de "Perfiles de tareas v1" (ADR-017, ADR-018); `AGENTS.md` actualizado; enmienda constitucional 1.1.1 propuesta (ADR-019); deuda DT-16…DT-25 registrada; plan y tareas de SPEC-02 cerrados con sus desviaciones documentadas |
+| 2026-10-23 | Perfil 1 | Backend: restaurados `htmlcov/`, `*.err` y `*.log` en el `.gitignore` local (`1958feb`, sin push), que se habían perdido en un merge local |
+| 2026-10-13 | Equipo | Backend PR \#12 (`feat/loans`) mergeado en `develop`: contratos, modelos y migración `0009` de `loans`, sin spec en `specs/` (DT-16) |
+| 2026-10-10…13 | Equipo | SPEC-02 mergeado en `develop` (backend PR \#7 y `074158e`; frontend PR \#4). Alta de espacios en frontend (`e90f98c`) |
+| 2026-10-08 | Perfil 1 | **SPEC-02 implementado y verificado**: Backend `de28749` (257 tests, cobertura 96 %, migraciones 0007/0008); Frontend `af81452` (build, 14 unitarios Vitest, 11 verificaciones E2E Playwright AC-50…AC-59). Publicados en `origin/feat/spec-02-integracion` y `origin/feat/login-auth-ui`, listos para merge post-demo (D-01) |
+| 2026-10-08 | Perfil 1 | Conciliación de SPEC-02 (v1.0.1) con PR \#6 de `spaces`: se incorporan En\_Uso/Finalizada e intervalos\_disponibles |
+| 2026-10-08 | Perfil 1 | ERS movido a `Backend-PrestaMeDios/docs/ERS.md` y README técnicos en backend y frontend; constitución v1.1.0. El build del front sin `.figma/` ya lo había resuelto un colega en `develop` (79bd91e) |
+| 2026-10-08 | Perfil 1 | **SPEC-02 aprobado** con todas las recomendaciones |
+| 2026-10-08 | Perfil 1 | Redacción de SPEC-02 (borrador). USR-02, foto de perfil y refresh token se proponen para SPEC-03 |
+| 2026-10-07 | Perfil 1 | **Commit `7b95956`** (`feat/users-core`): SPEC-01 \+ migración `0006` de `inventory` (DT-04) \+ logs fuera del índice (DT-07). 46 archivos, 157 tests en verde. Publicado en `origin/feat/users-core`; también quedó en `origin/develop` por el upstream anterior. PR pendiente |
+| 2026-10-07 | Perfil 1 | **SPEC-01 implementado**: 157 tests, cobertura 95 %, migración `0005` verificada, prueba de humo E2E OK |
+| 2026-10-07 | Perfil 1 | Plan y tareas aprobados; responsables de `inventory` y `spaces` autorizan modificaciones en sus módulos |
+| 2026-10-07 | Perfil 1 | Redacción de `specs/01-auth-users/plan.md` y `specs/01-auth-users/tasks.md` |
+| 2026-10-07 | Perfil 1 | ERS (entonces `README.md`): CU "Registro y validación de cuentas" — el rechazo conserva la cuenta con motivo y permite re-registro (ADR-010) |
+| 2026-10-07 | Perfil 1 | **SPEC-01 aprobado (v1.0.0)** con ajustes en D-02, D-04 y D-07 (ADR-008 a ADR-011) |
+| 2026-10-07 | Perfil 1 | Redacción de Constitución v1.0.0, AGENTS.md, MEMORY.md y SPEC-01 (borrador) |
+| 2026-10-07 | Equipo | Merge frontend PR \#2: calendario de reservas de espacios v1 |
+| 2026-10-06 | Equipo | Merge backend PR \#2 y \#3: inventario y espacios |
+| 2026-10-05 | Equipo | Plantilla base del frontend y primeros contratos de inventario |
+
+&nbsp;
