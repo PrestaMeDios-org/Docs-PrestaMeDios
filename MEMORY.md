@@ -2,7 +2,7 @@
 
 > Registro vivo del estado del proyecto, decisiones de arquitectura (ADR), deuda técnica y coordinación entre perfiles. Lo actualizan humanos y agentes de IA al cerrar cada tarea relevante. Entradas nuevas **arriba** dentro de cada sección.
 
-> **Última actualización:** 2026-11-02 · Perfil 1 (orden de documentación)
+> **Última actualización:** 2026-11-02 · Perfil 1 (orden de documentación y registro de la tercera entrevista)
 
 ---
 
@@ -17,7 +17,7 @@
 | Specs en borrador | `spec-05` (`loans`, v0.1.0, Perfil 3, `BORRADOR`). Su §16 tiene pedidos al Perfil 1 (C1–C7, C13) |
 | Numeración | `spec-03` queda reservado para el próximo spec del Perfil 1 (responde D-L01 de SPEC-05) |
 | Spec siguiente (Perfil 2) | **Fase B de SPEC-04** (disponibilidad por fechas e historial por unidad, INV-26): bloqueada hasta que `loans` publique sus funciones de lectura (ver §5) |
-| Spec siguiente (Perfil 1\) | **SPEC-03**, en dos fases. Fase A: API pública de `users` (datos públicos por lote de ids, pedido por los Perfiles 3 y 4). Fase B: USR-02 (recuperación por email), almacenamiento de archivos (foto de perfil USR-03 \+ PDF de aval PRE-05) y refresh token / cookie HttpOnly (a reevaluar frente a ADR-015). Luego USR-06…09, GLO-05 y despliegue (ADR-018) |
+| Spec siguiente (Perfil 1\) | **SPEC-03**, en dos fases. Fase A: API pública de `users` (datos públicos por lote de ids, pedido por los Perfiles 3 y 4). Fase B: USR-02 (recuperación por email), almacenamiento de archivos (foto de perfil USR-03 \+ PDF de aval PRE-05) y refresh token / cookie HttpOnly (a reevaluar frente a ADR-015). Luego USR-06…09, GLO-05 y despliegue (ADR-018). **Alcance nuevo por la entrevista del 16/10 (ADR-022):** horario por sede, teléfono obligatorio, correo de contacto del laboratorio, delegación temporal del rol de Superadministrador, llamados de atención con faltas y suspensión automática (USR-09) y aviso por email de las sanciones |
 | Constitución | v1.1.0 vigente, **sin ratificación del equipo registrada**. Enmienda 1.1.1 propuesta (ADR-019 y, desde el 2026-11-02, ADR-021) |
 | Ramas backend | `main` \= PR \#8 (2026-10-08, anterior a SPEC-02) · `staging` \= PR \#13 (2026-10-14, incluye SPEC-02 y los contratos de `loans`) · `develop` \= `origin/develop` (`73fb4b9`, 2026-11-02: SPEC-04, refactor de `loans` PR \#16 y ERS fuera del repo PR \#15) |
 | Ramas frontend | `main` \= PR \#5 (2026-10-08) · `staging` \= PR \#8 (2026-10-22) · `develop` \= `origin/develop` (`5d72123`, 2026-11-02: SPEC-04 PR \#9 y ERS fuera del repo PR \#10) |
@@ -52,6 +52,7 @@
 
 | ID | Fecha | Decisión | Motivo | Estado |
 | :---- | :---- | :---- | :---- | :---- |
+| ADR-022 | 2026-11-02 | Reglas surgidas de la tercera entrevista (16/10/2026, demo del Sprint 1) y completadas por el equipo, porque el Reglamento no fija cantidades: (a) **horario de atención por sede** (p. ej. Ushuaia 09:00–16:00, Río Grande 10:00–17:00); (b) **teléfono obligatorio** en el registro; (c) **correo de contacto del laboratorio** en el aviso de anticipación mínima; (d) **llamados de atención**: el 1.º y el 2.º no son falta, el 3.º se convierte en una falta; con 1 falta el administrador decide si suspende, con 2 la suspensión es **automática**; (e) la suspensión dura un **tiempo fijo** configurable y el administrador puede levantarla antes; (f) cada llamado de atención o sanción se notifica por **email**; (g) **delegación temporal del rol de Superadministrador**: sólo a un `ADMIN_LOCAL`, con duración fijada al delegar (días, una semana o vacaciones) y revocable antes del vencimiento; (h) la **renovación de notebooks** es presencial y se hace con una **nueva solicitud** desde la app; (i) **docentes** también piden alta gama, con el PDF de la resolución del Consejo (CICSE/ICSE); (j) no hay estudiantes sin DNI argentino (confirma D-03). Las cantidades de (d) y (e) son parámetros de `config` | Validación del Sprint 1 con la referente (ERS, Iteración 5); (d), (e) y (g) los definió el Perfil 1 a falta de reglamento | Vigente — falta reflejarlo en los requisitos del ERS (DT-29) y en los specs |
 | ADR-021 | 2026-10-27 | La documentación del proyecto (ERS, Constitución, `AGENTS.md`, `MEMORY.md`, perfiles y specs) se versiona en un repo propio, `Docs-PrestaMeDios`. El ERS pasa de `Backend-PrestaMeDios/docs/ERS.md` a `docs/ERS.md` de ese repo (copia sin historial; el historial anterior queda en el backend) y los cambios de requisitos se hacen por PR ahí | Que todo el equipo versione specs y memoria en un solo lugar, sin mezclarlos con el código. Constitución §1 y §6.1 actualizadas; desde el 2026-11-02 el cambio se somete a ratificación como parte C de la enmienda 1.1.1 (§10.1) | Vigente — pendiente de ratificar con la enmienda 1.1.1 |
 | ADR-020 | 2026-10-23 | SPEC-04 (`inventory`): (D-02) `prestado` ya no se puede fijar por la API, sólo `loans` mediante `inventory/service.py`; (D-03) `baja` es terminal; (D-04) estudiantes y docentes reciben una vista reducida del catálogo, sin unidades, series ni códigos de inventario; (D-05) `equipamientos.es_notebook` decide el plazo por defecto (`prestamo.notebook.max_dias`); (D-06) un `ADMIN_LOCAL` edita ítems de su alcance pero sólo el `SUPERADMIN` da de baja un ítem con unidades en ambas sedes; (D-09) `mantenimiento` = "En Mantenimiento" (temporal) y `baja` = "Fuera de servicio" (definitivo); la categoría se filtra en la pantalla. Migración `0010` | Cerrar la doble fuente de verdad del estado de la unidad (DT-20), mínimo dato necesario (P4, P6) y reglas del ERS (PRE-14) | Vigente — aprobado por el Perfil 2 (SPEC-04 `IMPLEMENTADO`, Fase A) |
 | ADR-019 | 2026-10-23 | Enmienda 1.1.1 de la Constitución (aclaraciones; desde el 2026-11-02 incluye también la ubicación de la documentación, ADR-021): validaciones previas de solapamiento en el servicio permitidas, con `EXCLUDE` como garantía final para lo adjudicado (P7.2); `Usuario` devuelto por `get_current_user` y funciones de servicio públicas como excepciones explícitas al aislamiento de módulos (P3.3). La propone el Perfil 1 al equipo | El documento de perfiles prohibía literalmente lo que hacen SPEC-02 y `spaces/service.py`, y `core`, `config`, `inventory` y `spaces` ya importan `Usuario` | **Propuesta** — texto en `docs/constitution.md` §10.1 |
@@ -85,6 +86,11 @@
 - **Anticipación mínima:** toda solicitud de préstamo o reserva se envía con al menos 24 h de antelación (configurable, ADR-011).  
 - **Registro:** cualquier email válido; la cuenta queda "Pendiente en aprobación" hasta que un administrador con jurisdicción la valida. Un rechazo conserva la cuenta (ADR-010).  
 - **Lockers:** numerados 1–7 por sede.  
+- **Horario por sede (2026-10-16):** cada sede tiene su propio horario de atención (p. ej. Ushuaia 09:00–16:00, Río Grande 10:00–17:00). Hoy `config` tiene un único `horario.apertura`/`horario.cierre`.
+- **Sanciones (ADR-022):** llamado de atención (faltas leves: retrasos, equipos devueltos helados) → al 3.º, una falta → con 1 falta el admin evalúa, con 2 suspensión automática por tiempo fijo, que el admin puede levantar antes. Cada llamado o sanción se avisa por email.
+- **Renovación de notebooks:** presencial (se revisa el equipo en el mostrador) y mediante una nueva solicitud en la app, para dar oportunidad a otros solicitantes.
+- **Delegación de Superadministrador:** temporal, sólo a un Admin Local, con duración fijada al delegar y revocable antes.
+- **Alta gama:** la piden estudiantes y docentes (estos con regularidad); el aval es el PDF de la resolución del Consejo (CICSE/ICSE).
 - **Requisito futuro:** Isla de Digitalización de Archivos Físicos (VHS, S-VHS, Beta, Hi8).
 
 ---
@@ -93,6 +99,7 @@
 
 | ID | Severidad | Descripción | Ubicación | Responsable sugerido |
 | :---- | :---- | :---- | :---- | :---- |
+| DT-29 | Media | La tercera entrevista (16/10/2026) quedó registrada en el ERS (bibliografía e Iteración 5), pero los textos de USR-05, USR-09, GLO-01, GLO-03, GLO-04, RES-03, PRE-05 y PRE-11 y sus casos de uso todavía no reflejan ADR-022 | `docs/ERS.md` | Perfil 1 (PR al ERS) |
 | DT-16 | Alta | **Parcial (2026-11-02):** `specs/05-loans-prestamos/spec.md` existe en `BORRADOR` (v0.1.0). Se cierra cuando el spec esté `APROBADO`. Mientras tanto `loans` no tiene criterios de aceptación aprobados (Constitución P1.1) | `specs/05-loans-prestamos/`, `app/modules/loans/` | Perfil 3 |
 | ~~DT-17~~ | — | ~~`loans/dependencies.py` placeholder con `RolEnum` propio y endpoints que respondían 500 sin sesión~~ → **Resuelto 2026-11-02 (PR \#16)**: se eliminó `dependencies.py`; los 5 endpoints usan `get_current_user`/`require_roles(RolUsuario...)` y responden `501 NO_IMPLEMENTADO` con `AppError` | `loans/router.py` | Perfil 3 |
 | ~~DT-18~~ | — | ~~Errores `{codigo, detalle}` y `HTTPException` en `loans`~~ → **Resuelto 2026-11-02 (PR \#16)**: `loans` usa `AppError` (`{detail, code}`) | `loans/schemas.py`, `loans/router.py` | Perfil 3 |
@@ -128,6 +135,9 @@
 
 | Fecha | De → Para | Pedido | Estado |
 | :---- | :---- | :---- | :---- |
+| 2026-11-02 | Perfil 1 → Perfil 3 | Entrevista del 16/10 (ADR-022): (a) **la renovación de notebooks contradice SPEC-05**: el spec la plantea como una extensión que hace el administrador (CU-L09, `PATCH …/renovacion`), y la referente pidió que el estudiante presente el equipo y emita **una nueva solicitud** desde la app; corregir el spec antes de aprobarlo; (b) PRE-05: los docentes también piden alta gama y el aval es el PDF de la resolución del Consejo (CICSE/ICSE); (c) el horario pasará a ser por sede (las claves de `config` cambian, se avisa en SPEC-03) | Abierto |
+| 2026-11-02 | Perfil 1 → Perfil 4 | Entrevista del 16/10: (a) nombre del solicitante en el calendario maestro, sólo para administradores (confirma el pedido del Perfil 4; hoy la bandeja muestra `Usuario #id`); (b) aviso emergente al fallar la anticipación mínima, con el correo del laboratorio (parámetro nuevo de `config`, lo agrega el Perfil 1); (c) mostrar el motivo al pasar el mouse sobre un día bloqueado; (d) revertir bloqueos (GLO-04, no hay endpoint); (e) el horario pasará a ser por sede | Abierto |
+| 2026-11-02 | Perfil 1 → Perfil 5 | Los llamados de atención y sanciones se avisan por email (ADR-022). Definir si los mails salen de `notifications` o de una función de correo de `core` que el Perfil 1 diseña para USR-02 (SPEC-03) | Abierto |
 | 2026-11-02 | Perfil 4 → Perfil 1 | `users`: función pública liviana para obtener nombre y apellido por lote de ids, para mostrar el solicitante en la bandeja de reservas sin importar el modelo `Usuario` en `spaces`. Es el mismo pedido que C2 de SPEC-05 (Perfil 3). Se implementa una sola función, `datos_publicos_por_ids(db, ids) -> dict[int, DatosPublicosUsuario]` (`id`, `nombre`, `apellido`), en la Fase A de SPEC-03. Sin filtro de sede: quien llama sólo pasa ids que ya puede mostrar (P6). El campo `solicitante` en `ReservaEspacioResponse` lo documenta y lo implementa el Perfil 4 | Aceptado — pendiente de SPEC-03 Fase A |
 | 2026-11-02 | Perfil 1 → Perfil 4 | Publicar en `spaces/service.py` una función de lectura de reservas por usuario, para USR-06 y USR-07 (`docs/perfiles.md` §5) | Abierto |
 | 2026-11-02 | Perfil 1 → Perfil 3 | Respuestas a SPEC-05 §16: D-L01 confirmado (`spec-03` reservado para el Perfil 1); C2 entra en SPEC-03 Fase A (función compartida con el pedido del Perfil 4; el vínculo docente–asignatura depende de C3); C4 (archivos) en SPEC-03 Fase B; C6 resuelto (DT-24). Quedan abiertos C1, C3, C5 y C13 | Abierto |
@@ -153,9 +163,10 @@
 
 ## 6\. Preguntas abiertas para la referente (Natalia Ader)
 
-1. ¿Hay estudiantes sin DNI argentino? (D-03)  
-2. Un usuario sancionado, ¿debe poder ingresar para consultar su historial? (D-08)  
-3. ¿La anticipación mínima de 24 h aplica también a docentes y a reservas de espacios, o sólo a préstamos de estudiantes? (ADR-011 asume que aplica a toda solicitud)
+1. ¿La anticipación mínima de 24 h aplica también a los **docentes**? (ADR-011 asume que sí; la entrevista del 16/10 sólo lo confirmó para estudiantes, en préstamos y reservas de espacios)
+2. Sanciones (ADR-022): ¿el contador de llamados de atención vuelve a cero al convertirse en falta (cada 3 llamados, 1 falta)? ¿Las faltas vencen (por ejemplo, por cuatrimestre)? ¿Cuántos días dura la suspensión por defecto?
+
+> Resueltas el 2026-11-02 (entrevista del 16/10 y definiciones del equipo, ADR-022): no hay estudiantes sin DNI argentino (D-03 confirmada); el usuario suspendido no inicia sesión y ve "Tu cuenta está suspendida" (D-08 confirmada); la anticipación de 24 h aplica a las reservas de espacios de estudiantes.
 
 > Resueltas internamente el 2026-10-07: dominio de email (D-02 → sin restricción) e interpretación de las 24 h (D-07 → anticipación mínima).
 
@@ -165,6 +176,7 @@
 
 | Fecha | Autor | Evento |
 | :---- | :---- | :---- |
+| 2026-11-02 | Perfil 1 | Registro de la **tercera entrevista con la referente** (16/10/2026, demo del Sprint 1), con asistencia de IA: ERS (bibliografía e Iteración 5), ADR-022 con las reglas validadas y las que completó el equipo (sanciones, delegación temporal), conocimiento de dominio, DT-29, coordinación con los Perfiles 3, 4 y 5 y preguntas de §6 actualizadas |
 | 2026-11-02 | Perfil 1 | Orden de documentación (con asistencia de IA): snapshot al día con `develop` (SPEC-04 mergeado, PR \#16 de `loans`, ERS fuera de los repos de código, SPEC-05 en `BORRADOR`); DT-17, DT-18 y DT-24 cerradas, DT-16 y DT-25 parciales; `AGENTS.md` §3 y `docs/perfiles.md` §4–§5 actualizados; ADR-021 sumado a la enmienda 1.1.1 como parte C; IA-02 del ERS corregido (DT-25); pedido del Perfil 4 (datos públicos de usuarios) aceptado para SPEC-03 Fase A |
 | 2026-10-27 | Perfil 1 | Reorganización de `specs/` (con asistencia de IA): una carpeta por spec, `specs/NN-<slug>/{spec,plan,tasks}.md`, en lugar de `specs/{spec,plan,tasks}-NN-<slug>.md`. Referencias actualizadas en `AGENTS.md`, `docs/constitution.md` §6, `docs/perfiles.md`, este archivo y los propios specs. Los identificadores cortos (`spec-01`, `plan-02` §6) se mantienen como nombres. Además, la documentación (`AGENTS.md`, `MEMORY.md`, `docs/`, `specs/`) pasa a un repo propio, `Docs-PrestaMeDios`, clonado junto a Backend y Frontend; la raíz del workspace lleva copias de `workspace/` (`CLAUDE.md` con `@` para Claude Code, `opencode.json` con `instructions` para OpenCode y un `AGENTS.md` puntero de respaldo) para que el agente cargue `Docs-PrestaMeDios/AGENTS.md` al iniciar |
 | 2026-10-23 | Perfil 2 | **SPEC-04 Fase A implementada** (con asistencia de IA) y publicada por `Farvi-1986` en `feat/inventory-gestion` (backend, `b93017f`) y `feat/inventory-catalogo` (frontend, `128b749`), sin PR todavía; el `package-lock.json` modificado del frontend no se incluyó: backend 320 tests en verde (63 nuevos, cobertura de `inventory` 98 %), migración `0010` validada con upgrade/downgrade/upgrade y con un locker inválido; frontend `typecheck`, `build` y 47 tests (31 nuevos); INV-24 e INV-25 verificados a mano en el navegador contra un backend local con base descartable. Ítems de coordinación registrados (§5), ADR-020, DT-22 y DT-23 cerradas, DT-26…DT-28 abiertas. Pendiente: Fase B (necesita funciones de lectura de `loans`), revisión y PR |
