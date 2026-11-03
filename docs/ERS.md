@@ -285,7 +285,7 @@ Debido a que las operaciones del laboratorio requieren la intervención directa 
 **Módulo 1: Interfaz y Consultas en Lenguaje Natural**
 
 * **IA-01 - Interfaz del asistente:** El sistema integrará un botón de acceso rápido en la interfaz principal para desplegar el asistente virtual.
-* **IA-02 - Consulta de disponibilidad (Lectura):** El chatbot deberá tener acceso de lectura a la base de datos para responder consultas en lenguaje natural sobre el stock y las fechas disponibles de los equipos y aulas.
+* **IA-02 - Consulta de disponibilidad (Lectura):** El chatbot deberá tener acceso de lectura, mediante la API REST del sistema y con la sesión del usuario, para responder consultas en lenguaje natural sobre el stock y las fechas disponibles de los equipos y aulas. No accede de forma directa a la base de datos (ver Arquitectura, Agente MCP).
 * **IA-03 - Procesamiento conversacional de reservas:** El chatbot permitirá al usuario interactuar mediante lenguaje natural para consultar la disponibilidad del catálogo, y ejecutar reservas guiadas directamente en el sistema utilizando la sesión activa del usuario.
 
 ---
@@ -1010,7 +1010,7 @@ Dado que el equipo consta de 5 integrantes y un plazo limitado de 16 semanas, Sc
 * **Flujo principal:**
 1. El usuario selecciona la opción de acceso directo para desplegar la ventana del asistente virtual.
 2. Realiza una consulta mediante lenguaje coloquial consultando disponibilidades de recursos o salas.
-3. El sistema procesa la consulta mediante lecturas de la base de datos y responde la inquietud planteada.
+3. El sistema procesa la consulta mediante lecturas de la API REST y responde la inquietud planteada.
 4. Si el usuario decide avanzar, solicita al asistente proseguir con la reserva.
 5. El chatbot toma de forma automática la información del perfil (ID, Rol, Sede) y tramita la solicitud, asentándose en estado "Pendiente".
 

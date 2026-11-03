@@ -1,10 +1,10 @@
 # Perfiles del equipo — Guía de trabajo con agentes de IA
 
-> **Versión:** 1.0.0 · **Fecha:** 2026-10-23 · **Mantiene:** Perfil 1
+> **Versión:** 1.1.0 · **Fecha:** 2026-11-02 · **Mantiene:** Perfil 1
 
 > **Subordinado a:** `docs/constitution.md` → `AGENTS.md`. Ante cualquier diferencia, prevalecen esos documentos. Este archivo **no** agrega reglas: indica qué le toca a cada perfil y cómo arrancar a trabajar con un agente de IA.
 
-> Estado del código verificado contra `develop` de ambos repositorios al 2026-10-23.
+> Estado del código verificado contra `develop` de ambos repositorios al 2026-11-02.
 
 ---
 
@@ -86,7 +86,7 @@
 | Estado | Detalle |
 | :---- | :---- |
 | Implementado | SPEC-01 y SPEC-02: registro, login JWT, cuatro roles, aislamiento de sede, directorio y aprobación de cuentas, edición de perfil, cambio obligatorio de contraseña, parámetros con historial. Frontend de login, registro, perfil, gestión de usuarios y parámetros. Tema claro/oscuro (GLO-06, parcial) |
-| Pendiente | USR-02 (recuperar contraseña por email), foto de perfil (USR-03), refresh token (propuestos para el próximo spec del Perfil 1\) · USR-06 (panel de solicitudes propias) · USR-07 (historial de actividad) · USR-08 (auditoría global) · USR-09 (chips de comportamiento) · GLO-05 (notas privadas) · Docker y CI |
+| Pendiente | SPEC-03 Fase A: API pública de `users` con datos públicos por lote de ids (pedido de los Perfiles 3 y 4) · SPEC-03 Fase B: USR-02 (recuperar contraseña por email), almacenamiento de archivos (foto de perfil USR-03 y PDF de aval PRE-05), refresh token · USR-06 (panel de solicitudes propias) · USR-07 (historial de actividad) · USR-08 (auditoría global) · USR-09 (chips de comportamiento) · GLO-05 (notas privadas) · Docker y CI |
 | Depende de otros perfiles | USR-06, USR-07 y USR-08 consumen datos de `loans` y `spaces`. Necesitan que esos módulos expongan funciones de lectura (ver §5) |
 
 **Prompt de arranque:**
@@ -108,9 +108,9 @@ specs/ en estado BORRADOR, y no escribas código hasta que yo lo apruebe.
 
 | Estado | Detalle |
 | :---- | :---- |
-| Implementado (backend) | Modelos y esquemas de `Categoria`, `Equipamiento` y `UnidadFisica`; alta y listado filtrable por sede, categoría y texto; alta de unidades con sede automática (PRE-19); `PATCH /unidades/{id}/estado` (PRE-14); autenticación y alcance de sede (integrados por SPEC-02); plazo por defecto desde `config` |
-| Implementado (frontend) | Grilla filtrable del catálogo, pero **con datos de ejemplo** (`mockInventory.ts`). `inventoryApi.ts` existe y está autenticado, pero ninguna pantalla lo usa |
-| Pendiente | Conectar el catálogo a la API · edición y baja lógica de equipamiento · tabla de stock con orden y despliegue de unidades (PRE-12) · historial de usuarios por unidad (PRE-12) · disponibilidad dinámica y mini-calendario (PRE-01, que necesita datos de `loans`) · `CHECK` de la base para que el locker esté entre 1 y 7 |
+| Implementado (backend, SPEC-04 Fase A) | Modelos y esquemas de `Categoria`, `Equipamiento` y `UnidadFisica`; alta y listado filtrable por sede, categoría y texto; alta de unidades con sede automática (PRE-19); edición y baja lógica de equipamiento y unidades; matriz de estados en `PATCH /unidades/{id}/estado` (PRE-14; `prestado` sólo lo fija `loans`); vista reducida para estudiantes y docentes; `inventory/service.py` público para `loans`; `CHECK` de locker 1–7 (migración `0010`); autenticación, alcance de sede y plazo por defecto desde `config` |
+| Implementado (frontend, SPEC-04 Fase A) | Catálogo conectado a la API (se eliminó el mock); tabla de stock en `admin-stock` con alta, edición, baja lógica y cambio de estado |
+| Pendiente | Sólo la Fase B de SPEC-04: disponibilidad por fechas y mini-calendario (PRE-01) e historial por unidad (PRE-12). Necesita las funciones de lectura de `loans` (SPEC-05 §10.2) |
 | Límites | Entrega, devolución, renovación y bandeja de órdenes **no** son de este perfil (son del Perfil 3). El estado de la unidad (`disponible`, `prestado`, `mantenimiento`, `baja`) se debe coordinar con `loans` (ver §5) |
 
 **Prompt de arranque:**
@@ -134,15 +134,11 @@ y no escribas código hasta que yo lo apruebe.
 
 | Estado | Detalle |
 | :---- | :---- |
-| Implementado (backend, en `develop`) | Enums, esquemas Pydantic de orden y detalle, modelos ORM, migración `0009_loans_init` con `EXCLUDE USING gist` sobre `(unidad_fisica_id, periodo)` para detalles `reservado`/`entregado`. Firmas de 6 endpoints en `/api/v1/loans` |
+| Implementado (backend, en `develop`) | Enums, esquemas Pydantic de orden y detalle, modelos ORM, migración `0009_loans_init` con `EXCLUDE USING gist` sobre `(unidad_fisica_id, periodo)` para detalles `reservado`/`entregado`. 5 endpoints en `/api/v1/loans` que exigen sesión y rol y responden `501 NO_IMPLEMENTADO` (PR \#16). Tests de contrato y esquemas. Spec: `specs/05-loans-prestamos/spec.md` (`BORRADOR`) |
 | Pendiente | Toda la lógica (servicio), los tests, la integración con la autenticación real, el PDF de aval (PRE-05), la cancelación automática (PRE-08), la entrega y devolución (PRE-13), la renovación (PRE-11), el calendario maestro (PRE-16), la cancelación forzada (PRE-17), el panel docente (PRE-20) y el frontend (formulario unificado con fechas y asignatura) |
-| Deuda registrada | DT-16 a DT-20 en `MEMORY.md` §4: no hay spec; dependencia de usuario simulada que responde 500; `RolEnum` propio; formato de error `{codigo, detalle}`; estado de la unidad duplicado con `inventory` |
+| Deuda registrada | En `MEMORY.md` §4: DT-16 (spec sin aprobar) y DT-20 (estado de la unidad duplicado con `inventory` hasta que `loans` use `inventory/service.py`). DT-17 y DT-18 se resolvieron en el PR \#16 |
 
-**Antes de seguir programando:** escribir el spec de `loans` en `specs/` que cubra lo ya hecho y lo que falta, y que resuelva la deuda DT-16 a DT-20. Concretamente:
-
-- reemplazar `loans/dependencies.py` por `get_current_user` y `RolUsuario`;  
-- usar `AppError`;  
-- definir con el Perfil 2 cómo se refleja el estado de la unidad.
+**Antes de seguir programando:** llevar SPEC-05 (`specs/05-loans-prestamos/spec.md`) a `APROBADO`. Ya resuelve en papel DT-16 a DT-20; el PR \#16 aplicó en el código la parte de DT-17 y DT-18 (`get_current_user`, `RolUsuario`, `AppError`). Falta, sobre todo, usar `inventory/service.py` para el estado de la unidad (DT-20).
 
 **Prompt de arranque:**
 
@@ -150,9 +146,9 @@ y no escribas código hasta que yo lo apruebe.
 Trabajo en PrestaMeDios como Perfil 3 (Préstamos y concurrencia).
 Leé completos docs/constitution.md, AGENTS.md, MEMORY.md y docs/perfiles.md antes de actuar.
 Mi módulo es loans (backend y frontend). Requisitos: PRE-03…11, PRE-13, PRE-15…18, PRE-20.
-El módulo ya tiene contratos, modelos y la migración 0009 en develop, pero no tiene spec
-ni lógica. Primero redactá un spec en specs/ (estado BORRADOR) que documente lo existente,
-lo que falta y cómo se resuelven DT-16 a DT-20 de MEMORY.md. Usá get_current_user,
+El módulo ya tiene contratos, modelos y la migración 0009 en develop, sin lógica, y su spec
+está en specs/05-loans-prestamos/spec.md (BORRADOR). Trabajá sobre ese spec hasta que yo lo
+apruebe; resuelve DT-16 a DT-20 de MEMORY.md. Usá get_current_user,
 RolUsuario, AppError y obtener_parametro del proyecto; no definas usuarios, roles ni
 formatos de error propios. No modifiques inventory ni otros módulos: lo que necesites de
 ellos va como ítem de coordinación. No escribas código hasta que yo apruebe el spec.
@@ -215,9 +211,10 @@ estado BORRADOR, y no escribas código hasta que yo lo apruebe.
 
 | Interfaz | Entre | Propuesta | Se define en |
 | :---- | :---- | :---- | :---- |
-| Estado de la unidad física | Perfil 2 ↔ Perfil 3 | Una única fuente de verdad. `loans` no presta unidades en `mantenimiento` o `baja`, y la entrega o devolución actualiza la unidad mediante una función pública de `inventory` (DT-20) | Spec de `loans` |
+| Estado de la unidad física | Perfil 2 ↔ Perfil 3 | Una única fuente de verdad. `loans` no presta unidades en `mantenimiento` o `baja`, y la entrega o devolución actualiza la unidad mediante una función pública de `inventory` (DT-20). **Lado de `inventory` publicado** (SPEC-04): `unidades_asignables`, `unidad_es_asignable`, `marcar_unidad_prestada`, `liberar_unidad` | Spec de `loans` (SPEC-05) |
 | Disponibilidad del catálogo (PRE-01) | Perfil 2 ← Perfil 3 | `loans` expone una función de lectura de ocupación por unidad y período | Spec de `loans` |
-| Historial y panel del usuario (USR-06, USR-07, USR-08) | Perfil 1 ← Perfiles 3 y 4 | `loans` y `spaces` exponen funciones de lectura de las solicitudes de un usuario | Spec del Perfil 1 |
+| Historial y panel del usuario (USR-06, USR-07, USR-08) | Perfil 1 ← Perfiles 3 y 4 | `loans` y `spaces` exponen funciones de lectura de las solicitudes de un usuario (`loans`: `ordenes_de_usuario`, SPEC-05 §10.2) | Spec del Perfil 1 |
+| Datos públicos de usuarios | Perfiles 3 y 4 ← Perfil 1 | `users/service.py` expone `datos_publicos_por_ids(db, ids)` → `{id: DatosPublicosUsuario(id, nombre, apellido)}`, sin DNI, email ni teléfono (P6). No filtra por sede: quien llama sólo pasa ids que ya puede mostrar | SPEC-03 (Fase A) |
 | Notificaciones (NOV-03, NOV-04, PRE-17) | Perfiles 3 y 4 → Perfil 5 | `notifications` expone una función pública para crear notificaciones, que `loans` y `spaces` llaman al cambiar de estado | Spec de `notifications` |
 | Endpoints para el asistente (IA-02, IA-03) | Perfil 5 ← Perfiles 2, 3 y 4 | El asistente usa los endpoints existentes; los nuevos los implementa el perfil dueño | Spec de `assistant` |
 
@@ -236,6 +233,7 @@ estado BORRADOR, y no escribas código hasta que yo lo apruebe.
 
 | Versión | Fecha | Cambio |
 | :---- | :---- | :---- |
+| 1.1.0 | 2026-11-02 | Estado al día con `develop`: Perfil 2 con SPEC-04 Fase A implementada; Perfil 3 con endpoints protegidos (`501`) y SPEC-05 en borrador; Perfil 1 con SPEC-03 por fases; nueva interfaz "Datos públicos de usuarios" (§5) |
 | 1.0.0 | 2026-10-23 | Versión inicial. Adapta el documento "Perfiles de tareas v1" (externo) a la asignación de `AGENTS.md` y al código: los requisitos del Módulo 3 de Préstamos quedan en `loans`; el Perfil 1 asume USR-06…09, GLO-05, GLO-06 y el despliegue; se corrigen los roles (cuatro), el horario (configurable) y la autenticación (`Depends`); se aclara que "infraestructura" es física; se incorpora el flujo SDD |
 
 &nbsp;
