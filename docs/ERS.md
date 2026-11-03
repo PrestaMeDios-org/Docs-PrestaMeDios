@@ -142,6 +142,7 @@ PrestaMeDios se concibe como una aplicación web cuya arquitectura posibilitará
 * Resolución CICSE N° 056/2023: Reglamento del Laboratorio de Medios Audiovisuales. Ushuaia (2023). Se adjunta en pdf.
 * Ader, N.: Primera entrevista y relevamiento de requerimientos para el sistema PrestaMeDios. Ushuaia (27/08/2026).
 * Ader, N.: Segunda entrevista y relevamiento de requerimientos para el sistema PrestaMeDios. Ushuaia (04/09/2026).
+* Ader, N.: Tercera entrevista, demostración del Sprint 1 y validación de reglas de negocio del sistema PrestaMeDios. Ushuaia (16/10/2026).
 
 ### Descripción general
 
@@ -1125,6 +1126,29 @@ Durante esta etapa, el enfoque principal del equipo transitó desde el relevamie
 En cuanto a las decisiones técnicas y de diseño, se estableció la adopción de una Arquitectura Intermedia (Monolito Modular por Dominio / API-First) apalancada en Python con FastAPI y PostgreSQL.
 
 De cara al desarrollo definimos cómo nos dividiremos las tareas.
+
+### Iteración 5
+
+Tercera entrevista con Natalia Ader 16/10/2026: le presentamos la primera versión funcional del sistema (demo del Sprint 1) y recorrimos con ella el registro y la validación de cuentas, la reserva de espacios, los bloqueos del calendario, el panel de parámetros, los préstamos de notebooks y de alta gama, y la gestión de roles por sede. Natalia validó lo construido y precisó varias reglas operativas:
+
+* **Registro:** los datos obligatorios son nombre, DNI (numérico, de 7 a 8 dígitos), teléfono y correo electrónico. La contraseña combina letras y números. La cuenta queda "Pendiente de aprobación" hasta que un administrador la activa.
+* **Reserva de espacios:** si un estudiante intenta reservar con menos de 24 horas de anticipación, además del bloqueo se le muestra un aviso con el correo del laboratorio para canalizar urgencias. El rechazo de una reserva exige un motivo. En el calendario maestro, el administrador ve el nombre de quien reservó cada turno. Si el estudiante cancela una reserva, la franja se libera.
+* **Bloqueos del calendario:** se cargan por rango de fechas (y opcionalmente por franja horaria) con un motivo, que se muestra al pasar el mouse sobre el día bloqueado. Los bloqueos se pueden revertir si la situación se normaliza (GLO-04).
+* **Parámetros globales (GLO-03):** el horario de atención se configura por sede (por ejemplo, de 9:00 a 16:00 en Ushuaia y de 10:00 a 17:00 en Río Grande). Se confirmaron el aviso de vencimiento (24 horas), los plazos máximos de préstamo (4 días corridos en general y 15 para notebooks), la tolerancia para el retiro, la anticipación mínima (24 horas) y la ventana máxima de reserva a futuro (120 días, un cuatrimestre).
+* **Renovación de notebooks:** es estrictamente presencial. El estudiante presenta el equipo en el mostrador para constatar su estado y emite una nueva solicitud desde la aplicación, lo que permite verificar la disponibilidad y dar oportunidad a otros solicitantes.
+* **Roles:** el Superadministrador puede crear administradores locales y delegar temporalmente su rol.
+* **Alta gama:** el administrador marca en el inventario los equipos de alta gama. Al solicitarlos, estudiantes y docentes adjuntan obligatoriamente el PDF de la resolución del Consejo (CICSE/ICSE), que el administrador verifica antes de aprobar.
+* **Llamados de atención y sanciones:** se incorpora el llamado de atención, previo a una suspensión, para faltas leves (por ejemplo, retrasos o equipos devueltos helados por quedar en un vehículo). Cada llamado de atención o sanción se notifica al estudiante por correo electrónico, y al acumular el límite de faltas la cuenta se suspende. Las cuentas dadas de baja o suspendidas conservan su historial y las cuentas inactivas pueden reactivarse.
+
+Como el Reglamento no fija cantidades para las sanciones, después de la entrevista el equipo definió estas reglas (son configurables desde el panel de parámetros):
+
+* Los dos primeros llamados de atención no constituyen falta; el tercero se convierte en una falta.
+* Con una falta, el administrador evalúa si corresponde suspender la cuenta; con dos faltas, la suspensión es automática.
+* La suspensión dura un tiempo fijo, y el administrador puede levantarla antes si lo considera necesario.
+* La delegación del rol de Superadministrador sólo puede recibirla un Administrador Local. El Superadministrador fija su duración al delegar (por ejemplo, unos días o una semana, o el período de sus vacaciones) y puede revocarla antes del vencimiento.
+* Se confirmó que no hay estudiantes sin DNI argentino y que los docentes también solicitan, con regularidad, equipos de alta gama.
+
+Estas definiciones impactan en USR-05 (teléfono obligatorio), USR-09 (llamados de atención, faltas y suspensión automática), GLO-01 (delegación temporal), GLO-03 (horario por sede y correo de contacto del laboratorio), GLO-04, RES-03, PRE-05 y PRE-11. Los requisitos y casos de uso afectados se actualizarán en este documento y, luego, en los specs correspondientes.
 
 ---
 
