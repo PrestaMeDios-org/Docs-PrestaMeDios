@@ -1,6 +1,6 @@
 # Constitución del Proyecto PrestaMeDios
 
-> **Versión:** 1.1.0 · **Ratificada:** pendiente de aprobación del equipo · **Última revisión:** 2026-10-08 · **Enmienda propuesta:** 1.1.1 (§10.1)
+> **Versión:** 1.1.0 · **Ratificada:** pendiente de aprobación del equipo · **Última revisión:** 2026-11-02 · **Enmienda propuesta:** 1.1.1 (§10.1)
 >
 > Este documento define los principios **no negociables** que gobiernan el diseño, la construcción y la evolución de PrestaMeDios. Todo spec, plan, tarea, Pull Request o salida de un agente de IA debe cumplirlo. Ante un conflicto entre este documento y cualquier otro artefacto, **prevalece la Constitución**, salvo enmienda formal (§10).
 
@@ -214,9 +214,9 @@ Las enmiendas se proponen por PR que modifique este archivo, con justificación,
 
 ### 10.1 Enmiendas propuestas (no vigentes hasta su aprobación)
 
-> El workspace no es un repositorio Git, así que esta enmienda se presenta al equipo para su revisión. Al aprobarse, el texto propuesto reemplaza al vigente y la versión se registra en la tabla anterior.
+> Se presenta al equipo por PR al repo `Docs-PrestaMeDios`. Al aprobarse, el texto propuesto reemplaza al vigente y la versión se registra en la tabla anterior.
 
-**Enmienda 1.1.1 (PATCH, aclaraciones)** · Propone: Perfil 1 · Fecha: 2026-10-23 · Estado: `PROPUESTA` · Ver ADR-019 en `MEMORY.md`.
+**Enmienda 1.1.1 (PATCH, aclaraciones)** · Propone: Perfil 1 · Fecha: 2026-10-23 (parte C: 2026-11-02) · Estado: `PROPUESTA` · Ver ADR-019 y ADR-021 en `MEMORY.md`.
 
 #### A. P3.3 — Aislamiento entre módulos
 
@@ -229,3 +229,9 @@ Las enmiendas se proponen por PR que modifique este archivo, con justificación,
 - *Vigente:* "Las operaciones concurrentes sobre un mismo recurso se serializan (restricciones de exclusión, bloqueo de fila u optimista)."
 - *Propuesto:* "Las operaciones concurrentes sobre un mismo recurso se serializan (restricciones de exclusión, bloqueo de fila u optimista). La no superposición de recursos **adjudicados** (reservas aprobadas o en uso, unidades reservadas o entregadas) se garantiza en PostgreSQL con `EXCLUDE USING gist`, y su violación se traduce a `409`. El servicio puede verificar antes los solapamientos para devolver un error específico, pero esa verificación nunca reemplaza a la restricción. Las solicitudes pendientes concurrentes están permitidas cuando el requisito lo indica (RES-02)."
 - *Motivo:* SPEC-02 (V6–V8) y `spaces/service.py` validan bloqueos y duplicados antes de insertar. Los bloqueos contra reservas y las solicitudes pendientes no se pueden expresar con una única restricción de exclusión.
+
+#### C. §1 y §6.1 — Ubicación de la documentación (ya aplicada al texto)
+
+- *Antes (v1.1.0):* el ERS estaba en `Backend-PrestaMeDios/docs/ERS.md`, y la Constitución, `AGENTS.md`, `MEMORY.md` y los specs vivían en la raíz del workspace, que no es un repositorio.
+- *Ahora:* el ERS está en `docs/ERS.md` del repo `Docs-PrestaMeDios`, junto con la Constitución, `AGENTS.md`, `MEMORY.md`, los perfiles y `specs/`. Los cambios de requisitos se hacen por PR a ese repo (§6.1).
+- *Motivo:* ADR-021. El cambio ya está aplicado en §1 y §6.1 y en los repos de código (backend PR \#15, frontend PR \#10); esta enmienda lo ratifica y lo registra en la tabla de versiones.
