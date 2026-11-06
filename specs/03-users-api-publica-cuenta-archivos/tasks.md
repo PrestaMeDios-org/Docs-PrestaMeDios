@@ -8,17 +8,20 @@
 
 ## Bloque 0 — Preparación
 
-- [ ] **T-00 · Línea base.** Actualizar `develop` en backend y frontend (`git fetch` + `git pull` en `develop`; hoy no tienen upstream configurado, se usa `origin/develop` explícito). Correr `pytest -q`, `npm run typecheck`, `npm run build` y `npm test`, y anotar el resultado: la suite completa no se corre desde el PR #16 de `loans`.
+- [x] **T-00 · Línea base.** Actualizar `develop` en backend y frontend (`git fetch` + `git pull` en `develop`; hoy no tienen upstream configurado, se usa `origin/develop` explícito). Correr `pytest -q`, `npm run typecheck`, `npm run build` y `npm test`, y anotar el resultado: la suite completa no se corre desde el PR #16 de `loans`.
   *Verificación:* resultados anotados en el PR de la Fase A; si algo falla de entrada, se informa antes de seguir.
+  *Estado 2026-11-06 (backend, `origin/develop` `b51b5ae`):* el primer intento falló por configuración local (`TEST_DATABASE_URL` con la plantilla en el puerto 5432; el PostgreSQL 18 local escucha en el 5433). Ya corregida la variable, la suite de backend de la rama de la Fase A (`develop` + 16 tests nuevos) dio **386 pasados**: los 370 de `develop` están en verde. El frontend no se corrió: la Fase A no lo toca.
 
 ## Bloque A — Datos públicos de usuarios (`feat/users-datos-publicos`)
 
-- [ ] **A-01 · Tests primero.** `tests/users/test_datos_publicos.py` con `pytestmark = pytest.mark.integracion`, fixture local de conteo de consultas y los casos AC-61…AC-70 (plan §4.3).
-  *Verificación:* fallan por `ImportError` (la función no existe).
-- [ ] **A-02 · Función.** `DatosPublicosUsuario` y `datos_publicos_por_ids` en `users/service.py`, en la sección "API pública para otros módulos", según plan §4.2, con docstring que cite C2 de SPEC-05, RN-39 y RN-43.
+- [x] **A-01 · Tests primero.** `tests/users/test_datos_publicos.py` con `pytestmark = pytest.mark.integracion`, fixture local de conteo de consultas y los casos AC-61…AC-70 (plan §4.3).
+  *Verificación:* fallan por `ImportError` (la función no existe). ✔ 2026-11-06: 16 tests (AC-63 y AC-70 parametrizados por forma de entrada); falla la recolección por `ImportError`.
+- [x] **A-02 · Función.** `DatosPublicosUsuario` y `datos_publicos_por_ids` en `users/service.py`, en la sección "API pública para otros módulos", según plan §4.2, con docstring que cite C2 de SPEC-05, RN-39 y RN-43.
   *Verificación:* `pytest tests/users/test_datos_publicos.py -q` en verde. *Cubre:* AC-61…AC-70.
+  ✔ 2026-11-06: 16 pasados contra PostgreSQL 18. El SQL emitido es `WHERE usuarios.id = ANY ($1::INTEGER[])`: un solo parámetro aun con 40 000 ids, y sólo las columnas `id`, `nombre` y `apellido`.
 - [ ] **A-03 · Cierre.** `pytest -q` completo; cobertura de `app/modules/users` ≥ 85 %; una línea en el README del backend.
   *Verificación:* suite en verde; PR hacia `develop` con la trazabilidad RN-35…RN-43 → AC-61…AC-70 y la mención de la enmienda 1.1.1 (spec §2.3).
+  *Estado 2026-11-06:* `pytest -q` completo con 386 pasados; cobertura de `app/modules/users` 94 % (`service.py` 98 %, con la función nueva cubierta entera); README actualizado (párrafo "API pública de `users` para otros módulos"). Commit `9341c59`, backend PR #18 hacia `develop`: falta la revisión de otro integrante y el merge.
 
 ## Bloque B1 — Correo y recuperación de contraseña (`feat/users-recuperacion`)
 
