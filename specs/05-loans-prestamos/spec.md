@@ -1,26 +1,25 @@
 # SPEC-05 — Préstamos de equipamiento y notebooks (`loans`)
 
-> **Estado:** `EN_REVISION` · **Versión:** 0.2.0 · **Fecha:** 2026-11-03 · **Perfil:** 3 (Préstamos y concurrencia)
-> **Requisitos:** PRE-03…PRE-11, PRE-13, PRE-15…PRE-18, PRE-20 (ERS, Subsistema 2, módulos 2, 3 y 4)
-> **Depende de:** SPEC-01 (`core`, autenticación), SPEC-02 (alcance de sede, `config`) y SPEC-04 (`inventory/service.py`)
-> **Constitución:** v1.1.0, con la enmienda 1.1.1 propuesta (ADR-019) · **Plan y tareas:** `plan.md` y `tasks.md` (se redactan tras la aprobación)
+> **Estado:** `EN_REVISION` · **Versión:** 0.3.0 · **Fecha:** 2026-11-06 · **Perfil:** 3 (Préstamos y concurrencia)
+> **Requisitos:** PRE-03…PRE-11, PRE-13, PRE-15…PRE-18, PRE-20 (`docs/ERS.md` del repo `Docs-PrestaMeDios`, Subsistema 2, módulos 2, 3 y 4, incluida la Iteración 5)
+> **Depende de:** SPEC-01 (`core`, autenticación), SPEC-02 (alcance de sede, `config`), SPEC-03 (`users.datos_publicos_por_ids`, `files` para el aval, horario por sede K10) y SPEC-04 (`inventory/service.py`)
+> **Constitución:** v1.1.0, con la enmienda 1.1.1 propuesta (ADR-019) · **Plan y tareas:** `plan.md` y `tasks.md` en esta misma carpeta (se redactan tras la aprobación)
 
-> **Numeración:** tomé SPEC-05 porque existen 01, 02 y 04, y entiendo que el 03 quedó reservado para el próximo spec del Perfil 1. Confirmar (D-L01).
 
 ---
 
 ## 0. Supuestos a verificar antes de aprobar
 
-Este spec se redactó leyendo `constitution.md`, `AGENTS.md`, `perfiles.md`, `MEMORY.md`, `requisitos.md` y el código de `loans` ya conocido. **No se leyeron** `app/core/deps.py` (lo describe `MEMORY.md`) ni los specs 01, 02 y 04, así que lo siguiente se toma de `AGENTS.md` y `MEMORY.md` y debe confirmarse contra el código:
+Este spec se redactó leyendo `constitution.md`, `AGENTS.md`, `perfiles.md`, `MEMORY.md`, `docs/ERS.md` y el código de `origin/develop`. Los supuestos quedaron verificados contra el código:
 
 | # | Supuesto | Fuente | Dónde se confirma |
 | :---- | :---- | :---- | :---- |
-| S1 | `get_current_user`, `require_roles(RolUsuario...)`, `resolver_alcance_sede(...)` y `sede_para_alta(...)` existen en `app/core/deps.py` con la semántica de `AGENTS.md` §6 | `AGENTS.md` | `app/core/deps.py` |
+| S1 | **Verificado** en `app/core/deps.py`: `get_current_user`, `require_roles(RolUsuario...)` (devuelve el `Usuario`), `resolver_alcance_sede(...)` y `sede_para_alta(...)` | `app/core/deps.py` | — |
 | S2 | **Verificado** en `app/core/errors.py`: `AppError(status_code, code, detail, *, headers=None, **extra)` responde `{detail, code, ...extra}`; `ErrorNegocio` es el esquema OpenAPI y `error_responses(*codes)` declara las respuestas para `responses=` (admite 401, 403, 404, 409 y 422) | `app/core/errors.py` | — |
-| S3 | **Verificado** en `config/service.py`: `obtener_parametro(db, clave) -> int | float | bool | str | time` (`HORA` se devuelve como `datetime.time`); una clave inexistente responde `500 PARAMETRO_NO_CONFIGURADO`. Las claves `horario.apertura`, `horario.cierre`, `prestamo.general.max_dias`, `prestamo.notebook.max_dias`, `solicitud.anticipacion_min_horas` y `prestamo.tolerancia_retiro_horas` figuran en `config/seed.py`. `config` valida que el plazo general no supere el de notebooks y que apertura sea anterior a cierre | `config/service.py`, `config/seed.py` | — |
+| S3 | **Verificado** en `config/service.py`: `obtener_parametro(db, clave) -> int | float | bool | str | time` (`HORA` se devuelve como `datetime.time`); una clave inexistente responde `500 PARAMETRO_NO_CONFIGURADO`. Las claves `horario.apertura`, `horario.cierre`, `prestamo.general.max_dias`, `prestamo.notebook.max_dias`, `solicitud.anticipacion_min_horas` y `prestamo.tolerancia_retiro_horas` figuran en `config/seed.py`. `config` valida que el plazo general no supere el de notebooks y que apertura sea anterior a cierre | `config/service.py`, `config/seed.py` | —. El horario pasa a ser **por sede** (ADR-022 a): las claves de `config` van a cambiar (SPEC-03 K10) |
 | S4 | **Verificado** en `inventory/service.py` de `origin/develop` (73fb4b9): `unidades_asignables(db, equipamiento_id, sede) -> list[int]`, `unidad_es_asignable(db, unidad_id, sede) -> bool`, `marcar_unidad_prestada(db, unidad_id)` y `liberar_unidad(db, unidad_id)`. Ninguna hace `commit`. Las dos primeras solo consideran unidades `disponible` **hoy** de ítems activos, que es el criterio buscado: una unidad `prestado` no se promete hasta que se devuelva (ver §10.1) | `inventory/service.py` | — |
-| S5 | `Equipamiento` tiene `es_notebook`, `alta_gama` y `max_dias_prestamo` | ADR-020 (D-05), migración `0010` | `inventory/models.py` |
-| S6 | `ahora_lab()` y `ZONA_HORARIA_LAB` están en `app/core/settings.py` | `perfiles.md` §2 | `core/settings.py` |
+| S5 | **Verificado** en `inventory/models.py`: `Equipamiento` tiene `es_notebook`, `alta_gama`, `max_dias_prestamo` y `activo` | `inventory/models.py` | — |
+| S6 | **Verificado** en `app/core/settings.py`: `ahora_lab()` y `ZONA_HORARIA_LAB` (ambas sedes comparten zona) | `app/core/settings.py` | — |
 | S7 | Los tests de integración crean el esquema con `create_all` y una sesión por request (ADR-013); la migración se valida aparte | `MEMORY.md` ADR-013 | `tests/conftest.py` |
 
 > **Nota de nombres (inventory):** `unidades_asignables`, `unidad_es_asignable`, `marcar_unidad_prestada` y `liberar_unidad` están confirmadas por el código de `origin/develop` (73fb4b9) y por `MEMORY.md` (2026-10-23, Perfil 2 → Perfil 3, SPEC-04 §6); `bloquear_unidad` también figura en el servicio. Los nombres `unidades_disponibles` y `marcar_unidad_devuelta` que se citaron después no existen. Según SPEC-04 D-02, un administrador ya no puede poner `prestado` por la API: solo `loans`, mediante `marcar_unidad_prestada`.
@@ -36,7 +35,7 @@ Este spec se redactó leyendo `constitution.md`, `AGENTS.md`, `perfiles.md`, `ME
 3. **Bandeja administrativa** con jurisdicción por sede, **aprobación con asignación de unidad**, rechazo y ajuste horario (PRE-10, PRE-15, PRE-18).
 4. **Cancelación** por el solicitante (pendiente) y por el administrador (aprobada), y **cancelación forzada** por línea (PRE-17).
 5. **Entrega y devolución** en mostrador, con observaciones del estado físico y alerta de demora (PRE-13).
-6. **Renovación de notebooks**, solo presencial (PRE-11).
+6. **Renovación de notebooks** como nueva solicitud emitida en el mostrador (PRE-11, ADR-022 h).
 7. **Cancelación automática por no retiro** (PRE-08).
 8. **Calendario maestro** de operaciones (PRE-16) y **panel de observación docente** (PRE-20).
 9. **Funciones públicas de lectura** que necesitan otros perfiles (§10.2).
@@ -48,7 +47,7 @@ Este spec se redactó leyendo `constitution.md`, `AGENTS.md`, `perfiles.md`, `ME
 - Catálogo y stock (PRE-01, PRE-02, PRE-12, PRE-14, PRE-19): Perfil 2. `loans` consume su servicio y publica funciones de lectura para su Fase B.
 - Usuarios, sanciones y chips de comportamiento (USR-09): Perfil 1.
 - Notificaciones (NOV-xx): Perfil 5. Este spec define los eventos que `loans` emite (§10.3), no el módulo.
-- Catálogo de asignaturas y almacenamiento de archivos: no tienen dueño definido (§16, C3 y C4). Bloquean parcialmente PRE-03, PRE-05 y PRE-20.
+- Catálogo de asignaturas: no tiene dueño definido (§16, C3). Bloquea parcialmente PRE-03 y PRE-20. El almacenamiento de archivos para el aval lo provee SPEC-03 (C4).
 - Reasignación de unidad de una línea ya aprobada (se anota en EC-L06 como trabajo futuro).
 
 ---
@@ -66,7 +65,7 @@ Este spec se redactó leyendo `constitution.md`, `AGENTS.md`, `perfiles.md`, `ME
 | `loans/service.py`, frontend | **No existen** (el frontend es un `.gitkeep`) | |
 | `tests/loans/` | Contrato HTTP (401, 403 por rol, 501) y esquemas Pydantic (PR #16); la suite completa quedó en 370 tests en verde | |
 
-**Garantía de integridad ya vigente y probada en una base real:** dos líneas `reservado` o `entregado` de la misma unidad con períodos solapados no pueden coexistir; una línea `pendiente` no ocupa; devolver y retirar en el mismo instante no choca; una línea que ocupa debe tener unidad asignada. **La decisión D-L17 la endurece:** una unidad tendrá a lo sumo una línea ocupante a la vez, sin importar las fechas (índice único parcial en la migración `0011`).
+**Garantía de integridad ya vigente y probada en una base real:** dos líneas `reservado` o `entregado` de la misma unidad con períodos solapados no pueden coexistir; una línea `pendiente` no ocupa; devolver y retirar en el mismo instante no choca; una línea que ocupa debe tener unidad asignada. Es la garantía definitiva de no superposición (D-L17 descartada, §15.3).
 
 ---
 
@@ -95,7 +94,7 @@ Este spec se redactó leyendo `constitution.md`, `AGENTS.md`, `perfiles.md`, `ME
 | Bandeja y detalle de órdenes de la sede | No | No | Sí (su sede) | Sí (ambas) |
 | Aprobar, rechazar, ajustar horario | No | No | Sí (su sede) | Sí |
 | Cancelar orden `aprobada` y cancelación forzada | No | No | Sí (su sede) | Sí |
-| Entregar, devolver, renovar | No | No | Sí (su sede) | Sí |
+| Entregar, devolver y aprobar renovaciones | No | No | Sí (su sede) | Sí |
 | Calendario maestro | No | No | Sí (su sede) | Sí |
 | Panel docente y observación | No | Sí (sus asignaturas) | No | No |
 
@@ -108,14 +107,14 @@ Todos los endpoints requieren sesión (P4.1). Fuera de alcance de sede o de prop
 | ID | Caso de uso | Actor | Requisitos | Resumen del flujo |
 | :---- | :---- | :---- | :---- | :---- |
 | CU-L01 | Solicitar equipamiento | Estudiante, Docente | PRE-03, 04, 06, 07, 09 | Elige ítems (uno o carrito), fecha y hora de retiro y devolución dentro de la franja, asignatura (estudiante), acepta la normativa y envía. La orden queda `pendiente` |
-| CU-L02 | Solicitar con alta gama | Estudiante, Docente | PRE-05 | Igual que CU-L01 con aval PDF obligatorio. **Diferido** (D-L12) |
+| CU-L02 | Solicitar con alta gama | Estudiante, Docente | PRE-05 | Igual que CU-L01 con aval PDF obligatorio, subido con `files` (SPEC-03) |
 | CU-L03 | Cancelar solicitud propia | Estudiante, Docente | — | Cancela una orden `pendiente` |
 | CU-L04 | Validar solicitud | Admin | PRE-10, 15, 18 | Abre la bandeja de su sede, revisa (con la observación del docente), opcionalmente ajusta horarios, asigna una unidad por línea y aprueba, o rechaza con motivo |
 | CU-L05 | Cancelar orden aprobada | Admin | — | Libera las unidades y registra el motivo |
 | CU-L06 | Cancelación forzada | Admin | PRE-17 | Cancela una línea afectada por la baja de una unidad, con motivo obligatorio y aviso al usuario |
 | CU-L07 | Entregar | Admin | PRE-13 | Confirma la entrega presencial: línea `entregado` y unidad `prestado` |
 | CU-L08 | Recibir devolución | Admin | PRE-13 | Registra la devolución con observaciones: línea `devuelto` y unidad liberada |
-| CU-L09 | Renovar notebook | Admin | PRE-11 | Extiende la devolución de una notebook entregada; se rechaza si choca con otra reserva |
+| CU-L09 | Renovar notebook | Estudiante (en el mostrador), Admin | PRE-11 | El estudiante presenta la notebook y emite desde la app una nueva solicitud de renovación; el administrador la aprueba o rechaza (ADR-022 h) |
 | CU-L10 | Observar solicitudes de mi cátedra | Docente | PRE-20 | Lista de solo lectura de solicitudes de sus asignaturas y comentario |
 | CU-L11 | Ver calendario maestro | Admin | PRE-16 | Recursos agrupados en "En Uso" y "En Reserva" |
 | CU-L12 | Procesos automáticos | Sistema | PRE-08 | No retiro dentro de la tolerancia (RN-L23) |
@@ -137,9 +136,8 @@ Base: `/api/v1/loans` · tag "Préstamos y Solicitudes" · todos exigen `Authori
 | `GET /ordenes` | ADMIN_LOCAL, SUPERADMIN | Bandeja (`estado`=`pendiente` por defecto, `sede` solo SUPERADMIN, `limit`, `offset`) | 200 | 401, 403 |
 | `GET /ordenes/{orden_id}` | dueño, admin con alcance, docente de la asignatura | Detalle | 200 | 401, 404 |
 | `PATCH /ordenes/{orden_id}/estado` | ver §4 | Aprobar, rechazar o cancelar | 200 | 401, 403, 404, 409, 422 |
-| `GET /ordenes/{orden_id}/unidades-libres` | ADMIN_LOCAL, SUPERADMIN | Por cada línea de la orden, las unidades libres del modelo en la sede, para asignar al aprobar (RN-L10, RN-L12) | 200 | 401, 403, 404 |
+| `GET /ordenes/{orden_id}/unidades-libres` | ADMIN_LOCAL, SUPERADMIN | Por cada línea de la orden, las unidades del modelo en la sede que están `disponible` y sin otra línea `reservado` o `entregado` que se solape con su período, para asignar al aprobar (RN-L10, RN-L12) | 200 | 401, 403, 404 |
 | `PATCH /ordenes/{orden_id}/detalles/{detalle_id}/estado` | ADMIN_LOCAL, SUPERADMIN | Entregar, devolver o cancelación forzada | 200 | 401, 403, 404, 409, 422 |
-| `PATCH /ordenes/{orden_id}/detalles/{detalle_id}/renovacion` | ADMIN_LOCAL, SUPERADMIN | Renovar notebook | 200 | 401, 403, 404, 409, 422 |
 | `PUT /ordenes/{orden_id}/observacion-docente` | DOCENTE | Comentario del docente | 200 | 401, 403, 404, 409, 422 |
 | `GET /calendario` | ADMIN_LOCAL, SUPERADMIN | Calendario maestro (`desde`, `hasta`, `sede` solo SUPERADMIN) | 200 | 401, 403, 422 |
 
@@ -149,13 +147,12 @@ Los cambios de estado usan `PATCH /<recurso>/{id}/estado` (Constitución §4.2).
 
 | Esquema | Campos | Reglas |
 | :---- | :---- | :---- |
-| `OrdenPedidoCreate` | `asignatura_id?`, `retiro`, `devolucion`, `items[1..20]{equipamiento_id}`, `acepta_normativa` | `extra="forbid"`; `acepta_normativa` debe ser `true`; `devolucion > retiro`. No incluye `solicitante_id`, `sede` ni `estado` |
+| `OrdenPedidoCreate` | `asignatura_id?`, `retiro`, `devolucion`, `items[1..20]{equipamiento_id}`, `acepta_normativa`, `pdf_aval_id?` (alta gama, PRE-05), `renueva_detalle_id?` (renovación, PRE-11) | `extra="forbid"`; `acepta_normativa` debe ser `true`; `devolucion > retiro`. No incluye `solicitante_id`, `sede` ni `estado` |
 | `OrdenPedidoEstadoUpdate` | `estado` ∈ {`aprobada`, `rechazada`, `cancelada`}, `motivo?`, `asignaciones[]`, `nuevo_retiro?`, `nueva_devolucion?` | `rechazada` exige `motivo` y no admite asignaciones; `aprobada` exige una asignación por línea y admite el ajuste horario (ambas fechas juntas); `cancelada` por administrador exige `motivo` (lo valida el servicio, depende del rol). Reemplaza a `OrdenPedidoResolucion` y `OrdenPedidoCancelacion` |
 | `DetalleEstadoUpdate` | `estado` ∈ {`entregado`, `devuelto`, `cancelado`}, `observacion?` (solo `devuelto`, ≤ 500), `motivo?`, `a_mantenimiento?` (solo `devuelto`) | `cancelado` (forzada) exige `motivo` |
-| `RenovacionCreate` | `nueva_devolucion` | Fecha y hora con zona |
 | `ObservacionDocenteUpdate` | `observacion` (1..500) | |
-| `ReglasResponse` | `horario_apertura`, `horario_cierre`, `anticipacion_min_horas`, `max_dias_general`, `max_dias_notebook`, `tolerancia_retiro_horas` | Solo lectura, valores vigentes de `config` |
-| `OrdenPedidoResponse` / `DetallePrestamoResponse` | Los actuales, más `entregado_en`, `devuelto_en`, `observacion_devolucion`, `motivo_cancelacion` en el detalle; `resuelto_en` en la orden. Para administradores y docentes, un resumen del solicitante (`id`, `nombre`, `apellido`); **nunca** DNI, email ni teléfono (P6) | `demorado` sigue siendo derivado (RN-L21) |
+| `ReglasResponse` | `sede`, `horario_apertura`, `horario_cierre`, `anticipacion_min_horas`, `max_dias_general`, `max_dias_notebook`, `tolerancia_retiro_horas` | Valores vigentes de `config` para la **sede del solicitante**; `SUPERADMIN` la indica con `?sede=` (ADR-022 a, K10) |
+| `OrdenPedidoResponse` / `DetallePrestamoResponse` | Los actuales, más `entregado_en`, `devuelto_en`, `observacion_devolucion`, `motivo_cancelacion` en el detalle; `resuelto_en` y `situacion` (derivada, RN-L31) en la orden; el aval según K3 de SPEC-03. Para administradores y docentes, un resumen del solicitante obtenido con `users.datos_publicos_por_ids` (`id`, `nombre`, `apellido`); **nunca** DNI, email ni teléfono (P6) | `demorado` y `situacion` son derivados |
 
 Todos los campos llevan `Field(..., examples=[...])` y las respuestas de error se documentan en OpenAPI (Constitución §9).
 
@@ -169,24 +166,24 @@ Todos los campos llevan `Field(..., examples=[...])` y las respuestas de error s
 | `ROL_NO_AUTORIZADO` | 403 | Rol sin permiso para la acción |
 | `CANCELACION_NO_PERMITIDA` | 403 | El solicitante intenta cancelar una orden `aprobada` |
 | `ASIGNATURA_REQUERIDA` | 422 | Estudiante sin asignatura |
-| `FRANJA_FUERA_DE_HORARIO` | 422 | Hora de retiro o devolución fuera de `horario.apertura`–`horario.cierre` |
+| `FRANJA_FUERA_DE_HORARIO` | 422 | Hora de retiro o devolución fuera del horario de la sede del solicitante |
 | `ANTICIPACION_INSUFICIENTE` | 422 | Retiro antes de `ahora + solicitud.anticipacion_min_horas` |
 | `LIMITE_DIAS_EXCEDIDO` | 422 | Rango mayor al máximo de alguna línea (incluye `equipamiento_id` y el máximo en el mensaje) |
-| `AVAL_NO_HABILITADO` | 422 | Orden con ítems de alta gama mientras no exista PRE-05 |
+| `AVAL_REQUERIDO` | 422 | Orden con ítems de alta gama sin `pdf_aval_id`. Los errores de `vincular_archivo` (archivo ajeno, propósito incorrecto) se propagan con su propio código |
 | `RETIRO_VENCIDO` | 422 | Aprobar una orden cuyo retiro ya pasó, sin ajuste horario |
 | `ASIGNACIONES_INVALIDAS` | 422 | Faltan, sobran, se repiten o no pertenecen a la orden |
 | `UNIDAD_NO_ASIGNABLE` | 422 | Unidad de otra sede o modelo, o en `mantenimiento`/`baja` |
 | `MOTIVO_REQUERIDO` | 422 | Rechazo, cancelación por administrador o cancelación forzada sin motivo |
-| `RENOVACION_NO_PERMITIDA` | 422 | La línea no es notebook o no está `entregado` |
+| `RENOVACION_NO_PERMITIDA` | 422 | `renueva_detalle_id` no es una línea `entregado` de una notebook del solicitante |
 | `TRANSICION_INVALIDA` | 409 | El estado actual no admite la acción |
-| `UNIDAD_NO_DISPONIBLE` | 409 | La base rechazó la asignación: la unidad ya tiene otra línea `reservado` o `entregado` (SQLSTATE `23505` del índice `uq_detalles_prestamo_unidad_activa`, o `23P01` del `EXCLUDE`) |
-| `EQUIPAMIENTO_NO_DISPONIBLE` | 409 | No hay unidades libres del modelo en la sede, o el pedido tiene más líneas del modelo que unidades libres |
+| `UNIDAD_NO_DISPONIBLE` | 409 | La base rechazó la asignación: la unidad ya tiene otra línea `reservado` o `entregado` con un período que se solapa (SQLSTATE `23P01` del `EXCLUDE`) |
+| `EQUIPAMIENTO_NO_DISPONIBLE` | 409 | No hay unidades libres del modelo en la sede para el período pedido, o el pedido tiene más líneas del modelo que unidades libres |
 
 Los datos adicionales de un error viajan como `**extra` de `AppError` (por ejemplo `equipamiento_id` y `max_dias` en `LIMITE_DIAS_EXCEDIDO`). Las respuestas se declaran en cada ruta con `error_responses(...)`.
 
 Los `401` y `403` por rol los produce `require_roles` con los códigos que defina `core`; `ROL_NO_AUTORIZADO` solo se usa cuando la decisión la toma el servicio.
 
-**Traducción de errores de base:** se convierten en `409 UNIDAD_NO_DISPONIBLE` la violación de exclusión (`23P01`) y la de unicidad (`23505`) del índice `uq_detalles_prestamo_unidad_activa`. Las violaciones de `CHECK` (`23514`) o de clave foránea (`23503`) no se enmascaran como conflicto: indican un defecto y devuelven 500. No se reutiliza `_commit_or_409` de `inventory`, porque traduce cualquier `IntegrityError` a un mensaje único. Tras el error se hace `rollback`.
+**Traducción de errores de base:** solo la violación de exclusión (`23P01`) se convierte en `409 UNIDAD_NO_DISPONIBLE`. Las violaciones de `CHECK` (`23514`), de unicidad (`23505`) o de clave foránea (`23503`) no se enmascaran como conflicto: indican un defecto y devuelven 500. No se reutiliza `_commit_or_409` de `inventory`, porque traduce cualquier `IntegrityError` a un mensaje único. Tras el error se hace `rollback`.
 
 ---
 
@@ -200,7 +197,6 @@ Los `401` y `403` por rol los produce `require_roles` con los códigos que defin
 
 | Tabla | Cambio | Motivo |
 | :---- | :---- | :---- |
-| `detalles_prestamo` | Índice único parcial `uq_detalles_prestamo_unidad_activa` sobre `(unidad_fisica_id)` donde `estado IN ('reservado', 'entregado')` (migración `0011`, Fase 2) | Una unidad tiene a lo sumo una línea ocupante a la vez, sin importar las fechas (D-L17, RN-L12) |
 | `ordenes_pedido` | `resuelto_por_id` (FK `usuarios`, `SET NULL`), `resuelto_en` (`timestamptz`) | Quién y cuándo resolvió (aprobó, rechazó o canceló); auditoría (USR-08) |
 | `detalles_prestamo` | `entregado_en`, `devuelto_en` (`timestamptz`, nulos) | Registro de entrega y devolución (PRE-13) |
 | `detalles_prestamo` | `observacion_devolucion` (`String(500)`, nula) | Estado físico al devolver; alimenta el historial de la unidad (PRE-12, PRE-13) |
@@ -208,7 +204,7 @@ Los `401` y `403` por rol los produce `require_roles` con los códigos que defin
 | `detalles_prestamo` | `CHECK` `entrega_registrada` (`estado <> 'entregado' OR entregado_en IS NOT NULL`) y `devolucion_registrada` (`estado <> 'devuelto' OR (entregado_en IS NOT NULL AND devuelto_en IS NOT NULL)`) | Coherencia en la base (P7.1) |
 | `ordenes_historial_estado` (nueva) | `id` (`BigInteger`, `Identity`), `orden_id` (FK, `CASCADE`), `estado_anterior?`, `estado_nuevo`, `motivo?`, `actor_id` (FK `usuarios`, `SET NULL`), `created_at`; índice `(orden_id, created_at)` | Traza inmutable de transiciones, igual que `usuarios_historial_estado` (P7.3, D-L10) |
 
-Reparto: `0011_loans_unidad_activa` (Fase 2) lleva el índice único parcial, `resuelto_por_id`, `resuelto_en` y `ordenes_historial_estado`; `0012_loans_ciclo_entrega` (Fase 3) lleva las columnas y los `CHECK` de entrega, devolución y cancelación forzada; una `0013` agregará `pdf_aval_id` cuando exista el almacenamiento de archivos (C4). Los `CHECK` usan nombres cortos. Cada migración tiene `downgrade` y se valida con upgrade → downgrade → upgrade (P7.4).
+Reparto: `0011_loans_resolucion` (Fase 2) lleva `resuelto_por_id`, `resuelto_en` y `ordenes_historial_estado`; `0012_loans_ciclo_entrega` (Fase 3) lleva las columnas y los `CHECK` de entrega, devolución y cancelación forzada. El vínculo con el aval lo guarda `files` (SPEC-03); si K3 requiere una columna en `ordenes_pedido`, va en `0011`. **La numeración final se acuerda con el Perfil 1 antes de abrir el PR**, porque SPEC-03 también agrega migraciones (su EC-45). Los `CHECK` usan nombres cortos. Cada migración tiene `downgrade` y se valida con upgrade → downgrade → upgrade (P7.4).
 
 ---
 
@@ -253,32 +249,34 @@ Una orden `aprobada` no tiene estado final propio: el avance lo muestran las lí
 | RN-L01 | La orden pertenece a la sede del solicitante, tomada de la sesión (P5). Nunca se acepta sede ni solicitante en el body |
 | RN-L02 | Solo `ESTUDIANTE` y `DOCENTE` crean órdenes: el `SUPERADMIN` no tiene sede (D-L06) y el `ADMIN_LOCAL` no solicita equipamiento, solo valida |
 | RN-L03 | La orden nace `pendiente`, con líneas `pendiente` y sin unidad. **Una línea pendiente no ocupa ninguna unidad**, así que varias órdenes pendientes pueden pedir el mismo modelo y período |
-| RN-L04 | Franja operativa: la hora de retiro y la de devolución están entre `horario.apertura` y `horario.cierre` (inclusive), en la zona horaria del laboratorio (PRE-06, R4) |
+| RN-L04 | Franja operativa: la hora de retiro y la de devolución están entre la apertura y el cierre **de la sede del solicitante** (inclusive), en la zona horaria del laboratorio (PRE-06, R4, ADR-022 a). Hoy se leen `horario.apertura` y `horario.cierre` globales; cuando `config` publique las claves por sede (SPEC-03 K10) se cambia la lectura, no la regla |
 | RN-L05 | Anticipación: `retiro ≥ ahora_lab() + solicitud.anticipacion_min_horas` (ADR-011) |
-| RN-L06 | Plazo máximo por línea = el menor entre el parámetro del tipo (`prestamo.notebook.max_dias` si `es_notebook`, si no `prestamo.general.max_dias`) y `max_dias_prestamo` del ítem. Se cuenta en días corridos incluyendo el día de retiro y el de devolución. La orden debe cumplir el límite de **cada** línea (D-L03, D-L04) |
+| RN-L06 | Plazo máximo por línea = el menor entre el parámetro del tipo (`prestamo.notebook.max_dias` si `es_notebook`, si no `prestamo.general.max_dias`) y `max_dias_prestamo` del ítem. Se cuenta en días corridos incluyendo el día de retiro y el de devolución. La orden debe cumplir el límite de **cada** línea (D-L03, D-L04). Ver C18 sobre cómo `inventory` fija `max_dias_prestamo` |
 | RN-L07 | Asignatura obligatoria para `ESTUDIANTE`; el `DOCENTE` solicita para uso de cátedra (PRE-03, PRE-09) |
 | RN-L08 | Debe aceptarse la normativa (PRE-03) |
-| RN-L09 | Los ítems de alta gama requieren aval PDF (PRE-05). Mientras no exista el almacenamiento se rechazan con `AVAL_NO_HABILITADO` (D-L12) |
-| RN-L10 | Cada `equipamiento_id` debe existir, estar activo y tener al menos una unidad libre en la sede del solicitante. Unidad libre = figura en `unidades_asignables(db, equipamiento_id, sede)` (`disponible` hoy) y **no tiene ninguna línea `reservado` o `entregado`**, sin importar las fechas (D-L17). Si el pedido trae varias líneas del mismo modelo, las unidades libres deben alcanzar. Si no alcanzan, `409 EQUIPAMIENTO_NO_DISPONIBLE`. Las líneas `pendiente` no cuentan. Es una verificación previa (P7.2): la garantía final es el índice único parcial al aprobar. El solicitante no elige unidades |
-| RN-L11 | Toda aprobación es manual (R1). Se asigna **una unidad por línea**, que debe ser de la sede, del modelo pedido y asignable según `inventory` (`disponible`: una unidad `prestado` no se asigna hasta que se devuelva). La pertenencia al modelo se verifica con la lista de unidades que `inventory` devuelve para ese `equipamiento_id`, porque `unidad_es_asignable` no recibe el modelo. Que la unidad no esté asignada a otra línea activa lo garantiza el índice único parcial (D-L17). Al asignar, `loans` bloquea cada unidad con `inventory.bloquear_unidad` (en orden ascendente de id) y verifica sede, modelo (`equipamiento_id` de la unidad devuelta) y estado `disponible`; el ítem activo se comprueba con `unidad_es_asignable` |
-| RN-L12 | Solo `reservado` y `entregado` ocupan. **Una unidad tiene a lo sumo una línea ocupante a la vez, sin importar las fechas** (D-L17): lo garantiza el índice único parcial `uq_detalles_prestamo_unidad_activa`, y el `EXCLUDE` sobre `(unidad_fisica_id, periodo)` queda implícito (se mantiene). La violación se traduce a `409`. El servicio puede consultar antes para dar un error específico, pero nunca reemplaza a la restricción (P7.2). Una unidad se libera cuando su línea pasa a `devuelto`, `cancelado` o `no_retirado` |
+| RN-L09 | Los ítems de alta gama requieren aval PDF (PRE-05). Lo suben estudiantes y docentes con `POST /api/v1/files/archivos` (`proposito=AVAL_PRESTAMO`) y la orden lo referencia con `pdf_aval_id`. El servicio llama a `vincular_archivo(db, archivo_id, *, propietario_id, proposito)` sin `commit`, **en la misma transacción** que crea la orden. Lo descargan el solicitante y los administradores con jurisdicción, no el docente de la asignatura (SPEC-03 RN-60, D-18). Sin aval: `422 AVAL_REQUERIDO` |
+| RN-L10 | Cada `equipamiento_id` debe existir, estar activo y tener, **para el período pedido**, al menos una unidad libre en la sede del solicitante. Unidad libre = figura en `unidades_asignables(db, equipamiento_id, sede)` (`disponible` en el estante: una unidad prestada no se promete hasta que vuelva) **y** no tiene ninguna línea `reservado` o `entregado` cuyo período se solape con `[retiro, devolucion)`. Si el pedido trae varias líneas del mismo modelo, las unidades libres deben alcanzar. Si no, `409 EQUIPAMIENTO_NO_DISPONIBLE`. Las líneas `pendiente` no cuentan. Es una verificación previa (P7.2): la garantía final es el `EXCLUDE` al aprobar. El solicitante no elige unidades |
+| RN-L11 | Toda aprobación es manual (R1). Se asigna **una unidad por línea**, que debe ser de la sede, del modelo pedido y asignable según `inventory` (`disponible`: una unidad `prestado` no se asigna hasta que se devuelva). La pertenencia al modelo se verifica con la lista de unidades que `inventory` devuelve para ese `equipamiento_id`, porque `unidad_es_asignable` no recibe el modelo. Que la unidad no tenga otra línea activa con un período solapado lo garantiza el `EXCLUDE`. Al asignar, `loans` bloquea cada unidad con `inventory.bloquear_unidad` (en orden ascendente de id) y verifica sede, modelo (`equipamiento_id` de la unidad devuelta) y estado `disponible`; el ítem activo se comprueba con `unidad_es_asignable` |
+| RN-L12 | Solo `reservado` y `entregado` ocupan. **Una unidad no puede tener dos líneas ocupantes con períodos que se solapan**: lo garantiza el `EXCLUDE` sobre `(unidad_fisica_id, periodo)` de `0009`, y su violación (`23P01`) se traduce a `409`. Dos reservas de la misma unidad en fechas distintas pueden convivir (ERS PRE-11 y PRE-17). El servicio puede consultar antes para dar un error específico, pero nunca reemplaza a la restricción (P7.2). Una unidad se libera cuando su línea pasa a `devuelto`, `cancelado` o `no_retirado` |
 | RN-L13 | Aprobar es **atómico**: orden, líneas y unidades en una transacción. Si una línea choca, ninguna se aprueba |
 | RN-L14 | Las transiciones de una orden se serializan con `SELECT ... FOR UPDATE` sobre la fila de la orden, de modo que dos acciones simultáneas sobre la misma orden no se pisan. Para evitar interbloqueos, el orden de bloqueo es siempre: primero la orden y después las unidades, en orden ascendente de id. Como en `config`, ante un `AppError` se hace `rollback` antes de propagarlo |
 | RN-L15 | Rechazar exige `motivo` |
 | RN-L16 | Cancelación: el solicitante solo cancela su orden `pendiente`; el administrador solo cancela una orden `aprobada` de su sede, sin líneas `entregado`, y con motivo obligatorio |
-| RN-L17 | Cancelación forzada (PRE-17): por línea, solo `reservado`, con motivo obligatorio; si no quedan líneas vigentes, la orden pasa a `cancelada`; se emite un aviso al solicitante |
+| RN-L17 | Cancelación forzada (PRE-17): por línea, solo `reservado`, con motivo obligatorio; el cierre de la orden sigue RN-L30; se emite un aviso al solicitante |
 | RN-L18 | Ajuste horario al aprobar (PRE-18): cumple RN-L04 y RN-L06, se aplica a todas las líneas, `fin_ocupacion` queda igual a la nueva devolución y se avisa al solicitante |
 | RN-L19 | Entrega: solo una línea `reservado` de una orden `aprobada`. Llama a `inventory.marcar_unidad_prestada` en la misma transacción y registra `entregado_en`. No hay restricción horaria: el control es presencial |
 | RN-L20 | Devolución: solo una línea `entregado`. Llama a `inventory.liberar_unidad`, registra `devuelto_en` y la observación del estado físico. Si la unidad vuelve dañada (`a_mantenimiento = true`), pasa a `mantenimiento` en la misma transacción, para que no quede asignable entre la devolución y el cambio de estado (C17) |
 | RN-L21 | `demorado` es **derivado**, no se guarda: línea `entregado` y `ahora_lab() > devolucion_pactada`. La interfaz lo muestra en rojo |
-| RN-L22 | Mora: una unidad que no se devolvió sigue `prestado` en `inventory` y con su línea `entregado`, así que no puede asignarse ni entregarse a otro pedido hasta que el administrador registre la devolución (`liberar_unidad`). No existe otra reserva sobre esa unidad (D-L17). `fin_ocupacion` no se extiende por demora: solo cambia por ajuste horario o renovación (D-L16) |
-| RN-L23 | No retiro (PRE-08): una línea `reservado` cuyo retiro superó `prestamo.tolerancia_retiro_horas` pasa a `no_retirado` y libera la unidad. Si todas las líneas de la orden quedan así, la orden pasa a `cancelada`; si alguna fue entregada, la orden sigue `aprobada` (D-L09) |
-| RN-L24 | Renovación (PRE-11): solo notebooks (`es_notebook`), línea `entregado`, la hace un administrador, la nueva devolución es posterior a la actual y cumple RN-L04. Como la unidad no tiene otra línea ocupante (D-L17), la renovación no puede chocar con otra reserva. Marca `es_renovado` |
+| RN-L22 | Mora: una unidad que no se devolvió sigue `prestado` en `inventory`, así que no puede asignarse a pedidos nuevos (RN-L11) ni entregarse (`marcar_unidad_prestada` exige `disponible`) hasta que el administrador registre la devolución. Si ya tenía una reserva aprobada para después, la entrega de esa reserva falla con `409 TRANSICION_ESTADO_INVALIDA` y el administrador la resuelve con una cancelación forzada (PRE-17) o, a futuro, reasignando la unidad. `fin_ocupacion` no se extiende por demora: solo cambia por ajuste horario o renovación (D-L16) |
+| RN-L23 | No retiro (PRE-08): una línea `reservado` cuyo retiro superó `prestamo.tolerancia_retiro_horas` pasa a `no_retirado` y libera la unidad, **salvo** que su unidad siga `prestado` por la demora de otra línea: en ese caso no se la marca (el solicitante no tiene la culpa) y se informa al administrador para que resuelva (RN-L22); el cierre de la orden sigue RN-L30 |
+| RN-L24 | Renovación (PRE-11, ADR-022 h): el estudiante presenta la notebook en el mostrador y emite desde la app una nueva orden con `renueva_detalle_id` (una línea `entregado` suya, de un ítem `es_notebook`) y una sola línea del mismo modelo. Se valida como cualquier pedido (franja, plazo, asignatura), **sin anticipación mínima**, y la unidad renovada cuenta como libre para esa orden. Al aprobarla, el administrador asigna la misma unidad y, en una sola transacción, **primero** la línea anterior pasa a `devuelto` (así deja de ocupar y el `EXCLUDE` no la compara) (sin llamar a `inventory`: la unidad sigue `prestado`) y la nueva a `entregado`; se marca `es_renovado`. Si la unidad tiene otra reserva aprobada que se solapa, la base lo rechaza con `409 UNIDAD_NO_DISPONIBLE` y el administrador asigna otra notebook libre o rechaza |
 | RN-L25 | Privacidad (P6): el estudiante solo ve lo propio; el docente solo ve órdenes de sus asignaturas, en lectura y observación, sin DNI, email ni teléfono; ningún rol ve solicitantes de otra sede |
 | RN-L26 | Jurisdicción (P5): el `ADMIN_LOCAL` opera solo en su sede y el filtro se aplica en el `WHERE` de la consulta, no en la interfaz |
 | RN-L27 | Aprobar exige `retiro_pactado > ahora_lab()`, salvo que se ajuste el horario (`RETIRO_VENCIDO`) |
 | RN-L28 | Ningún valor operativo (plazos, horario, anticipación, tolerancia) se escribe fijo en el código: se leen con `obtener_parametro` (P8) |
 | RN-L29 | Las fechas se comparan con `ahora_lab()` y se persisten como `timestamptz` (UTC) |
+| RN-L30 | Cierre de la orden: después de una cancelación forzada o de un no retiro, si ninguna línea queda `reservado`, `entregado` o `devuelto`, la orden pasa a `cancelada`; si no, sigue `aprobada` (unifica RN-L17 y RN-L23) |
+| RN-L31 | `situacion` (derivada, no se guarda): `en_curso` si la orden tiene alguna línea `pendiente`, `reservado` o `entregado`; `finalizada` en otro caso. Permite separar en la bandeja y en el historial (USR-06) las órdenes `aprobada` terminadas de las que siguen en curso, sin agregar un estado |
 
 ---
 
@@ -293,13 +291,14 @@ Una orden `aprobada` no tiene estado final propio: el avance lo muestran las lí
 | `inventory` | `unidades_asignables` y `unidad_es_asignable` (**verificadas**): solo cuentan unidades `disponible` hoy y de ítems activos. Es el criterio buscado: una unidad `prestado` no se promete hasta que se devuelva | Creación (RN-L10) y aprobación (RN-L11) |
 | `inventory` | `marcar_unidad_prestada` y `liberar_unidad` (**verificadas**): no hacen `commit`, bloquean la unidad con `FOR UPDATE` y lanzan `AppError 409 TRANSICION_ESTADO_INVALIDA` si el estado no corresponde (`disponible` → `prestado` y `prestado` → `disponible`). `loans` hace `rollback` antes de propagar el error | Entrega y devolución (RN-L19, RN-L20) |
 | `inventory` | Lectura de datos de equipamiento y unidades (`es_notebook`, `alta_gama`, `max_dias_prestamo`, nombre, código): **no publicada hoy** (C8) | RN-L06, RN-L09, RN-L24 y respuestas para el administrador |
-| `users` | Nombre y apellido por id; pertenencia docente–asignatura: **no publicados hoy** (C2) | Resumen del solicitante y panel docente |
+| `users` | `datos_publicos_por_ids(db, ids) -> dict[int, DatosPublicosUsuario]` (`id`, `nombre`, `apellido`; SPEC-03 Fase A). El vínculo docente–asignatura sigue sin publicar (SPEC-03 D-04, C3) | Resumen del solicitante y panel docente |
+| `files` | `vincular_archivo(db, archivo_id, *, propietario_id, proposito)` sin `commit` (SPEC-03) | Aval de alta gama (RN-L09) |
 
 ### 10.2 `loans` publica (en `loans/service.py`, documentadas como API pública)
 
 | Función (firma indicativa) | Para | Requisito |
 | :---- | :---- | :---- |
-| `unidades_libres(db, equipamiento_ids, sede)` → por modelo, la cantidad de unidades libres (criterio de RN-L10) y la próxima liberación prevista (menor `devolucion_pactada` de las líneas `reservado` o `entregado` de ese modelo), **sin identidad de solicitantes** | Perfil 2 (INV-26) | PRE-01 |
+| `unidades_libres(db, equipamiento_ids, sede, desde, hasta)` → por modelo, la cantidad de unidades libres para ese período (criterio de RN-L10), **sin identidad de solicitantes**. Sirve al mini-calendario del catálogo (PRE-01) | Perfil 2 (INV-26) | PRE-01 |
 | `historial_de_unidad(db, unidad_id, actor)` → movimientos, solo con jurisdicción | Perfil 2 | PRE-12 |
 | `reservas_futuras_de_unidad(db, unidad_id, desde)` → reservas aprobadas, solo con jurisdicción | Perfil 2 | PRE-17 |
 | `ordenes_de_usuario(db, usuario_id, ...)` | Perfil 1 | USR-06, USR-07, USR-08 |
@@ -323,11 +322,11 @@ Orden aprobada, rechazada o cancelada; horario ajustado (PRE-18); cancelación f
 | Mis solicitudes | Estudiante, Docente | USR-06 | Estados y cancelación de las pendientes |
 | Bandeja de validación | Admin | PRE-15 | Filtro por estado, detalle con observación del docente |
 | Aprobación | Admin | PRE-10, 18 | Asignación de unidad (lista de `GET /ordenes/{id}/unidades-libres`) y ajuste horario |
-| Mostrador (entrega, devolución, renovación) | Admin | PRE-11, 13 | Alerta roja de demora y campo de observaciones |
+| Mostrador (entrega, devolución y aprobación de renovaciones) | Admin | PRE-11, 13 | Alerta roja de demora y campo de observaciones |
 | Calendario maestro | Admin | PRE-16 | "En Uso" y "En Reserva" |
 | Panel docente | Docente | PRE-20 | Solo lectura y comentario |
 
-El campo de aval PDF (PRE-05) se incorpora cuando exista el almacenamiento (C4).
+El formulario sube el aval con `POST /api/v1/files/archivos` (`proposito=AVAL_PRESTAMO`) y envía su id en `pdf_aval_id` (PRE-05). La renovación (PRE-11) es el mismo formulario precargado con la notebook a renovar.
 
 ---
 
@@ -352,12 +351,16 @@ Cada criterio tendrá al menos un test automatizado, anotado con `# AC-Lxx`, mar
 | AC-L11 | Un equipo común admite hasta 4 días y una notebook hasta 15, según los parámetros vigentes |
 | AC-L12 | Un `equipamiento_id` inexistente, inactivo o sin unidades en la sede responde `404 EQUIPAMIENTO_NO_ENCONTRADO` |
 | AC-L13 | `SUPERADMIN` y `ADMIN_LOCAL` reciben `403` al crear; sin token, `401` |
-| AC-L14 | Una orden con un ítem de alta gama responde `422 AVAL_NO_HABILITADO` mientras no exista PRE-05 |
+| AC-L14 | Una orden con un ítem de alta gama sin `pdf_aval_id` responde `422 AVAL_REQUERIDO`; con un aval válido se crea y el archivo queda vinculado en la misma transacción (si la creación falla, el archivo no queda vinculado) |
 | AC-L15 | Dos órdenes pendientes concurrentes por el mismo modelo y período se crean ambas |
-| AC-L56 | Un modelo sin unidades libres en la sede (ninguna `disponible`, o todas con una línea `reservado` o `entregado`) responde `409 EQUIPAMIENTO_NO_DISPONIBLE` |
-| AC-L57 | Un pedido con más líneas del mismo modelo que unidades libres responde `409 EQUIPAMIENTO_NO_DISPONIBLE` |
-| AC-L58 | `GET .../unidades-libres` devuelve, por línea, solo unidades del modelo y la sede que estén `disponible` y sin ninguna línea `reservado` o `entregado`; nunca una unidad ya asignada a otro pedido, sin importar las fechas |
-| AC-L59 | Devolver con `a_mantenimiento = true` deja la línea `devuelto` y la unidad en `mantenimiento` en una sola transacción, sin pasar por un estado asignable |
+| AC-L56 | Un modelo sin unidades libres para el período (ninguna `disponible` en la sede, o todas con una línea `reservado` o `entregado` que se solapa) responde `409 EQUIPAMIENTO_NO_DISPONIBLE`; si la única reserva es en otras fechas, el pedido se crea |
+| AC-L57 | Un pedido con más líneas del mismo modelo que unidades libres para el período responde `409 EQUIPAMIENTO_NO_DISPONIBLE` |
+| AC-L58 | `GET .../unidades-libres` devuelve, por línea, solo unidades del modelo y la sede que estén `disponible` y sin otra línea `reservado` o `entregado` que se solape con su período |
+| AC-L59 | Devolver con `a_mantenimiento = true` deja la línea `devuelto` y la unidad en `mantenimiento` en una sola transacción, sin pasar por un estado asignable **Bloqueado por C17.** |
+| AC-L60 | El aval lo descargan el solicitante y los administradores con jurisdicción; el docente de la asignatura recibe `404` (SPEC-03 RN-60) |
+| AC-L61 | `situacion` es `en_curso` mientras haya líneas `pendiente`, `reservado` o `entregado`, y `finalizada` en otro caso |
+| AC-L62 | Tras una cancelación forzada y un no retiro sobre las dos líneas de una orden sin entregas, la orden queda `cancelada` (RN-L30) |
+| AC-L63 | `GET /reglas` devuelve el horario de la sede del solicitante; el `SUPERADMIN` lo pide con `?sede=` |
 
 **Consulta**
 
@@ -375,7 +378,7 @@ Cada criterio tendrá al menos un test automatizado, anotado con `# AC-Lxx`, mar
 | AC-L20 | Una unidad que no está `disponible` (`prestado`, `mantenimiento` o `baja`) responde `422 UNIDAD_NO_ASIGNABLE` y no cambia nada |
 | AC-L21 | Una unidad de otra sede o de otro modelo responde `422 UNIDAD_NO_ASIGNABLE` |
 | AC-L22 | Asignaciones incompletas, repetidas o de líneas ajenas responden `422 ASIGNACIONES_INVALIDAS` |
-| AC-L23 | Dos aprobaciones concurrentes de órdenes distintas sobre la misma unidad, aunque sus fechas no se pisen: una responde `200` y la otra `409 UNIDAD_NO_DISPONIBLE`, y la perdedora queda `pendiente` sin cambios parciales |
+| AC-L23 | Dos aprobaciones concurrentes de órdenes distintas sobre la misma unidad con períodos que se solapan: una responde `200` y la otra `409 UNIDAD_NO_DISPONIBLE`, y la perdedora queda `pendiente` sin cambios parciales. Con períodos que no se solapan, ambas se aprueban |
 | AC-L24 | Dos acciones concurrentes sobre la misma orden: una prospera y la otra responde `409 TRANSICION_INVALIDA` |
 | AC-L25 | El ajuste horario valida franja y plazos, actualiza todas las líneas y deja `fin_ocupacion` igual a la nueva devolución |
 | AC-L26 | Asignar una unidad que sigue `prestado` (devolución pendiente, aunque esté vencida) responde `422 UNIDAD_NO_ASIGNABLE` |
@@ -403,10 +406,10 @@ Cada criterio tendrá al menos un test automatizado, anotado con `# AC-Lxx`, mar
 | AC-L38 | Devolver una línea `entregado` la deja `devuelto`, registra `devuelto_en` y la observación, y libera la unidad |
 | AC-L39 | Entregar o devolver fuera del estado correspondiente responde `409 TRANSICION_INVALIDA` |
 | AC-L40 | `demorado` es `true` solo para órdenes con línea `entregado` y devolución pactada vencida |
-| AC-L41 | Renovar una notebook `entregado` extiende su devolución y marca `es_renovado` |
-| AC-L42 | Renovar un ítem que no es notebook responde `422 RENOVACION_NO_PERMITIDA` |
-| AC-L43 | Renovar una línea que no está `entregado` responde `409 TRANSICION_INVALIDA` y no cambia nada |
-| AC-L44 | Una nueva devolución anterior o igual a la actual, o fuera de franja, responde `422` |
+| AC-L41 | Aprobar una renovación asigna la misma unidad; en una transacción la línea anterior queda `devuelto`, la nueva `entregado`, la unidad sigue `prestado` y la orden queda con `es_renovado` |
+| AC-L42 | Un `renueva_detalle_id` que no es una notebook `entregado` responde `422 RENOVACION_NO_PERMITIDA`; uno de otro solicitante responde `404` |
+| AC-L43 | La solicitud de renovación no exige la anticipación mínima, pero sí la franja de la sede y el plazo de notebooks |
+| AC-L44 | Si la unidad tiene otra reserva aprobada que se solapa, aprobar la renovación responde `409 UNIDAD_NO_DISPONIBLE` y no cambia nada |
 
 **Procesos automáticos, calendario y panel docente**
 
@@ -414,7 +417,7 @@ Cada criterio tendrá al menos un test automatizado, anotado con `# AC-Lxx`, mar
 | :---- | :---- |
 | AC-L45 | `procesar_vencimientos` pasa a `no_retirado` las líneas `reservado` que superaron la tolerancia y libera la unidad |
 | AC-L46 | Si todas las líneas de una orden quedan `no_retirado`, la orden pasa a `cancelada`; si alguna fue entregada, sigue `aprobada` |
-| AC-L47 | Una unidad con una línea `reservado` o `entregado` (incluso vencida) no aparece en `unidades-libres`, y asignarla a otra línea responde `409 UNIDAD_NO_DISPONIBLE` |
+| AC-L47 | Una unidad con una línea `reservado` o `entregado` que se solapa con el período no aparece en `unidades-libres` y asignarla responde `409 UNIDAD_NO_DISPONIBLE`; con una reserva en otras fechas sí aparece |
 | AC-L48 | El proceso es idempotente: ejecutarlo dos veces seguidas no cambia el resultado |
 | AC-L49 | El calendario maestro agrupa los recursos "En Uso" y "En Reserva" y respeta la sede del administrador |
 | AC-L50 | El docente ve solo órdenes de sus asignaturas, sin DNI, email ni teléfono del solicitante, y no puede resolverlas (`403`) |
@@ -425,9 +428,9 @@ Cada criterio tendrá al menos un test automatizado, anotado con `# AC-Lxx`, mar
 | ID | Criterio |
 | :---- | :---- |
 | AC-L52 | Todos los endpoints responden `401` sin token |
-| AC-L53 | Los errores de negocio responden `{detail, code}`; solo `23P01` se traduce a `409` y otras violaciones de base no se enmascaran como conflicto |
+| AC-L53 | Los errores de negocio responden `{detail, code}`; solo las violaciones de exclusión o unicidad listadas en §6.3 se traducen a `409`, y otras violaciones de base no se enmascaran como conflicto |
 | AC-L54 | Cada migración de `loans` (`0011` y `0012`) se valida con upgrade → downgrade → upgrade |
-| AC-L55 | Las pruebas de concurrencia (AC-L23, AC-L24, AC-L43) usan sesiones independientes, como en producción (ADR-013) |
+| AC-L55 | Las pruebas de concurrencia (AC-L23, AC-L24 y EC-L10) usan sesiones independientes, como en producción (ADR-013) |
 
 ---
 
@@ -441,14 +444,14 @@ Cada criterio tendrá al menos un test automatizado, anotado con `# AC-Lxx`, mar
 | EC-L04 | Cliente en otra zona horaria | Los instantes se convierten a la zona del laboratorio antes de validar la franja |
 | EC-L05 | Orden pendiente cuyo retiro ya pasó | Sigue `pendiente`; la bandeja la marca y solo puede rechazarse o aprobarse con ajuste horario (RN-L27) |
 | EC-L06 | Una unidad reservada pasa a `mantenimiento` o `baja` | La entrega falla (AC-L37) y se resuelve con cancelación forzada. Reasignar la unidad sería mejor, pero queda **fuera de este spec** |
-| EC-L07 | Una unidad atrasada (línea `entregado` vencida) | Sigue ocupada y `prestado`; no se asigna a ningún otro pedido hasta que se registre la devolución (D-L17). Los pedidos pendientes del modelo esperan o el administrador los rechaza |
+| EC-L07 | La unidad reservada para B sigue `prestado` por la demora de A | La entrega a B falla (`TRANSICION_ESTADO_INVALIDA`) y B conserva su reserva: el proceso de no retiro no la marca `no_retirado` (RN-L23). El administrador espera la devolución, reasigna o hace una cancelación forzada (PRE-17) |
 | EC-L08 | Equipo dado de baja lógica con órdenes pendientes | Al aprobar, la unidad no es asignable (`UNIDAD_NO_ASIGNABLE`) |
 | EC-L09 | Doble envío del formulario | El backend no deduplica: crea dos órdenes pendientes; la interfaz deshabilita el botón al enviar |
 | EC-L10 | Cancelación del solicitante simultánea con la aprobación | `FOR UPDATE` serializa: una prospera y la otra recibe `409 TRANSICION_INVALIDA` |
 | EC-L11 | Parámetros cambiados entre el pedido y la aprobación | Aprobar no revalida plazos ni franja (la solicitud se hizo con las reglas vigentes); solo el ajuste horario las revalida |
 | EC-L12 | Solicitante suspendido con órdenes vigentes | Sus órdenes no se cancelan solas; la sanción la define el Perfil 1 (USR-09) |
 | EC-L13 | Aprobación parcial por concurrencia | No existe: aprobar es todo o nada (RN-L13) |
-| EC-L14 | Un modelo con todas sus unidades ocupadas (`prestado`, o con una línea `reservado` o `entregado`) | No se puede solicitar hasta que alguna se libere (decisión del equipo, D-L17). El ítem **sigue visible** en el catálogo con 0 disponibles (RN-I5 de SPEC-04: solo desaparece si `activo = false`) y el botón de solicitar se deshabilita. Si alguien lo fuerza, `409 EQUIPAMIENTO_NO_DISPONIBLE` |
+| EC-L14 | Un modelo sin unidades libres para las fechas pedidas | No se puede solicitar para esas fechas (`409 EQUIPAMIENTO_NO_DISPONIBLE`), pero sí para otras. El ítem **sigue visible** en el catálogo (RN-I5 de SPEC-04: solo desaparece si `activo = false`), y el mini-calendario muestra en qué fechas hay unidades libres |
 | EC-L15 | La unidad vuelve rota | Al devolverla con `a_mantenimiento = true`, `loans` la libera y la pasa a `mantenimiento` en la misma transacción. Sin eso quedaría `disponible` y asignable hasta que el administrador cambie el estado en otra solicitud (C17) |
 
 ---
@@ -458,11 +461,11 @@ Cada criterio tendrá al menos un test automatizado, anotado con `# AC-Lxx`, mar
 | Fase | Contenido | Requisitos | Bloqueos |
 | :---- | :---- | :---- | :---- |
 | **0. Saneamiento** | Eliminar `dependencies.py`, autenticar y autorizar los endpoints, `AppError`, rutas `/estado`, `501 NO_IMPLEMENTADO`, descripción de `main.py` | DT-16, 17, 18 | Implementada (PR #16) |
-| **1. Solicitar** | `GET /reglas`, `POST /ordenes`, consultas propias, reglas RN-L01…L10; formulario y carrito | PRE-03, 04, 06, 07, 09 | C3 (asignaturas), C8 (lectura de `inventory`) |
-| **2. Validar** | Bandeja, unidades libres por línea, aprobar, rechazar, cancelar, ajuste horario, uso de `inventory/service.py`; funciones de lectura para el Perfil 2; migración `0011` (índice único parcial) | PRE-10, 15, 18, DT-20 | C8 |
-| **3. Mostrador** | Entrega, devolución, renovación, cancelación forzada; migración `0012` | PRE-11, 13, 17 | — |
+| **1. Solicitar** | `GET /reglas`, `POST /ordenes` (con aval y renovación), consultas propias, reglas RN-L01…L10; formulario y carrito | PRE-03, 04, 05, 06, 07, 09 | C3 (asignaturas), C8 (lectura de `inventory`), SPEC-03 (`files`, K10), B2 |
+| **2. Validar** | Bandeja, unidades libres por línea, aprobar, rechazar, cancelar, ajuste horario, uso de `inventory/service.py`; funciones de lectura para el Perfil 2; migración `0011` | PRE-10, 11, 15, 18, DT-20 | C8 |
+| **3. Mostrador** | Entrega, devolución, cancelación forzada; migración `0012` | PRE-13, 17 | C17 |
 | **4. Procesos y paneles** | `procesar_vencimientos` (no retiro), calendario maestro, panel docente | PRE-08, 16, 20 | C2, C3, C5 |
-| **5. Aval y avisos** | PDF de aval y notificaciones | PRE-05, eventos §10.3 | C4, C12 |
+| **5. Avisos** | Notificaciones | Eventos §10.3 | C12 |
 
 El frontend avanza una fase detrás del backend de cada una.
 
@@ -474,7 +477,7 @@ El frontend avanza una fase detrás del backend de cada una.
 
 | ID | Decisión | Recomendación |
 | :---- | :---- | :---- |
-| D-L01 | Numeración del spec | SPEC-05 |
+| D-L01 | Numeración del spec | **Resuelto:** SPEC-05 (SPEC-03 existe) |
 | D-L02 | Cambios de estado como `PATCH .../estado` (Constitución §4.2), reemplazando `/resolucion` y `/cancelacion` | Adoptar |
 | D-L03 | Plazo máximo por línea = el menor entre el parámetro del tipo y `max_dias_prestamo` del ítem | Adoptar; resuelve las tres fuentes del límite. Requiere la conformidad del Perfil 2 |
 | D-L04 | Los días se cuentan corridos, incluyendo el día de retiro y el de devolución | Adoptar; confirmar con la referente |
@@ -482,15 +485,21 @@ El frontend avanza una fase detrás del backend de cada una.
 | D-L06 | Solo `ESTUDIANTE` y `DOCENTE` crean órdenes; el `SUPERADMIN` no tiene sede y el `ADMIN_LOCAL` solo valida | Adoptar |
 | D-L07 | `GET /api/v1/loans/reglas` para que el formulario conozca las reglas sin tocar `config` | Adoptar |
 | D-L08 | Los procesos automáticos son una función idempotente más un comando de consola (`python -m app.modules.loans.cli procesar-vencimientos`); la periodicidad la resuelve el despliegue. No se agrega un planificador al servidor | Adoptar; coordinar con el Perfil 1 (C5) |
-| D-L09 | Una orden cuyas líneas quedan todas `no_retirado` pasa a `cancelada` | Adoptar |
+| D-L09 | Una orden sin líneas `reservado`, `entregado` ni `devuelto` pasa a `cancelada` (RN-L30) | Adoptar |
 | D-L10 | Tabla `ordenes_historial_estado` | Adoptar |
 | D-L11 | Los enums de `loans` siguen en minúsculas hasta que el equipo decida DT-19 | Adoptar |
-| D-L12 | Sin almacenamiento de archivos, las órdenes con alta gama se rechazan (`AVAL_NO_HABILITADO`) | Adoptar |
+| D-L12 | El aval de alta gama usa el almacenamiento de SPEC-03 y se vincula en la transacción que crea la orden (reemplaza el rechazo con `AVAL_NO_HABILITADO`) | Adoptar |
 | D-L13 | Hasta que exista el catálogo de asignaturas, `asignatura_id` no tiene FK y no se verifica su existencia | Adoptar como transitoria |
 | D-L14 | Fase 0: el router se mantiene montado con `501` en lugar de desmontarlo | Adoptar; permite generar tipos del frontend y del agente |
 | D-L15 | Mientras no se aclare, los límites de plazo y la anticipación se aplican también a los docentes | Adoptar como transitoria |
-| D-L16 | La mora se resuelve con el estado de la unidad en `inventory` (una unidad `prestado` no se promete ni se entrega hasta devolverse) y no extendiendo `fin_ocupacion` (subsumida por D-L17) | Adoptar; confirmar con el equipo |
-| D-L17 | Una unidad tiene a lo sumo una línea ocupante (`reservado` o `entregado`) a la vez, sin importar las fechas. Motivo: una unidad puede volver rota y pasar a reparación; si ya estuviera prometida a otro usuario, ese préstamo no podría concretarse porque no habría otro equipo del modelo. Se garantiza con un índice único parcial; el `EXCLUDE` queda implícito y se mantiene | Adoptar (decisión del equipo). Reemplaza la lectura "por fechas" de RN-L12 |
+| D-L16 | La mora se resuelve con el estado de la unidad en `inventory` (una unidad `prestado` no se promete ni se entrega hasta devolverse) y no extendiendo `fin_ocupacion` | Adoptar; confirmar con el equipo |
+| D-L17 | Una unidad con una línea ocupante no se asigna a otro pedido, sin importar las fechas | **Descartada** (2026-11-06, revisión del Perfil 1, B2): se vuelve al criterio por fechas (§15.3, opción B) |
+| D-L18 | La renovación es una nueva solicitud emitida en el mostrador, aprobada por un administrador, que conserva la misma unidad (RN-L24) | Adoptar (pedido de la referente, ADR-022 h) |
+| D-L19 | La orden `aprobada` no tiene estado final; `situacion` derivada distingue en curso de finalizada (RN-L31) | Adoptar |
+
+### 15.3 D-L17: decisión tomada (B2 de la revisión)
+
+Se eligió la **opción B: criterio por fechas, solo unidades `disponible`**. Una unidad no puede tener dos líneas ocupantes con períodos solapados (`EXCLUDE` de `0009`), y solo se asignan unidades físicamente presentes (`unidades_asignables`). Motivos: no inmoviliza equipos durante la ventana de reserva a futuro, permite la renovación del mismo equipo (RN-L24), coincide con el ERS (PRE-01, PRE-11, PRE-17) y mantiene cubierto el caso de una unidad que está afuera y vuelve rota. El riesgo residual (una unidad del estante, reservada a futuro, que se presta antes y vuelve rota) se resuelve con la cancelación forzada (PRE-17).
 
 ### 15.2 Preguntas para la referente (Natalia Ader)
 
@@ -499,7 +508,8 @@ El frontend avanza una fase detrás del backend de cada una.
 3. ¿Una renovación tiene tope de días o de cantidad de veces?
 4. ¿La tolerancia de retiro se mide desde la hora de retiro pactada?
 5. ¿El docente debe ver nombre y apellido del estudiante?
-6. Con la regla de unidad exclusiva (D-L17), una reserva aprobada para dentro de varias semanas deja esa unidad sin usar hasta entonces. ¿Conviene un tope de anticipación máxima para los préstamos (hoy solo existe `reserva_espacio.anticipacion_max_dias`, para espacios)?
+6. ¿La ventana de reserva a futuro de 120 días (ERS, Iteración 5) aplica también a los préstamos de equipamiento? Hoy el parámetro existente es `reserva_espacio.anticipacion_max_dias`, solo para espacios.
+7. Si el solicitante no puede ir a retirar, ¿puede cancelar una orden `aprobada` antes del retiro? Hoy solo puede el administrador, y el no retiro automático podría contarle como falta (ADR-022 d).
 
 ---
 
@@ -508,9 +518,9 @@ El frontend avanza una fase detrás del backend de cada una.
 | ID | De → Para | Pedido |
 | :---- | :---- | :---- |
 | C1 | Perfil 3 → Perfil 1 | Confirmar que las claves de `config` existentes alcanzan (no se piden claves nuevas) |
-| C2 | Perfil 3 → Perfil 1 | `users`: función pública para obtener nombre y apellido por ids y para saber si un docente está vinculado a una asignatura |
+| C2 | Perfil 3 → Perfil 1 | **Parcialmente resuelto:** SPEC-03 Fase A publica `datos_publicos_por_ids(db, ids)`. Sigue abierto el vínculo docente–asignatura (SPEC-03 D-04, C3) |
 | C3 | Perfil 3 → Perfil 1 / equipo | Definir quién implementa el **catálogo de asignaturas** y el vínculo docente–asignatura. Bloquea PRE-20 y la verificación de PRE-03 |
-| C4 | Perfil 3 → Perfil 1 | Almacenamiento de archivos para el aval PDF (PRE-05), previsto en el próximo spec del Perfil 1. Interfaz propuesta: subir el archivo, recibir un id y enviarlo en `OrdenPedidoCreate` como `pdf_aval_id` |
+| C4 | Perfil 3 → Perfil 1 | **Resuelto por SPEC-03:** `POST /api/v1/files/archivos` (`proposito=AVAL_PRESTAMO`) y `vincular_archivo(db, archivo_id, *, propietario_id, proposito)` sin `commit`. Falta acordar el detalle de K3 (cómo se expone el aval en la orden) |
 | C5 | Perfil 3 → Perfil 1 | Cómo se programa la ejecución periódica de `procesar-vencimientos` (cron, contenedor, CI/despliegue) |
 | C6 | Perfil 3 → Perfil 1 | Actualizar el README: `loans` está montado en `/api/v1/loans` (DT-24) |
 | C7 | Perfil 3 → Perfil 1 | `loans` publica `ordenes_de_usuario` para USR-06, 07 y 08 (§10.2) |
@@ -520,10 +530,12 @@ El frontend avanza una fase detrás del backend de cada una.
 | C11 | Perfil 3 → Perfil 2 | Frontend: botón "Agregar al pedido" y "Solicitar" en el catálogo, que usan el carrito de `loans` |
 | C12 | Perfil 3 → Perfil 5 | Función pública de `notifications` y eventos de §10.3 |
 | C13 | Perfil 3 → equipo | Ratificar la enmienda 1.1.1 y decidir DT-19 |
-| C14 | — | **Descartado:** por decisión del equipo, una unidad `prestado` no se asigna hasta devolverse, así que `unidades_asignables` y `unidad_es_asignable` alcanzan. `bloquear_unidad(db, unidad_id)` figura en `inventory/service.py`; confirmar con SPEC-04 §6 que es API pública, para bloquear la unidad al aprobar |
-| C15 | Perfil 3 → equipo | Reflejar D-L17 en el ERS (que el PR #15 pasó al repo `Docs-PrestaMeDios`), que la Constitución §6.1 manda actualizar primero por PR: el flujo alternativo de la extensión de notebooks (PRE-11, «reserva previa de otro usuario») deja de existir y el mini-calendario de disponibilidad (PRE-01) pasa a ser «unidades libres ahora». Ajustar también el texto propuesto de P7.2 (enmienda 1.1.1), que habla de `EXCLUDE` para unidades reservadas o entregadas |
-| C16 | Perfil 3 → Perfil 2 | `cantidad_disponible` del catálogo (RN-I4) cuenta las unidades `disponible`, incluidas las ya asignadas a un pedido aprobado y aún no entregadas. Para que coincida con D-L17, el contador que ve el usuario debe restar las asignadas, usando `loans.unidades_libres` (§10.2); si no, el catálogo mostraría disponibles que `loans` rechaza con `409`. Debe resolverse antes de cerrar la Fase 2, que es cuando aparecen las primeras líneas `reservado`. Además, el mini-calendario (PRE-01, Fase B) puede mostrar la próxima liberación prevista. Esto exige ajustar RN-I4 de SPEC-04 (hoy `cantidad_disponible` cuenta `disponible`) y extender RN-I5 («No disponible» para un ítem sin unidades activas) a «sin unidades libres». Un ítem con 0 libres sigue visible (RN-I5) |
+| C14 | — | **Descartado:** `unidades_asignables` y `unidad_es_asignable` alcanzan, porque solo se asignan unidades `disponible`. `bloquear_unidad(db, unidad_id)` figura en `inventory/service.py`; confirmar con SPEC-04 §6 que es API pública, para bloquear la unidad al aprobar |
+| C15 | — | **Descartado:** con D-L17 descartada, el ERS no cambia. Sigue vigente el texto propuesto de P7.2 (enmienda 1.1.1) |
+| C16 | Perfil 3 → Perfil 2 | El contador `cantidad_disponible` del catálogo (RN-I4) informa unidades `disponible` **ahora**, lo que es correcto para el estado físico. Pero si una unidad está reservada para las fechas que el usuario elige, `loans` rechazará el pedido con `409`. El mini-calendario (PRE-01, Fase B) debe usar `loans.unidades_libres(db, ids, sede, desde, hasta)` para mostrar en qué fechas hay unidades libres. Resolver antes de cerrar la Fase 2 |
 | C17 | Perfil 3 → Perfil 2 | Función pública para pasar una unidad a `mantenimiento` dentro de la transacción del llamador (por ejemplo `marcar_unidad_mantenimiento(db, unidad_id)`, usando `bloquear_unidad` y `validar_transicion_admin`), para registrar devoluciones con daño sin una ventana en la que la unidad esté `disponible` y asignable |
+| C18 | Perfil 3 → Perfil 2 | `inventory` copia el parámetro vigente en `max_dias_prestamo` al crear el ítem (acotado por `CHECK 1..15`). Con RN-L06, bajar el parámetro se aplica enseguida, pero subirlo no alcanza a los ítems existentes, y cambiar `es_notebook` después del alta no actualiza el tope. Confirmar si es el comportamiento esperado |
+| C19 | Perfil 3 → Perfil 1 | Claves de horario por sede en `config` (SPEC-03 K10) y numeración de las migraciones `0011` y `0012` frente a las de SPEC-03 |
 
 ---
 
@@ -531,19 +543,19 @@ El frontend avanza una fase detrás del backend de cada una.
 
 | Requisito | Casos de uso | Endpoint | Criterios | Fase |
 | :---- | :---- | :---- | :---- | :---- |
-| PRE-03 | CU-L01 | `POST /ordenes`, `GET /reglas` | AC-L02…L06, L12, L13 | 1 |
+| PRE-03 | CU-L01 | `POST /ordenes`, `GET /reglas` | AC-L02…L06, L12, L13, L56, L57, L63 | 1 |
 | PRE-04 | CU-L01 | `POST /ordenes` (y validación de la interfaz) | AC-L04…L06 | 1 |
-| PRE-05 | CU-L02 | `POST /ordenes` | AC-L14 (hasta PRE-05) | 5 |
+| PRE-05 | CU-L02 | `POST /ordenes` (con `pdf_aval_id`) | AC-L14, L60 | 1 |
 | PRE-06 | CU-L01 | `POST /ordenes` | AC-L07…L09 | 1 |
 | PRE-07 | CU-L01 | `POST /ordenes` | AC-L10, L11 | 1 |
 | PRE-08 | CU-L12 | `procesar-vencimientos` | AC-L45…L48 | 4 |
 | PRE-09 | CU-L01 | `POST /ordenes` | AC-L05 | 1 |
-| PRE-10 | CU-L04 | `PATCH /ordenes/{id}/estado` | AC-L19…L24, L27, L28 | 2 |
-| PRE-11 | CU-L09 | `PATCH .../renovacion` | AC-L41…L44 | 3 |
-| PRE-13 | CU-L07, CU-L08 | `PATCH .../detalles/{id}/estado` | AC-L36…L40 | 3 |
+| PRE-10 | CU-L04 | `PATCH /ordenes/{id}/estado`, `GET /ordenes/{id}/unidades-libres` | AC-L19…L24, L27, L28, L58, L61 | 2 |
+| PRE-11 | CU-L09 | `POST /ordenes` (con `renueva_detalle_id`) y `PATCH /ordenes/{id}/estado` | AC-L41…L44 | 2 |
+| PRE-13 | CU-L07, CU-L08 | `PATCH .../detalles/{id}/estado` | AC-L36…L40, L59 (bloqueado por C17) | 3 |
 | PRE-15 | CU-L04 | `GET /ordenes` | AC-L17, L18 | 2 |
 | PRE-16 | CU-L11 | `GET /calendario` | AC-L49 | 4 |
-| PRE-17 | CU-L05, CU-L06 | `PATCH .../estado` (orden y línea) | AC-L33…L35 | 2–3 |
+| PRE-17 | CU-L05, CU-L06 | `PATCH .../estado` (orden y línea) | AC-L33…L35, L62 | 2–3 |
 | PRE-18 | CU-L04 | `PATCH /ordenes/{id}/estado` | AC-L25, L30 | 2 |
 | PRE-20 | CU-L10 | `GET /ordenes/docente`, `PUT .../observacion-docente` | AC-L50, L51 | 4 |
 | DT-16…DT-20 | — | — | AC-L52, L53 y Fase 0 | 0 |
@@ -554,5 +566,6 @@ El frontend avanza una fase detrás del backend de cada una.
 
 | Versión | Fecha | Cambio |
 | :---- | :---- | :---- |
+| 0.3.0 | 2026-11-06 | Responde a la revisión del Perfil 1: incorpora la Iteración 5 y SPEC-03 (renovación como nueva solicitud, horario por sede, aval con `files`, `datos_publicos_por_ids`), unifica el cierre de la orden (RN-L30), agrega `situacion` derivada (RN-L31), corrige AC-L53, AC-L55 y la trazabilidad, actualiza §0, y descarta D-L17: vuelve al criterio por fechas (§15.3, opción B) con su ajuste en cascada. Pasa a `EN_REVISION` |
 | 0.2.0 | 2026-11-03 | Fase 0 implementada (PR #16). Verifica contra `develop` las firmas de `core.errors`, `config` e `inventory` (S2…S4). Adopta la unidad exclusiva (D-L17: índice único parcial, `unidades-libres`, `unidades_libres`), simplifica la mora (D-L16), agrega `a_mantenimiento` (C17), los pedidos C14…C17 y la pregunta 6 para la referente |
 | 0.1.0 | 2026-10-23 | Borrador inicial. Documenta lo existente en `develop`, define lo pendiente y resuelve DT-16…DT-20 |
