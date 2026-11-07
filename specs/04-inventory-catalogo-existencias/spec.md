@@ -131,8 +131,22 @@ Una unidad `prestado` sólo la libera `loans` (devolución, PRE-13). Pasar a `ma
 | `unidades_asignables(db, equipamiento_id, sede) -> list[int]` | Ids de unidades en `disponible` de esa sede, para asignar al aprobar |
 | `unidad_es_asignable(db, unidad_id, sede) -> bool` | Validar antes de asignar (excluye `mantenimiento` y `baja`) |
 | `marcar_unidad_prestada(db, unidad_id)` / `liberar_unidad(db, unidad_id)` | Entrega y devolución; cambian el estado con `FOR UPDATE` y levantan `AppError(409)` si la transición no es válida |
+| `datos_equipamiento_por_ids(db, ids) -> dict[int, DatosEquipamiento]` *(addendum v1.1.0, C8 de SPEC-05, `BORRADOR`)* | Validar plazo por línea y alta gama al crear una orden, y mostrar nombre y código al administrador, sin importar los modelos de `inventory` |
 
 Estas funciones no hacen `commit`: la transacción es de quien llama. **Hasta que Perfil 3 las adopte, nada de `loans` cambia.** Se registra como ítem de coordinación (§10).
+
+### 6.1 Addendum v1.1.0 — `datos_equipamiento_por_ids` (C8 de SPEC-05) · `BORRADOR`
+
+Pedido del Perfil 3 (SPEC-05 §16, C8). Es una función pública de lectura, en el estilo de `users.datos_publicos_por_ids`. Cumple P3.3 (enmienda 1.1.1): `loans` colabora a través de una función del módulo dueño y no importa `Equipamiento`.
+
+- **Firma:** `datos_equipamiento_por_ids(db: AsyncSession, ids: Iterable[int]) -> dict[int, DatosEquipamiento]`.
+- **`DatosEquipamiento`** (`dataclass(frozen=True, slots=True)`): `id`, `codigo`, `nombre`, `activo`, `es_notebook`, `alta_gama`, `max_dias_prestamo`.
+- **RN-I9 (alcance).** El catálogo es global (`equipamientos` no tiene sede; las unidades sí), así que la función **no filtra por sede ni por estado** y no incluye `sede`. `activo` viaja en el resultado y decide quien llama (un ítem dado de baja no se puede pedir, RN-I5). La autorización es de quien llama.
+- **RN-I10 (consulta).** Una sola consulta con los ids en un único parámetro arreglo; ids repetidos se consultan una vez; entrada vacía devuelve `{}` sin consultar la base; los ids inexistentes se omiten.
+- **RN-I11 (mínimo dato, P6).** Selecciona sólo las columnas necesarias, no la entidad: no carga unidades, series ni códigos de inventario en la sesión de quien llama.
+- **RN-I12 (transacción).** No hace `commit`, `rollback` ni `flush`.
+- **Criterio INV-27:** devuelve los siete campos correctos; incluye ítems inactivos y sin unidades; no filtra por sede; omite inexistentes y repetidos; entrada vacía sin consulta; una sola `SELECT` por lote que no toca `unidades_fisicas`; no deja la entidad en la sesión; no hace `flush`; el resultado es inmutable.
+- **Fuera de este addendum:** `marcar_unidad_mantenimiento` (C17), confirmar que `bloquear_unidad` es API pública (C14), el comportamiento de `max_dias_prestamo` al cambiar el parámetro (C18) y el frontend "Agregar al pedido" (C11) quedan como preguntas abiertas hasta que el usuario las decida.
 
 ## 7. Modelo de datos y migración `0010_inventory_gestion`
 
@@ -246,6 +260,7 @@ Todas resueltas el 2026-10-23 según la recomendación (columna "Resolución"). 
 
 | Versión | Fecha | Cambio |
 | :---- | :---- | :---- |
+| 1.1.0 | 2026-11-06 | **`BORRADOR`** (addendum §6.1, pendiente de aprobación): `datos_equipamiento_por_ids` a pedido del Perfil 3 (C8 de SPEC-05). El código se escribió antes de redactar el addendum, a pedido explícito del usuario; si el addendum no se aprueba, se descarta |
 | 1.0.1 | 2026-10-23 | Fase A implementada. §8: la categoría se filtra en la pantalla, no en la API. Se agregan en el frontend el alta y edición de unidades desde la tabla de stock (cubre PRE-12 y PRE-19). Hallazgo en la migración `0010`: `NAMING_CONVENTION` duplica el prefijo de los `CHECK` en bases creadas con Alembic; la migración usa SQL directo y tolera ambos nombres |
 | 1.0.0 | 2026-10-23 | Aprobado con todas las recomendaciones de §12. Se agrega `equipamientos.es_notebook` (D-05) y se corrige §3 (los tests existentes cubren AC-40…AC-45) |
 | 0.1.0 | 2026-10-23 | Borrador inicial (Perfil 2) |
