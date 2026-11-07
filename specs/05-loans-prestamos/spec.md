@@ -3,7 +3,7 @@
 > **Estado:** `EN_REVISION` · **Versión:** 0.3.0 · **Fecha:** 2026-11-06 · **Perfil:** 3 (Préstamos y concurrencia)
 > **Requisitos:** PRE-03…PRE-11, PRE-13, PRE-15…PRE-18, PRE-20 (`docs/ERS.md` del repo `Docs-PrestaMeDios`, Subsistema 2, módulos 2, 3 y 4, incluida la Iteración 5)
 > **Depende de:** SPEC-01 (`core`, autenticación), SPEC-02 (alcance de sede, `config`), SPEC-03 (`users.datos_publicos_por_ids`, `files` para el aval, horario por sede K10) y SPEC-04 (`inventory/service.py`)
-> **Constitución:** v1.1.0, con la enmienda 1.1.1 propuesta (ADR-019) · **Plan y tareas:** `plan.md` y `tasks.md` en esta misma carpeta (se redactan tras la aprobación)
+> **Constitución:** v1.1.0, con la enmienda 1.1.1 propuesta (ADR-019) · **Plan y tareas:** `plan.md` y `tasks.md` en esta misma carpeta (Fase 1, `BORRADOR`; se ajustan tras la aprobación)
 
 
 ---
@@ -266,9 +266,9 @@ Una orden `aprobada` no tiene estado final propio: el avance lo muestran las lí
 | RN-L18 | Ajuste horario al aprobar (PRE-18): cumple RN-L04 y RN-L06, se aplica a todas las líneas, `fin_ocupacion` queda igual a la nueva devolución y se avisa al solicitante |
 | RN-L19 | Entrega: solo una línea `reservado` de una orden `aprobada`. Llama a `inventory.marcar_unidad_prestada` en la misma transacción y registra `entregado_en`. No hay restricción horaria: el control es presencial |
 | RN-L20 | Devolución: solo una línea `entregado`. Llama a `inventory.liberar_unidad`, registra `devuelto_en` y la observación del estado físico. Si la unidad vuelve dañada (`a_mantenimiento = true`), pasa a `mantenimiento` en la misma transacción, para que no quede asignable entre la devolución y el cambio de estado (C17) |
-| RN-L21 | `demorado` es **derivado**, no se guarda: línea `entregado` y `ahora_lab() > devolucion_pactada`. La interfaz lo muestra en rojo |
+| RN-L21 | `demorado` es **derivado**, no se guarda: línea `entregado` y `ahora_lab() > devolucion_pactada`. La interfaz lo muestra en rojo. Las consecuencias de una devolución demorada (llamados de atención y faltas, ADR-022 d, USR-09) dependen de C20: hasta resolverlo, `loans` no registra sanciones |
 | RN-L22 | Mora: una unidad que no se devolvió sigue `prestado` en `inventory`, así que no puede asignarse a pedidos nuevos (RN-L11) ni entregarse (`marcar_unidad_prestada` exige `disponible`) hasta que el administrador registre la devolución. Si ya tenía una reserva aprobada para después, la entrega de esa reserva falla con `409 TRANSICION_ESTADO_INVALIDA` y el administrador la resuelve con una cancelación forzada (PRE-17) o, a futuro, reasignando la unidad. `fin_ocupacion` no se extiende por demora: solo cambia por ajuste horario o renovación (D-L16) |
-| RN-L23 | No retiro (PRE-08): una línea `reservado` cuyo retiro superó `prestamo.tolerancia_retiro_horas` pasa a `no_retirado` y libera la unidad, **salvo** que su unidad siga `prestado` por la demora de otra línea: en ese caso no se la marca (el solicitante no tiene la culpa) y se informa al administrador para que resuelva (RN-L22); el cierre de la orden sigue RN-L30 |
+| RN-L23 | No retiro (PRE-08): una línea `reservado` cuyo retiro superó `prestamo.tolerancia_retiro_horas` pasa a `no_retirado` y libera la unidad, **salvo** que su unidad siga `prestado` por la demora de otra línea: en ese caso no se la marca (el solicitante no tiene la culpa) y se informa al administrador para que resuelva (RN-L22); el cierre de la orden sigue RN-L30. Si un no retiro cuenta como llamado de atención se define en C20 (ver también la pregunta 7 de §15.2) |
 | RN-L24 | Renovación (PRE-11, ADR-022 h): el estudiante presenta la notebook en el mostrador y emite desde la app una nueva orden con `renueva_detalle_id` (una línea `entregado` suya, de un ítem `es_notebook`) y una sola línea del mismo modelo. Se valida como cualquier pedido (franja, plazo, asignatura), **sin anticipación mínima**, y la unidad renovada cuenta como libre para esa orden. Al aprobarla, el administrador asigna la misma unidad y, en una sola transacción, **primero** la línea anterior pasa a `devuelto` (así deja de ocupar y el `EXCLUDE` no la compara) (sin llamar a `inventory`: la unidad sigue `prestado`) y la nueva a `entregado`; se marca `es_renovado`. Si la unidad tiene otra reserva aprobada que se solapa, la base lo rechaza con `409 UNIDAD_NO_DISPONIBLE` y el administrador asigna otra notebook libre o rechaza |
 | RN-L25 | Privacidad (P6): el estudiante solo ve lo propio; el docente solo ve órdenes de sus asignaturas, en lectura y observación, sin DNI, email ni teléfono; ningún rol ve solicitantes de otra sede |
 | RN-L26 | Jurisdicción (P5): el `ADMIN_LOCAL` opera solo en su sede y el filtro se aplica en el `WHERE` de la consulta, no en la interfaz |
@@ -428,7 +428,7 @@ Cada criterio tendrá al menos un test automatizado, anotado con `# AC-Lxx`, mar
 | ID | Criterio |
 | :---- | :---- |
 | AC-L52 | Todos los endpoints responden `401` sin token |
-| AC-L53 | Los errores de negocio responden `{detail, code}`; solo las violaciones de exclusión o unicidad listadas en §6.3 se traducen a `409`, y otras violaciones de base no se enmascaran como conflicto |
+| AC-L53 | Los errores de negocio responden `{detail, code}`; solo la violación de exclusión (`23P01`) se traduce a `409 UNIDAD_NO_DISPONIBLE`; las de `CHECK`, unicidad o clave foránea no se enmascaran como conflicto (§6.3) |
 | AC-L54 | Cada migración de `loans` (`0011` y `0012`) se valida con upgrade → downgrade → upgrade |
 | AC-L55 | Las pruebas de concurrencia (AC-L23, AC-L24 y EC-L10) usan sesiones independientes, como en producción (ADR-013) |
 
@@ -449,7 +449,7 @@ Cada criterio tendrá al menos un test automatizado, anotado con `# AC-Lxx`, mar
 | EC-L09 | Doble envío del formulario | El backend no deduplica: crea dos órdenes pendientes; la interfaz deshabilita el botón al enviar |
 | EC-L10 | Cancelación del solicitante simultánea con la aprobación | `FOR UPDATE` serializa: una prospera y la otra recibe `409 TRANSICION_INVALIDA` |
 | EC-L11 | Parámetros cambiados entre el pedido y la aprobación | Aprobar no revalida plazos ni franja (la solicitud se hizo con las reglas vigentes); solo el ajuste horario las revalida |
-| EC-L12 | Solicitante suspendido con órdenes vigentes | Sus órdenes no se cancelan solas; la sanción la define el Perfil 1 (USR-09) |
+| EC-L12 | Solicitante suspendido con órdenes vigentes | Sus órdenes no se cancelan solas; la sanción la define el Perfil 1 (USR-09). Los llamados de atención que originan las demoras y los no retiros se coordinan en C20 |
 | EC-L13 | Aprobación parcial por concurrencia | No existe: aprobar es todo o nada (RN-L13) |
 | EC-L14 | Un modelo sin unidades libres para las fechas pedidas | No se puede solicitar para esas fechas (`409 EQUIPAMIENTO_NO_DISPONIBLE`), pero sí para otras. El ítem **sigue visible** en el catálogo (RN-I5 de SPEC-04: solo desaparece si `activo = false`), y el mini-calendario muestra en qué fechas hay unidades libres |
 | EC-L15 | La unidad vuelve rota | Al devolverla con `a_mantenimiento = true`, `loans` la libera y la pasa a `mantenimiento` en la misma transacción. Sin eso quedaría `disponible` y asignable hasta que el administrador cambie el estado en otra solicitud (C17) |
@@ -519,9 +519,9 @@ Se eligió la **opción B: criterio por fechas, solo unidades `disponible`**. Un
 | :---- | :---- | :---- |
 | C1 | Perfil 3 → Perfil 1 | Confirmar que las claves de `config` existentes alcanzan (no se piden claves nuevas) |
 | C2 | Perfil 3 → Perfil 1 | **Parcialmente resuelto:** SPEC-03 Fase A publica `datos_publicos_por_ids(db, ids)`. Sigue abierto el vínculo docente–asignatura (SPEC-03 D-04, C3) |
-| C3 | Perfil 3 → Perfil 1 / equipo | Definir quién implementa el **catálogo de asignaturas** y el vínculo docente–asignatura. Bloquea PRE-20 y la verificación de PRE-03 |
+| C3 | Perfil 3 → Perfil 1 / equipo | Definir quién implementa el **catálogo de asignaturas** y el vínculo docente–asignatura. Bloquea PRE-20 y la verificación de PRE-03. Lo decide el equipo, no el Perfil 3 solo (SPEC-03 D-04 también lo dejó abierto); D-L13 es la solución transitoria |
 | C4 | Perfil 3 → Perfil 1 | **Resuelto por SPEC-03:** `POST /api/v1/files/archivos` (`proposito=AVAL_PRESTAMO`) y `vincular_archivo(db, archivo_id, *, propietario_id, proposito)` sin `commit`. Falta acordar el detalle de K3 (cómo se expone el aval en la orden) |
-| C5 | Perfil 3 → Perfil 1 | Cómo se programa la ejecución periódica de `procesar-vencimientos` (cron, contenedor, CI/despliegue) |
+| C5 | Perfil 3 → Perfil 1 | Cómo se programa la ejecución periódica de `procesar-vencimientos` (cron, contenedor, CI/despliegue). Depende del despliegue, que es del Perfil 1 (ADR-018), y afecta a PRE-08 y, más adelante, a NOV-03; mientras tanto alcanza D-L08 |
 | C6 | Perfil 3 → Perfil 1 | Actualizar el README: `loans` está montado en `/api/v1/loans` (DT-24) |
 | C7 | Perfil 3 → Perfil 1 | `loans` publica `ordenes_de_usuario` para USR-06, 07 y 08 (§10.2) |
 | C8 | Perfil 3 → Perfil 2 | Función pública de lectura de equipamiento y unidades (`es_notebook`, `alta_gama`, `max_dias_prestamo`, nombre, código, sede), para validar plazos y mostrar datos al administrador |
@@ -536,6 +536,7 @@ Se eligió la **opción B: criterio por fechas, solo unidades `disponible`**. Un
 | C17 | Perfil 3 → Perfil 2 | Función pública para pasar una unidad a `mantenimiento` dentro de la transacción del llamador (por ejemplo `marcar_unidad_mantenimiento(db, unidad_id)`, usando `bloquear_unidad` y `validar_transicion_admin`), para registrar devoluciones con daño sin una ventana en la que la unidad esté `disponible` y asignable |
 | C18 | Perfil 3 → Perfil 2 | `inventory` copia el parámetro vigente en `max_dias_prestamo` al crear el ítem (acotado por `CHECK 1..15`). Con RN-L06, bajar el parámetro se aplica enseguida, pero subirlo no alcanza a los ítems existentes, y cambiar `es_notebook` después del alta no actualiza el tope. Confirmar si es el comportamiento esperado |
 | C19 | Perfil 3 → Perfil 1 | Claves de horario por sede en `config` (SPEC-03 K10) y numeración de las migraciones `0011` y `0012` frente a las de SPEC-03 |
+| C20 | Perfil 3 → Perfil 1 | **Sanciones (ADR-022 d, USR-09).** Acordar quién registra el llamado de atención cuando `loans` registra una devolución demorada (RN-L21) o un no retiro (RN-L23): (a) una función pública de `users`, sin `commit`, que `loans` llama en la misma transacción (por ejemplo `registrar_llamado_de_atencion(db, usuario_id, *, motivo, orden_id)`), o (b) un evento que `users` consume. Propuesta del Perfil 3: (a), por coherencia con `vincular_archivo` y `datos_publicos_por_ids`. Definir también si el no retiro cuenta como llamado, junto con la pregunta 7 de §15.2. Hasta resolverlo, `loans` no registra sanciones. Conviene cerrarlo antes de aprobar |
 
 ---
 
@@ -566,6 +567,6 @@ Se eligió la **opción B: criterio por fechas, solo unidades `disponible`**. Un
 
 | Versión | Fecha | Cambio |
 | :---- | :---- | :---- |
-| 0.3.0 | 2026-11-06 | Responde a la revisión del Perfil 1: incorpora la Iteración 5 y SPEC-03 (renovación como nueva solicitud, horario por sede, aval con `files`, `datos_publicos_por_ids`), unifica el cierre de la orden (RN-L30), agrega `situacion` derivada (RN-L31), corrige AC-L53, AC-L55 y la trazabilidad, actualiza §0, y descarta D-L17: vuelve al criterio por fechas (§15.3, opción B) con su ajuste en cascada. Pasa a `EN_REVISION` |
+| 0.3.0 | 2026-11-06 | Responde a la revisión del Perfil 1: incorpora la Iteración 5 y SPEC-03 (renovación como nueva solicitud, horario por sede, aval con `files`, `datos_publicos_por_ids`), unifica el cierre de la orden (RN-L30), agrega `situacion` derivada (RN-L31), corrige AC-L53, AC-L55 y la trazabilidad, actualiza §0, registra la relación con las sanciones (C20) y deja C3 y C5 como decisiones del equipo y del Perfil 1, y descarta D-L17: vuelve al criterio por fechas (§15.3, opción B) con su ajuste en cascada. Pasa a `EN_REVISION` |
 | 0.2.0 | 2026-11-03 | Fase 0 implementada (PR #16). Verifica contra `develop` las firmas de `core.errors`, `config` e `inventory` (S2…S4). Adopta la unidad exclusiva (D-L17: índice único parcial, `unidades-libres`, `unidades_libres`), simplifica la mora (D-L16), agrega `a_mantenimiento` (C17), los pedidos C14…C17 y la pregunta 6 para la referente |
 | 0.1.0 | 2026-10-23 | Borrador inicial. Documenta lo existente en `develop`, define lo pendiente y resuelve DT-16…DT-20 |
