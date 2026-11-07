@@ -1,8 +1,8 @@
 # TASKS-05 — Préstamos (`loans`): Fase 1, Solicitar
 
 > **Estado:** `BORRADOR` · **Versión:** 0.3.0 · **Fecha:** 2026-11-06 · **Perfil:** 3
-> **Spec:** `specs/05-loans-prestamos/spec.md` v0.3.1 · **Plan:** `specs/05-loans-prestamos/plan.md` v0.3.0
-> Cada tarea es chica y verificable. Las tareas que dependen de otros perfiles (`files`, K10) se aíslan para que el resto avance. **No se mergea `POST /ordenes` hasta que la v0.3.0 esté aprobada (V4).**
+> **Spec:** `specs/05-loans-prestamos/spec.md` v1.0.0 (`APROBADO`) · **Plan:** `specs/05-loans-prestamos/plan.md` v0.3.0
+> Cada tarea es chica y verificable. Las tareas que dependen de otros perfiles (`files`, K10) se aíslan para que el resto avance.
 
 Leyenda: `[ ]` pendiente · `[~]` bloqueada o en curso · `[x]` hecha
 
@@ -12,7 +12,7 @@ Leyenda: `[ ]` pendiente · `[~]` bloqueada o en curso · `[x]` hecha
 
 | ID | Tarea | Criterios | Verificación | Estado |
 | :---- | :---- | :---- | :---- | :---- |
-| **T1.0** | Verificaciones previas V1…V4 del plan: `core/settings.py` (`ahora_lab`, `ZONA_HORARIA_LAB`), fábricas de tests, estado de C8 y C3, y el spec en `APROBADO` | — | Plan §2. V1…V3 hechas; **V4 pendiente** (v0.3.0 en revisión del Perfil 1) | `[~]` |
+| **T1.0** | Verificaciones previas V1…V4 del plan: `core/settings.py` (`ahora_lab`, `ZONA_HORARIA_LAB`), fábricas de tests, estado de C8 y C3, y el spec en `APROBADO` | — | Plan §2. V1…V4 hechas (spec aprobada el 2026-11-07) | `[x]` |
 | **T1.1** | `ReglasResponse` en `schemas.py`, `service.reglas(db)` y `GET /reglas` (cualquier usuario autenticado), con el **horario global** | AC-L01, AC-L52 | `tests/loans/test_reglas.py`: devuelve los valores sembrados; con `set_parametro` el valor cambia; sin token, `401`. El horario por sede es T1.13 | `[x]` |
 | **T1.2** | Funciones puras de fechas en `service.py`: `_a_hora_lab`, `_validar_franja`, `_validar_anticipacion`, `_dias_corridos` | AC-L07, L08, L09; EC-L02, L03, L04 | `tests/loans/test_validaciones.py` (sin base de datos): horas exactas de apertura y cierre válidas; fuera de franja inválidas; anticipación justa válida; zona horaria distinta; mismo día | `[x]` |
 | **T1.3** | `_limite_dias(es_notebook, max_general, max_notebook, max_item)` y `_validar_plazo` | AC-L10, L11; EC-L01 | Unitarias: equipo común 4, notebook 15, el menor entre parámetro e ítem; el error trae `equipamiento_id` y `max_dias` | `[x]` |
