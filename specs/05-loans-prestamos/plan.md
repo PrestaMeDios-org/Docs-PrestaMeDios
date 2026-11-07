@@ -1,7 +1,7 @@
 # PLAN-05 — Préstamos (`loans`): Fase 1, Solicitar
 
-> **Estado:** `BORRADOR` · **Versión:** 0.2.0 · **Fecha:** 2026-11-06 · **Perfil:** 3
-> **Spec:** `specs/05-loans-prestamos/spec.md` v0.3.0 (§14, Fase 1) · **Tareas:** `specs/05-loans-prestamos/tasks.md`
+> **Estado:** `BORRADOR` · **Versión:** 0.3.0 · **Fecha:** 2026-11-06 · **Perfil:** 3
+> **Spec:** `specs/05-loans-prestamos/spec.md` v0.3.1 (§14, Fase 1) · **Tareas:** `specs/05-loans-prestamos/tasks.md`
 > Este plan define el **cómo** de la Fase 1. Las Fases 2 a 5 se planifican cuando se cierre cada fase anterior.
 
 ---
@@ -21,13 +21,13 @@ Reglas que se implementan: RN-L01…RN-L10 (sede, solicitante, estado inicial, f
 
 ### 1.1 Corte de esta primera entrega
 
-Mientras se aprueba la v0.3.0 y llegan C8 y `files` (SPEC-03), `POST /ordenes` se entrega recortado:
+Mientras se aprueba la v0.3.0 y llega `files` (SPEC-03), `POST /ordenes` se entrega recortado:
 
 | Tema | En este corte | Cuándo se completa |
 | :---- | :---- | :---- |
 | **Renovación** (RN-L24, `renueva_detalle_id`) | **Fuera de alcance.** El esquema ya acepta el campo, pero el servicio responde `501 NO_IMPLEMENTADO` | Tarea propia (T1.14), con su propio diseño de disponibilidad: la notebook a renovar está `prestado`, no figura en `unidades_asignables` y debe contar como libre para esa orden |
 | **Aval** (RN-L09, `pdf_aval_id`) | Toda orden con un ítem de alta gama responde `422 AVAL_REQUERIDO`, traiga o no `pdf_aval_id`, porque todavía no se puede vincular el archivo | Cuando `files` esté en `develop` (T1.12) |
-| **Lectura de equipamiento** (C8) | `crear_orden` usa un adaptador propio (`_datos_items`). Hasta que `inventory` publique la función, responde `501` en la API real; los tests lo reemplazan por uno falso | Cuando el Perfil 2 publique `datos_equipamiento_por_ids` (T1.11) |
+| **Lectura de equipamiento** (C8) | **Resuelto** (2026-11-06): `crear_orden` usa `inventory.datos_equipamiento_por_ids` (PR #19 del backend) | — |
 | **Horario por sede** (K10, AC-L63) | Se leen `horario.apertura` y `horario.cierre` globales | Cuando `config` publique las claves por sede (T1.13): cambia la lectura, no la regla |
 
 ---
@@ -38,7 +38,7 @@ Mientras se aprueba la v0.3.0 y llegan C8 y `files` (SPEC-03), `POST /ordenes` s
 | :---- | :---- | :---- | :---- |
 | V1 | `ahora_lab()` y `ZONA_HORARIA_LAB` existen y su firma (S6) | `app/core/settings.py` | Verificado |
 | V2 | Cómo crean los tests de `inventory` y `spaces` equipamiento, unidades y usuarios (para armar las fábricas de `loans`) | `tests/inventory/`, `tests/conftest.py` | Verificado: las fábricas de `loans` viven en `tests/conftest.py` |
-| V3 | Estado de C8 (lectura de equipamiento en `inventory`) y de C3 (asignaturas) | Respuesta del Perfil 2 y del equipo | C8 pedido y registrado en `MEMORY.md` §5, sin respuesta. C3 sin cambios (D-L13) |
+| V3 | Estado de C8 (lectura de equipamiento en `inventory`) y de C3 (asignaturas) | Respuesta del Perfil 2 y del equipo | C8 resuelto por el Perfil 2 (`datos_equipamiento_por_ids`, PR #19). C3 sin cambios (D-L13) |
 | V4 | Que el spec esté `APROBADO` (Constitución P1) | `Docs-PrestaMeDios` | v0.3.0 en revisión del Perfil 1. **No se mergea `POST /ordenes` antes de la aprobación** |
 
 ---
@@ -53,7 +53,8 @@ Mientras se aprueba la v0.3.0 y llegan C8 y `files` (SPEC-03), `POST /ordenes` s
 | `tests/loans/test_validaciones.py` | **Crear** | Pruebas unitarias de las funciones puras (sin base de datos) |
 | `tests/loans/test_reglas.py` | **Crear** | Integración de `GET /reglas` |
 | `tests/loans/test_unidades_libres.py` | **Crear** | Integración de `ids_unidades_libres` y `unidades_libres` |
-| `tests/loans/test_crear_orden.py` | **Crear** | Integración de `POST /ordenes`, con el adaptador de C8 reemplazado |
+| `tests/loans/test_crear_orden.py` | **Crear** | Integración de `POST /ordenes`, contra la base real |
+| `tests/loans/test_ocupacion.py` | **Crear** | Integración de `ocupacion_de_unidades` (incluye que use una sola consulta) |
 | `tests/loans/test_consulta.py` | **Crear** | Integración de `GET /ordenes/mias` y `GET /ordenes/{id}` |
 | `tests/loans/test_schemas.py` | Modificar | Forma de `pdf_aval_id` y `renueva_detalle_id` |
 | `tests/conftest.py` | Modificar | Fábricas `crear_equipamiento` y `crear_linea` (según V2) |
@@ -84,7 +85,7 @@ Mientras se aprueba la v0.3.0 y llegan C8 y `files` (SPEC-03), `POST /ordenes` s
 | `reglas(db)` | Lee con `obtener_parametro` las seis claves y arma `ReglasResponse` (horario global hasta K10) |
 | `ids_unidades_libres(db, equipamiento_ids, sede, desde, hasta)` | **Interna de `loans`.** Por modelo, los ids de las unidades libres para el período: `inventory.unidades_asignables(...)` menos las que tienen una línea `reservado` o `entregado` (`ESTADOS_DETALLE_QUE_OCUPAN`) cuyo `periodo` se solapa con `[desde, hasta)` (consulta a `detalles_prestamo` con `&&`). Siempre devuelve una clave por modelo pedido, sin repetidos. Un período vacío o invertido es un `ValueError` (error de programación). La usan `crear_orden` y, en la Fase 2, `GET /ordenes/{id}/unidades-libres` |
 | `unidades_libres(db, equipamiento_ids, sede, desde, hasta)` | **API pública** (spec §10.2), para el mini-calendario del Perfil 2 (INV-26, C10, C16). Mismo criterio, pero devuelve solo **cantidades** por modelo, sin identidad de unidades ni de solicitantes |
-| `_datos_items(db, ids)` | **Adaptador de C8** (§4.6) |
+| `ocupacion_de_unidades(db, unidad_ids, desde, hasta)` | **API pública** (spec §10.2), para el mini-calendario y la disponibilidad por fechas del Perfil 2 (PRE-01, INV-26). Por unidad, los períodos `[retiro_pactado, fin_ocupacion)` de sus líneas `reservado` o `entregado` que se solapan con el rango, en una sola consulta y sin identidad. `inventory` arma el conteo por día |
 | `crear_orden(db, actor, payload)` | Orquesta la creación (§4.3) |
 | `listar_mis_ordenes(db, actor, estado, limit, offset)` | Filtra por `solicitante_id`, ordena por `fecha_solicitud` descendente |
 | `obtener_orden(db, actor, orden_id)` | Solo el dueño; otra persona o inexistente → `404 ORDEN_NO_ENCONTRADA` |
@@ -96,7 +97,7 @@ Mientras se aprueba la v0.3.0 y llegan C8 y `files` (SPEC-03), `POST /ordenes` s
 3. **Asignatura** obligatoria para `ESTUDIANTE` → `422 ASIGNATURA_REQUERIDA`. Su existencia no se verifica (D-L13).
 4. **Parámetros**: `obtener_parametro` para horario, anticipación y plazos.
 5. **Franja y anticipación** (funciones puras).
-6. **Datos de los ítems** con `_datos_items` (una sola llamada para todos los modelos): ausente o inactivo → `404 EQUIPAMIENTO_NO_ENCONTRADO` con `equipamiento_id`.
+6. **Datos de los ítems** con `inventory.datos_equipamiento_por_ids` (una sola llamada para todos los modelos): ausente o inactivo → `404 EQUIPAMIENTO_NO_ENCONTRADO` con `equipamiento_id`.
 7. **Alta gama** → `422 AVAL_REQUERIDO` si falta `pdf_aval_id`. En este corte se rechaza toda alta gama, con o sin aval (§1.1).
 8. **Plazo por línea**: `_limite_dias` y `_validar_plazo`, por cada modelo distinto.
 9. **Unidades libres**: `Counter` de las líneas por modelo, `ids_unidades_libres(db, modelos, sede, retiro, devolucion)` y `_validar_disponibilidad`.
@@ -116,14 +117,9 @@ Los pasos 1 a 9 solo leen: un `AppError` en ellos no deja nada que deshacer.
 - `renueva_detalle_id: int | None` (`ge=1`).
 - Si viene `renueva_detalle_id`, la orden lleva **una sola línea** (validación del esquema, RN-L24). Que sea una línea `entregado` propia de una notebook lo valida el servicio (`422 RENOVACION_NO_PERMITIDA`, T1.14).
 
-### 4.6 Adaptador de lectura de equipamiento (C8)
+### 4.6 Lectura de equipamiento (C8, resuelto)
 
-`loans` no puede leer los modelos de `inventory` (P3.3). Para no quedar bloqueado, `crear_orden` depende de una interfaz propia:
-
-- `DatosEquipamiento` (dataclass inmutable): `id`, `nombre`, `codigo`, `activo`, `es_notebook`, `alta_gama`, `max_dias_prestamo`.
-- `_datos_items(db, ids) -> dict[int, DatosEquipamiento]`: un id inexistente no aparece en el resultado.
-
-Hoy `_datos_items` responde `501 NO_IMPLEMENTADO` y los tests la reemplazan con `monkeypatch` por una que lee el catálogo de prueba. Cuando el Perfil 2 publique `datos_equipamiento_por_ids` (firma propuesta en C8), solo cambia el cuerpo de `_datos_items`: la lógica y los tests ya están. Si el Perfil 2 elige otra firma, el cambio queda en este único lugar.
+`loans` no puede leer los modelos de `inventory` (P3.3). Mientras C8 no existía, `crear_orden` dependía de un adaptador propio (`_datos_items`) que respondía `501`, y los tests lo reemplazaban por uno falso. El 2026-11-06 el Perfil 2 publicó `inventory.datos_equipamiento_por_ids(db, ids) -> dict[int, DatosEquipamiento]` (`id`, `codigo`, `nombre`, `activo`, `es_notebook`, `alta_gama`, `max_dias_prestamo`) con la firma propuesta, así que se borró el adaptador: `crear_orden` la llama directamente y los tests corren contra la base real (T1.11).
 
 ---
 
@@ -131,7 +127,6 @@ Hoy `_datos_items` responde `501 NO_IMPLEMENTADO` y los tests la reemplazan con 
 
 | Bloqueo | Afecta | Alternativa mientras se resuelve |
 | :---- | :---- | :---- |
-| **C8**: lectura de `es_notebook`, `alta_gama`, `max_dias_prestamo` y `activo` en `inventory` | Pasos 6 a 9 de `crear_orden` en la API real | Adaptador propio con una función falsa en los tests (§4.6). No se lee el modelo de `inventory` directamente (P3.3) |
 | **`files`** (SPEC-03) | Aval de alta gama (RN-L09, AC-L14) | Se rechaza toda alta gama con `422 AVAL_REQUERIDO` |
 | **K10** (horario por sede) | AC-L63 | Claves globales de `config` |
 | **C3**: catálogo de asignaturas | Verificar `asignatura_id` | D-L13: se exige pero no se verifica su existencia |
@@ -146,7 +141,7 @@ AC-L12 pide `404 EQUIPAMIENTO_NO_ENCONTRADO` también para un modelo **sin unida
 ## 6. Verificación de la fase
 
 1. `pytest -q` completo y `ruff check` sin errores.
-2. `/docs` muestra los cinco endpoints (cuatro implementados) con las respuestas de error de `error_responses`. El `501` transitorio de `POST /ordenes` (C8 y renovación) no se declara en OpenAPI porque `error_responses` de `core` no lo admite; queda en el docstring.
+2. `/docs` muestra los cinco endpoints (cuatro implementados) con las respuestas de error de `error_responses`. El `501` transitorio de `POST /ordenes` (renovación) no se declara en OpenAPI porque `error_responses` de `core` no lo admite; queda en el docstring.
 3. Cada criterio AC-L01…L16, L18, L56 y L57 tiene al menos un test anotado con `# AC-Lxx` y `pytest.mark.integracion` (los unitarios, sin la marca).
 4. `MEMORY.md` actualizado (decisiones, deuda nueva) y el spec en `IMPLEMENTADO` para los criterios de la fase.
 
@@ -162,5 +157,6 @@ Se planifica en `tasks.md` (tareas F1.x). Depende de que el contrato de `POST /o
 
 | Versión | Fecha | Cambio |
 | :---- | :---- | :---- |
+| 0.3.0 | 2026-11-06 | C8 resuelto: `crear_orden` usa `inventory.datos_equipamiento_por_ids` y se borra el adaptador provisorio. Suma `ocupacion_de_unidades` (spec v0.3.1 §10.2) para el Perfil 2 |
 | 0.2.0 | 2026-11-06 | Alineado con SPEC-05 v0.3.0: `AVAL_REQUERIDO` en lugar de `AVAL_NO_HABILITADO`; división `ids_unidades_libres` / `unidades_libres` y `_validar_disponibilidad`; adaptador de C8 con función falsa en los tests; cambio de esquema (`pdf_aval_id`, `renueva_detalle_id`); renovación fuera de este corte; horario global hasta K10; garantía final en el `EXCLUDE` de `0009` (D-L17 descartada); nombres de archivo reales; resultado de V1…V4 |
 | 0.1.0 | 2026-11-03 | Primera versión, sobre SPEC-05 v0.2.0 |
