@@ -35,7 +35,7 @@
 | `inventory` | 2 | Implementado (SPEC-04 Fase A, PR \#14) | Auth, alcance de sede, vista reducida para estudiantes y docentes, edición y baja lógica de equipamiento y unidades, matriz de estados, `service.py` público para `loans` (incluye `datos_equipamiento_por_ids`, C8, PR \#19). Migraciones `0006` y `0010`. Falta la Fase B (disponibilidad por fechas e historial por unidad, depende de `loans`) |
 | `spaces` | 4 | Implementado | Con auth, alcance de sede y validaciones V1–V8 (SPEC-02); GIST con `tsrange`. Migraciones `0001`–`0004`, `0007` |
 | `loans` | 3 | Sólo contratos (en `develop`) | Esquemas, modelos, migración `0009` (GIST con `tstzrange`) y 5 endpoints en `/api/v1/loans` que exigen sesión y rol y responden `501 NO_IMPLEMENTADO` (PR \#16). Fase 1 (`GET /reglas`, consultas propias, unidades libres y `POST /ordenes`): `tasks.md` marca T1.1…T1.8 y T1.10 como hechas, pero **no está publicada**: al 2026-11-07, `origin/feat/loans-solicitudes` sólo tiene un commit que cambia `app/main.py`, sin `loans/service.py` ni tests nuevos. Con C8 en `develop`, T1.11 ya no está bloqueada |
-| `notifications` | 5 | Fase A implementada (rama `feat/notifications-comunicados`, sin PR) | SPEC-06 v1.0.0. Comunicados: `GET/POST /api/v1/notifications/comunicados`, `GET/PATCH …/{id}`, `PATCH …/{id}/estado`, con alcance de sede y globales. Migración `0013_notifications_init` (crea también `notificaciones` para la Fase B; `down_revision = 0010`). 54 tests, cobertura 100 %. Contrato de `crear_notificacion` (§6) publicado en el spec; se implementa en la Fase B |
+| `notifications` | 5 | Fase A implementada (PR abierto hacia `develop`, sin mergear) | Backend PR \#22 (`feat/daniel-notificaciones-comunicados`). SPEC-06 v1.0.0. Comunicados: `GET/POST /api/v1/notifications/comunicados`, `GET/PATCH …/{id}`, `PATCH …/{id}/estado`, con alcance de sede y globales. Migración `0013_notifications_init` (crea también `notificaciones` para la Fase B; `down_revision = 0010`). 54 tests, cobertura 100 %. Contrato de `crear_notificacion` (§6) publicado en el spec; se implementa en la Fase B |
 | `assistant` | 5 | No iniciado | Va en SPEC-07 (D-N09) |
 | Tests | — | 320 en verde al 2026-10-23 (con SPEC-04; cobertura de `inventory` 98 %). PR \#16 sumó `tests/loans/`; no se volvió a correr la suite completa después | `loans` sólo tiene tests de contrato y esquemas |
 
@@ -47,7 +47,7 @@
 | `inventory` | 2 | Implementado (SPEC-04 Fase A, PR \#9) | Catálogo conectado a la API, tabla de stock en `admin-stock`, alta, edición, baja lógica y estados (47 tests de frontend en verde). Se montó `StockPage` en `App.tsx` con la conformidad del Perfil 1 |
 | `spaces` | 4 | Implementado | Calendario conectado a la API, aprobación, bloqueos y alta de espacios |
 | `loans` | 3 | Placeholder | `.gitkeep` |
-| `notifications` | 5 | Fase A implementada (rama `feat/notifications-comunicados`, sin PR) | Pantalla "Novedades" (`news`, montada en `App.tsx`): comunicados conectados a la API y portal con el horario de `config`. 17 tests de frontend. La campanita sigue con datos fijos en `Navbar.tsx` hasta la Fase B |
+| `notifications` | 5 | Fase A implementada (PR abierto hacia `develop`, sin mergear) | Frontend PR \#12 (depende del backend \#22). Pantalla "Novedades" (`news`, montada en `App.tsx`): comunicados conectados a la API y portal con el horario de `config`. 17 tests de frontend. La campanita sigue con datos fijos en `Navbar.tsx` hasta la Fase B |
 
 ---
 
@@ -190,6 +190,7 @@
 
 | Fecha | Autor | Evento |
 | :---- | :---- | :---- |
+| 2026-11-07 | Perfil 5 | SPEC-06 Fase A publicada: backend PR \#22 y frontend PR \#12 hacia `develop` (rama `feat/daniel-notificaciones-comunicados` en ambos); documentación en `docs/daniel-notificaciones-spec-06`. Pendiente: recorrido manual en el navegador, revisión y merge (primero el \#22) |
 | 2026-11-07 | Perfil 5 | SPEC-06 **Fase A implementada** con asistencia de IA en `feat/notifications-comunicados` (backend y frontend, sin commit): comunicados por sede o globales, portal, migración `0013`. Línea base (T-00) con Python 3.12.10 y PostgreSQL 16 en Docker: DT-30 también falla con 3.12. Suite backend 550/551 (la que falla es DT-30), frontend 69/69. Falta el recorrido manual en el navegador |
 | 2026-11-07 | Perfil 5 | SPEC-06 (`notifications`) redactado con asistencia de IA a partir de la revisión del Perfil 1 (`revision-perfil-5-notifications-assistant.md`) y **aprobado** (v1.0.0) con todas las recomendaciones: ADR-023, respuesta a K6, C12 de SPEC-05 y S7 del Perfil 4 respondidos, ítems C-N01…C-N07. Plan y tareas en `BORRADOR` |
 | 2026-11-07 | Perfil 1 | Seguimiento de los cambios del 2026-11-06, con asistencia de IA: snapshot al día con `develop` (backend PR \#18…\#20, frontend PR \#11) y con `main` de Docs (PR \#6…\#8); DT-27, DT-28 y C8 constan como mergeados; la DT-29 de Python 3.13 se renumera a **DT-30** (el ID ya era del ERS); se registra que el addendum v1.1.0 de SPEC-04 tiene código mergeado sin aprobar y que la Fase 1 de `loans` no está publicada en GitHub. Detalle por perfil en las revisiones `revision-spec-04.md` y `revision-spec-05.md` (raíz del workspace, sin versionar) |

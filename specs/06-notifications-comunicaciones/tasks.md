@@ -103,6 +103,7 @@
 - [ ] **D-02 · Estado de los documentos.** Pasar el spec a `IMPLEMENTADO` (Fases A y B), registrar en su historial el desvío de la navegación desde `referencia` y pedir al Perfil 1 que actualice la fila del Perfil 5 en `AGENTS.md` §3 y `docs/perfiles.md` §4.
   *Verificación:* PR de documentación o aprobación del Perfil 1.
 - [ ] **D-03 · PRs.** Un PR por fase y por repo, con la tabla requisito → endpoint → test, el resultado de las pruebas y de la migración, y los puntos de integración tocados (plan §6). Sin commit, push ni merge salvo pedido explícito.
+  *Fase A, 2026-11-07:* PRs abiertos hacia `develop` desde `feat/daniel-notificaciones-comunicados`: backend [\#22](https://github.com/PrestaMeDios-org/Backend-PrestaMeDios/pull/22) (5 commits) y frontend [\#12](https://github.com/PrestaMeDios-org/Frontend-PrestaMeDios/pull/12) (4 commits, depende del \#22). La documentación va en la rama `docs/daniel-notificaciones-spec-06`. Queda abierta para la Fase B.
 
 ## Orden y dependencias
 
