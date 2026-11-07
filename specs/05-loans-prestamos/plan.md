@@ -1,7 +1,7 @@
 # PLAN-05 — Préstamos (`loans`): Fase 1, Solicitar
 
 > **Estado:** `BORRADOR` · **Versión:** 0.3.0 · **Fecha:** 2026-11-06 · **Perfil:** 3
-> **Spec:** `specs/05-loans-prestamos/spec.md` v0.3.1 (§14, Fase 1) · **Tareas:** `specs/05-loans-prestamos/tasks.md`
+> **Spec:** `specs/05-loans-prestamos/spec.md` v1.0.0, `APROBADO` (§14, Fase 1) · **Tareas:** `specs/05-loans-prestamos/tasks.md`
 > Este plan define el **cómo** de la Fase 1. Las Fases 2 a 5 se planifican cuando se cierre cada fase anterior.
 
 ---
@@ -39,7 +39,7 @@ Mientras se aprueba la v0.3.0 y llega `files` (SPEC-03), `POST /ordenes` se entr
 | V1 | `ahora_lab()` y `ZONA_HORARIA_LAB` existen y su firma (S6) | `app/core/settings.py` | Verificado |
 | V2 | Cómo crean los tests de `inventory` y `spaces` equipamiento, unidades y usuarios (para armar las fábricas de `loans`) | `tests/inventory/`, `tests/conftest.py` | Verificado: las fábricas de `loans` viven en `tests/conftest.py` |
 | V3 | Estado de C8 (lectura de equipamiento en `inventory`) y de C3 (asignaturas) | Respuesta del Perfil 2 y del equipo | C8 resuelto por el Perfil 2 (`datos_equipamiento_por_ids`, PR #19). C3 sin cambios (D-L13) |
-| V4 | Que el spec esté `APROBADO` (Constitución P1) | `Docs-PrestaMeDios` | v0.3.0 en revisión del Perfil 1. **No se mergea `POST /ordenes` antes de la aprobación** |
+| V4 | Que el spec esté `APROBADO` (Constitución P1) | `Docs-PrestaMeDios` | **Aprobado** (v1.0.0, 2026-11-07) |
 
 ---
 
