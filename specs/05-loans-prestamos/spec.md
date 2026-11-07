@@ -1,6 +1,6 @@
 # SPEC-05 — Préstamos de equipamiento y notebooks (`loans`)
 
-> **Estado:** `EN_REVISION` · **Versión:** 0.3.0 · **Fecha:** 2026-11-06 · **Perfil:** 3 (Préstamos y concurrencia)
+> **Estado:** `EN_REVISION` · **Versión:** 0.3.1 · **Fecha:** 2026-11-06 · **Perfil:** 3 (Préstamos y concurrencia)
 > **Requisitos:** PRE-03…PRE-11, PRE-13, PRE-15…PRE-18, PRE-20 (`docs/ERS.md` del repo `Docs-PrestaMeDios`, Subsistema 2, módulos 2, 3 y 4, incluida la Iteración 5)
 > **Depende de:** SPEC-01 (`core`, autenticación), SPEC-02 (alcance de sede, `config`), SPEC-03 (`users.datos_publicos_por_ids`, `files` para el aval, horario por sede K10) y SPEC-04 (`inventory/service.py`)
 > **Constitución:** v1.1.0, con la enmienda 1.1.1 propuesta (ADR-019) · **Plan y tareas:** `plan.md` y `tasks.md` en esta misma carpeta (Fase 1, `BORRADOR`; se ajustan tras la aprobación)
@@ -298,7 +298,8 @@ Una orden `aprobada` no tiene estado final propio: el avance lo muestran las lí
 
 | Función (firma indicativa) | Para | Requisito |
 | :---- | :---- | :---- |
-| `unidades_libres(db, equipamiento_ids, sede, desde, hasta)` → por modelo, la cantidad de unidades libres para ese período (criterio de RN-L10), **sin identidad de solicitantes**. Sirve al mini-calendario del catálogo (PRE-01) | Perfil 2 (INV-26) | PRE-01 |
+| `unidades_libres(db, equipamiento_ids, sede, desde, hasta)` → por modelo, la cantidad de unidades libres para ese período (criterio de RN-L10), **sin identidad de solicitantes**. Sirve para saber si un modelo se puede pedir en las fechas elegidas (botón del catálogo, C16) | Perfil 2 | PRE-01, PRE-03 |
+| `ocupacion_de_unidades(db, unidad_ids, desde, hasta) -> dict[int, list[PeriodoOcupado]]` → por unidad, los períodos `[retiro_pactado, fin_ocupacion)` de sus líneas `reservado` o `entregado` que se solapan con el rango, ordenados por inicio. Una sola consulta, sin identidad (P6: ni orden ni solicitante), sin filtro de sede y sin `commit`. Una clave por unidad pedida (lista vacía si está libre). `inventory` pasa las unidades operativas de un modelo y arma el conteo por día del mini-calendario y de la disponibilidad por fechas. Reemplaza las llamadas día por día a `unidades_libres`, con el aval del Perfil 2 (2026-11-06) | Perfil 2 (INV-26) | PRE-01 |
 | `historial_de_unidad(db, unidad_id, actor)` → movimientos, solo con jurisdicción | Perfil 2 | PRE-12 |
 | `reservas_futuras_de_unidad(db, unidad_id, desde)` → reservas aprobadas, solo con jurisdicción | Perfil 2 | PRE-17 |
 | `ordenes_de_usuario(db, usuario_id, ...)` | Perfil 1 | USR-06, USR-07, USR-08 |
@@ -567,6 +568,7 @@ Se eligió la **opción B: criterio por fechas, solo unidades `disponible`**. Un
 
 | Versión | Fecha | Cambio |
 | :---- | :---- | :---- |
+| 0.3.1 | 2026-11-06 | §10.2: agrega `ocupacion_de_unidades` (ocupación por unidad y período en una sola consulta, para el mini-calendario del Perfil 2, con su aval) y precisa el uso de `unidades_libres`. C8 resuelto por `inventory.datos_equipamiento_por_ids` (PR #19 del backend) |
 | 0.3.0 | 2026-11-06 | Responde a la revisión del Perfil 1: incorpora la Iteración 5 y SPEC-03 (renovación como nueva solicitud, horario por sede, aval con `files`, `datos_publicos_por_ids`), unifica el cierre de la orden (RN-L30), agrega `situacion` derivada (RN-L31), corrige AC-L53, AC-L55 y la trazabilidad, actualiza §0, registra la relación con las sanciones (C20) y deja C3 y C5 como decisiones del equipo y del Perfil 1, y descarta D-L17: vuelve al criterio por fechas (§15.3, opción B) con su ajuste en cascada. Pasa a `EN_REVISION` |
 | 0.2.0 | 2026-11-03 | Fase 0 implementada (PR #16). Verifica contra `develop` las firmas de `core.errors`, `config` e `inventory` (S2…S4). Adopta la unidad exclusiva (D-L17: índice único parcial, `unidades-libres`, `unidades_libres`), simplifica la mora (D-L16), agrega `a_mantenimiento` (C17), los pedidos C14…C17 y la pregunta 6 para la referente |
 | 0.1.0 | 2026-10-23 | Borrador inicial. Documenta lo existente en `develop`, define lo pendiente y resuelve DT-16…DT-20 |
