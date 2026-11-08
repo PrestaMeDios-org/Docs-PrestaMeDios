@@ -29,6 +29,7 @@
   ✔ 2026-11-06: `pytest -q` completo con 386 pasados; cobertura de `app/modules/users` 94 % (`service.py` 98 %, con la función nueva cubierta entera); README actualizado (párrafo "API pública de `users` para otros módulos"). Commit `9341c59`, **backend PR #18 mergeado en `develop`**.
 - [ ] **A-04 · DT-30 (`fix/users-test-dataclass`).** Ajustar el test de AC-67 a la redacción de la v1.1.0 (plan §4.4): `FrozenInstanceError` al asignar `nombre`, cualquiera de `FrozenInstanceError`, `TypeError` o `AttributeError` al asignar `dni`, y sin `__dict__`. Sin cambios en `users/service.py`.
   *Verificación:* `pytest tests/users/test_datos_publicos.py -q` en verde en 3.14 y en 3.12 o 3.13 (con los Perfiles 2 o 5). PR hacia `develop` que cierre DT-30. *Cubre:* AC-67.
+  ⏳ 2026-11-08 (en revisión, backend PR #25): test corregido en `fix/users-test-dataclass` (desde `develop` en `3ad6b6b`), commit `4c56d6c`, sólo `tests/users/test_datos_publicos.py`. Con Python 3.14.8 (única versión instalada en el equipo del Perfil 1) y PostgreSQL 18: el archivo, 16 pasados; `pytest -q` completo, 581 pasados. Falta: la corrida en 3.12 o 3.13 (Perfiles 2 o 5) y el merge.
 - [ ] **A-05 · Documentación de la Fase A.** Lo de plan §10, fila "Fase A mergeada": `docs/perfiles.md` §4 y §5, `AGENTS.md` §3 y `MEMORY.md` §5; avisar a los Perfiles 3 y 4 (K1, K2).
   *Verificación:* PR a `Docs-PrestaMeDios`; los avisos quedan registrados en `MEMORY.md` §5.
 
