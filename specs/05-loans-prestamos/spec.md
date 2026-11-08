@@ -1,6 +1,6 @@
 # SPEC-05 — Préstamos de equipamiento y notebooks (`loans`)
 
-> **Estado:** `APROBADO` · **Versión:** 1.0.0 · **Fecha:** 2026-11-07 · **Perfil:** 3 (Préstamos y concurrencia)
+> **Estado:** `APROBADO` (v1.0.0); la v1.0.1 corrige EC-L10 y espera el OK del Perfil 1 · **Versión:** 1.0.1 · **Fecha:** 2026-11-08 · **Perfil:** 3 (Préstamos y concurrencia)
 > **Requisitos:** PRE-03…PRE-11, PRE-13, PRE-15…PRE-18, PRE-20 (`docs/ERS.md` del repo `Docs-PrestaMeDios`, Subsistema 2, módulos 2, 3 y 4, incluida la Iteración 5)
 > **Depende de:** SPEC-01 (`core`, autenticación), SPEC-02 (alcance de sede, `config`), SPEC-03 (`users.datos_publicos_por_ids`, `files` para el aval, horario por sede K10) y SPEC-04 (`inventory/service.py`)
 > **Constitución:** v1.1.0, con la enmienda 1.1.1 propuesta (ADR-019) · **Plan y tareas:** `plan.md` y `tasks.md` en esta misma carpeta (Fase 1)
@@ -448,7 +448,7 @@ Cada criterio tendrá al menos un test automatizado, anotado con `# AC-Lxx`, mar
 | EC-L07 | La unidad reservada para B sigue `prestado` por la demora de A | La entrega a B falla (`TRANSICION_ESTADO_INVALIDA`) y B conserva su reserva: el proceso de no retiro no la marca `no_retirado` (RN-L23). El administrador espera la devolución, reasigna o hace una cancelación forzada (PRE-17) |
 | EC-L08 | Equipo dado de baja lógica con órdenes pendientes | Al aprobar, la unidad no es asignable (`UNIDAD_NO_ASIGNABLE`) |
 | EC-L09 | Doble envío del formulario | El backend no deduplica: crea dos órdenes pendientes; la interfaz deshabilita el botón al enviar |
-| EC-L10 | Cancelación del solicitante simultánea con la aprobación | `FOR UPDATE` serializa: una prospera y la otra recibe `409 TRANSICION_INVALIDA` |
+| EC-L10 | Cancelación del solicitante simultánea con la aprobación | `FOR UPDATE` serializa: una prospera y la otra recibe el error que corresponde al estado que dejó la primera. Si ganó la cancelación, aprobar responde `409 TRANSICION_INVALIDA`; si ganó la aprobación, cancelar responde `403 CANCELACION_NO_PERMITIDA` (AC-L32) |
 | EC-L11 | Parámetros cambiados entre el pedido y la aprobación | Aprobar no revalida plazos ni franja (la solicitud se hizo con las reglas vigentes); solo el ajuste horario las revalida |
 | EC-L12 | Solicitante suspendido con órdenes vigentes | Sus órdenes no se cancelan solas; la sanción la define el Perfil 1 (USR-09). Los llamados de atención que originan las demoras y los no retiros se coordinan en C20 |
 | EC-L13 | Aprobación parcial por concurrencia | No existe: aprobar es todo o nada (RN-L13) |
@@ -568,6 +568,7 @@ Se eligió la **opción B: criterio por fechas, solo unidades `disponible`**. Un
 
 | Versión | Fecha | Cambio |
 | :---- | :---- | :---- |
+| 1.0.1 | 2026-11-08 | **Pendiente del OK del Perfil 1.** Corrige EC-L10, que contradecía a AC-L32: si la aprobación gana la carrera, la cancelación del solicitante choca con una orden `aprobada` y responde `403 CANCELACION_NO_PERMITIDA`, no `409`. Lo encontró `test_concurrencia.py` (T2.8). Sin otros cambios de contrato |
 | 1.0.0 | 2026-11-07 | **Aprobado** por el Perfil 1 (PR #7 y #10 de `Docs-PrestaMeDios`). Corrige §10.1 y C8, que todavía decían que la lectura de equipamiento no estaba publicada (revisión de seguimiento del Perfil 1, 2026-11-07). Sin cambios de contrato respecto de la v0.3.1. Siguen abiertos como coordinación C19 (horario por sede y numeración de migraciones) y C20 (sanciones) |
 | 0.3.1 | 2026-11-06 | §10.2: agrega `ocupacion_de_unidades` (ocupación por unidad y período en una sola consulta, para el mini-calendario del Perfil 2, con su aval) y precisa el uso de `unidades_libres`. C8 resuelto por `inventory.datos_equipamiento_por_ids` (PR #19 del backend) |
 | 0.3.0 | 2026-11-06 | Responde a la revisión del Perfil 1: incorpora la Iteración 5 y SPEC-03 (renovación como nueva solicitud, horario por sede, aval con `files`, `datos_publicos_por_ids`), unifica el cierre de la orden (RN-L30), agrega `situacion` derivada (RN-L31), corrige AC-L53, AC-L55 y la trazabilidad, actualiza §0, registra la relación con las sanciones (C20) y deja C3 y C5 como decisiones del equipo y del Perfil 1, y descarta D-L17: vuelve al criterio por fechas (§15.3, opción B) con su ajuste en cascada. Pasa a `EN_REVISION` |
