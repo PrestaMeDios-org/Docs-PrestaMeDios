@@ -58,10 +58,10 @@
   ✔ 2026-11-08: `tests/files/test_cli.py`.
 - [x] **B2-08 · Cierre del backend.** Suite completa, cobertura ≥ 85 % de `app/modules/files`, `/docs` revisado (multipart y encabezados de descarga), README. Avisar al Perfil 3 que ya puede quitar el rechazo de alta gama (K3).
   *Verificación:* suite en verde.
-  ✔ 2026-11-08: línea base de `develop` (`d09723d`) con 697 pasados; con la rama, 799 pasados (102 nuevos) contra PostgreSQL 18. Cobertura de `app/modules/files` 97 % (`service.py` 99 %). README con módulo, variables, endpoints y el comando de limpieza. Commit `fc4edb2`, **backend PR #26**. Aviso al Perfil 3 (K3) en `MEMORY.md` §5.
+  ✔ 2026-11-08: línea base de `develop` (`d09723d`) con 697 pasados; con la rama, 799 pasados (102 nuevos) contra PostgreSQL 18. Cobertura de `app/modules/files` 97 % (`service.py` 99 %). README con módulo, variables, endpoints y el comando de limpieza. 8 commits atómicos (`f2409ab`…`3607ec5`, cada uno con `tests/users`, `tests/core` y `tests/files` en verde), **backend PR #26**. Aviso al Perfil 3 (K3) en `MEMORY.md` §5.
 - [x] **B2-09 · Frontend (`feat/users-foto`).** `api.ts` con `FormData` y `Blob` (+ test), `useArchivoUrl`, DTOs con `foto_id`, foto en `ProfilePage`, avatar en `Navbar` y "Quitar foto" en `UsersPage`.
   *Verificación:* typecheck, build, tests; recorrido manual; en la pestaña de red, ninguna URL lleva el token. *Cubre:* AC-97.
-  ✔ 2026-11-08: además, `components/ui/Avatar.tsx` (foto o iniciales) y `validarFoto` (+ test); `subirFoto`, `quitarFoto` y `quitarFotoDeUsuario` en `usersApi.ts`. typecheck y build sin errores; 58 tests. Recorrido manual contra el backend del PR #26: subir, ver y quitar como estudiante; ver y quitar como `ADMIN_LOCAL` de la sede; ninguna URL lleva el token. Commit `7daeabe`, **frontend PR #14** (se mergea después del backend PR #26).
+  ✔ 2026-11-08: además, `components/ui/Avatar.tsx` (foto o iniciales) y `validarFoto` (+ test); `subirFoto`, `quitarFoto` y `quitarFotoDeUsuario` en `usersApi.ts`. typecheck y build sin errores; 58 tests. Recorrido manual contra el backend del PR #26: subir, ver y quitar como estudiante; ver y quitar como `ADMIN_LOCAL` de la sede; ninguna URL lleva el token. 6 commits atómicos (`344f55e`…`c5bb073`, cada uno con typecheck y tests en verde), **frontend PR #14** (se mergea después del backend PR #26).
 
 ## Bloque B1 — Correo y recuperación de contraseña (`feat/users-recuperacion`) — segundo (D-20)
 
