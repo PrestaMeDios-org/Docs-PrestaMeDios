@@ -62,7 +62,7 @@ Ramas de Backend y Frontend: `main` (entregas), `staging`, `develop` (integraci�
 
 | Perfil | Dominio | Módulo backend | Requisitos | Estado |
 | :---- | :---- | :---- | :---- | :---- |
-| **Perfil 1** | Identidad, Usuarios e Historiales, Permisos, Configuración Global y Despliegue | `core`, `users`, `config` | USR-01…09, GLO-01, GLO-03, GLO-05, GLO-06, despliegue (Docker, CI) | SPEC-01 (v1.0.0) y SPEC-02 (v1.0.1) implementados y mergeados en `develop`. Próximo: SPEC-03. Pendientes: USR-02, USR-06…09, GLO-05, despliegue |
+| **Perfil 1** | Identidad, Usuarios e Historiales, Permisos, Configuración Global y Despliegue | `core`, `users`, `config`, `files` | USR-01…09, GLO-01, GLO-03, GLO-05, GLO-06, despliegue (Docker, CI) | SPEC-01 (v1.0.0) y SPEC-02 (v1.0.1) en `develop`. SPEC-03 (v1.1.0): Fase A en `develop` (PR \#18); B2 (archivos y foto) en revisión (backend PR \#26, frontend PR \#14); siguen B1 (USR-02, correo) y B3 (sesión). Pendientes: USR-06…09, GLO-05, despliegue |
 | **Perfil 2** | Catálogo y Existencias | `inventory` | PRE-01, PRE-02, PRE-12, PRE-14, PRE-19 | Implementado (SPEC-04, Fase A) en backend y frontend. Pendiente la Fase B (disponibilidad por fechas e historial por unidad), que depende de `loans` |
 | **Perfil 3** | Préstamos y Concurrencia | `loans` | PRE-03…11, PRE-13, PRE-15…18, PRE-20 | SPEC-05 v1.0.0 `APROBADO`. Fase 1 implementada en `develop` (PR \#21); Fase 2 (validar) en el PR \#23 (`feat/loans-validar`), salvo T2.9, T2.10 y T2.13 (DT-16, DT-20) |
 | **Perfil 4** | Espacios (infraestructura física) | `spaces` | RES-01…05, GLO-02, GLO-04 | Implementado con auth y alcance de sede (SPEC-02) |

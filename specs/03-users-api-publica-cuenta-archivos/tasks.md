@@ -35,24 +35,33 @@
 
 ## Bloque B2 — Archivos y foto de perfil (`feat/files-almacenamiento`) — primero (D-20)
 
-- [ ] **B2-01 · Dependencias y settings.** `python-multipart` y `Pillow` en `requirements.txt` (plan §3); variables `ARCHIVO_*`.
+- [x] **B2-01 · Dependencias y settings.** `python-multipart` y `Pillow` en `requirements.txt` (plan §3); variables `ARCHIVO_*`.
   *Verificación:* `pip install -r requirements-dev.txt` limpio en las versiones de Python del equipo; la app arranca.
-- [ ] **B2-02 · Modelos y migración.** Módulo `files` (enums y modelos), `Usuario.foto_id` con `use_alter=True`, registro en `alembic/env.py`, migración `0014_files_init` con `down_revision` = la cabeza de `develop` (D-22).
+  ✔ 2026-11-08: `python-multipart` y `Pillow>=11.3` en `requirements.txt`; `ARCHIVO_FOTO_MAX_MB`, `ARCHIVO_PDF_MAX_MB`, `ARCHIVO_HUERFANO_HORAS` y `ARCHIVO_MAX_PENDIENTES` en `core/settings.py` y `.env.example`. Instalado y probado sólo en Python 3.14.8: falta la corrida en 3.12 o 3.13.
+- [x] **B2-02 · Modelos y migración.** Módulo `files` (enums y modelos), `Usuario.foto_id` con `use_alter=True`, registro en `alembic/env.py`, migración `0014_files_init` con `down_revision` = la cabeza de `develop` (D-22).
   *Verificación:* la base de tests se crea con `create_all` (ciclo de FK resuelto); upgrade → downgrade → upgrade; `alembic heads` con una sola cabeza. *Cubre:* AC-90.
-- [ ] **B2-03 · Servicio interno.** Lectura con límite, detección de tipo, `procesar_foto`, cuota y `limpiar_huerfanos`.
+  ✔ 2026-11-08: `0014_files_init` con `down_revision = 0011_loans_resolucion`. upgrade → downgrade -1 → upgrade sobre una base de desarrollo; `alembic heads` con una sola cabeza. La clase ORM de `archivos_contenido` se llama `ArchivoDatos`, para no chocar con el dataclass público `ArchivoContenido` (§6.5).
+- [x] **B2-03 · Servicio interno.** Lectura con límite, detección de tipo, `procesar_foto`, cuota y `limpiar_huerfanos`.
   *Verificación:* `tests/files/test_service.py` (firmas, tamaños en el borde, imagen corrupta, EXIF eliminado, cuota, limpieza idempotente). *Cubre:* AC-82, AC-87, AC-88 (parte de servicio).
-- [ ] **B2-04 · API pública de `files`.** `vincular_archivo`, `abrir_archivo`, `respuesta_descarga` y `ArchivoContenido`, con docstrings que las declaren públicas (P3.3, enmienda 1.1.1).
+  ✔ 2026-11-08: además, `preparar_foto` (lee, valida y procesa) y la cuota con la fila del propietario bloqueada (`FOR UPDATE`).
+- [x] **B2-04 · API pública de `files`.** `vincular_archivo`, `abrir_archivo`, `respuesta_descarga` y `ArchivoContenido`, con docstrings que las declaren públicas (P3.3, enmienda 1.1.1).
   *Verificación:* `tests/files/test_api_publica.py`. *Cubre:* AC-86.
-- [ ] **B2-05 · Router de `files`.** `POST /archivos` y `GET /archivos/{id}/contenido`, montado en `main.py` con el tag "Archivos".
+  ✔ 2026-11-08: sección "API pública para otros módulos" al final de `files/service.py`.
+- [x] **B2-05 · Router de `files`.** `POST /archivos` y `GET /archivos/{id}/contenido`, montado en `main.py` con el tag "Archivos".
   *Verificación:* `tests/files/test_archivos.py`, incluida la matriz de descarga con estudiante, docente, ambos tipos de administrador y `SUPERADMIN`. *Cubre:* AC-81, AC-82, AC-85.
-- [ ] **B2-06 · Foto de perfil.** `reemplazar_foto`, `quitar_foto` y `quitar_foto_por_admin` en `users`; endpoints `PUT`/`DELETE /auth/me/foto` y `DELETE /users/{id}/foto`; `foto_id` en los esquemas de usuario.
+  ✔ 2026-11-08: `ArchivoResponse` incluye `sha256` porque AC-81 pide el hash.
+- [x] **B2-06 · Foto de perfil.** `reemplazar_foto`, `quitar_foto` y `quitar_foto_por_admin` en `users`; endpoints `PUT`/`DELETE /auth/me/foto` y `DELETE /users/{id}/foto`; `foto_id` en los esquemas de usuario.
   *Verificación:* `tests/users/test_foto.py`; los tests de esquemas de `users` actualizados por el campo nuevo. *Cubre:* AC-83, AC-84, AC-89.
-- [ ] **B2-07 · CLI.** `python -m app.modules.files.cli limpiar-huerfanos`.
+  ✔ 2026-11-08: `DELETE /auth/me/foto` también exige el cambio de contraseña resuelto (RN-33 de SPEC-02), igual que el `PUT`.
+- [x] **B2-07 · CLI.** `python -m app.modules.files.cli limpiar-huerfanos`.
   *Verificación:* test del CLI como `tests/users/test_cli.py`. *Cubre:* AC-88.
-- [ ] **B2-08 · Cierre del backend.** Suite completa, cobertura ≥ 85 % de `app/modules/files`, `/docs` revisado (multipart y encabezados de descarga), README. Avisar al Perfil 3 que ya puede quitar el rechazo de alta gama (K3).
+  ✔ 2026-11-08: `tests/files/test_cli.py`.
+- [x] **B2-08 · Cierre del backend.** Suite completa, cobertura ≥ 85 % de `app/modules/files`, `/docs` revisado (multipart y encabezados de descarga), README. Avisar al Perfil 3 que ya puede quitar el rechazo de alta gama (K3).
   *Verificación:* suite en verde.
-- [ ] **B2-09 · Frontend (`feat/users-foto`).** `api.ts` con `FormData` y `Blob` (+ test), `useArchivoUrl`, DTOs con `foto_id`, foto en `ProfilePage`, avatar en `Navbar` y "Quitar foto" en `UsersPage`.
+  ✔ 2026-11-08: línea base de `develop` (`d09723d`) con 697 pasados; con la rama, 799 pasados (102 nuevos) contra PostgreSQL 18. Cobertura de `app/modules/files` 97 % (`service.py` 99 %). README con módulo, variables, endpoints y el comando de limpieza. Commit `fc4edb2`, **backend PR #26**. Aviso al Perfil 3 (K3) en `MEMORY.md` §5.
+- [x] **B2-09 · Frontend (`feat/users-foto`).** `api.ts` con `FormData` y `Blob` (+ test), `useArchivoUrl`, DTOs con `foto_id`, foto en `ProfilePage`, avatar en `Navbar` y "Quitar foto" en `UsersPage`.
   *Verificación:* typecheck, build, tests; recorrido manual; en la pestaña de red, ninguna URL lleva el token. *Cubre:* AC-97.
+  ✔ 2026-11-08: además, `components/ui/Avatar.tsx` (foto o iniciales) y `validarFoto` (+ test); `subirFoto`, `quitarFoto` y `quitarFotoDeUsuario` en `usersApi.ts`. typecheck y build sin errores; 58 tests. Recorrido manual contra el backend del PR #26: subir, ver y quitar como estudiante; ver y quitar como `ADMIN_LOCAL` de la sede; ninguna URL lleva el token. Commit `7daeabe`, **frontend PR #14** (se mergea después del backend PR #26).
 
 ## Bloque B1 — Correo y recuperación de contraseña (`feat/users-recuperacion`) — segundo (D-20)
 
