@@ -1,7 +1,7 @@
 # PLAN-05 — Préstamos (`loans`): Fases 1 y 2
 
-> **Estado:** `BORRADOR` · **Versión:** 0.4.0 · **Fecha:** 2026-11-07 · **Perfil:** 3
-> **Spec:** `specs/05-loans-prestamos/spec.md` v1.0.0, `APROBADO` (§14, Fases 1 y 2) · **Tareas:** `specs/05-loans-prestamos/tasks.md`
+> **Estado:** `BORRADOR` · **Versión:** 0.4.1 · **Fecha:** 2026-11-08 · **Perfil:** 3
+> **Spec:** `specs/05-loans-prestamos/spec.md` v1.0.1 (`APROBADO` v1.0.0; la v1.0.1 corrige EC-L10) (§14, Fases 1 y 2) · **Tareas:** `specs/05-loans-prestamos/tasks.md`
 > Este plan define el **cómo** de la Fase 1, Solicitar (§1…§7, implementada en el backend PR #21), y de la Fase 2, Validar (§8). Las Fases 3 a 5 se planifican cuando se cierre cada fase anterior.
 
 ---
@@ -192,7 +192,7 @@ El plan de la demo del Perfil 1 (`plan-demo-perfil-3.md`, paso 4) pide llegar a 
 
 | # | Qué verificar | Resultado (2026-11-07) |
 | :---- | :---- | :---- |
-| V5 | **Numeración de `0011` (C19).** `develop` termina en `0010_inventory_gestion`. La Fase A de SPEC-06 trae `0013_notifications_init`, también con `down_revision = "0010_inventory_gestion"` (backend PR #22, abierto) | Si las dos llegan a `develop` con la misma base, Alembic queda con dos cabezas. Regla: **la que se mergea segunda apunta su `down_revision` a la cabeza de `develop`** al abrir su PR (Alembic encadena por id, no por número). Confirmar con los Perfiles 1 y 5 |
+| V5 | **Numeración de `0011` (C19).** `develop` termina en `0010_inventory_gestion`. La Fase A de SPEC-06 trae `0013_notifications_init`, también con `down_revision = "0010_inventory_gestion"` (backend PR #22, abierto) | Si las dos llegan a `develop` con la misma base, Alembic queda con dos cabezas. Regla: **la que se mergea segunda apunta su `down_revision` a la cabeza de `develop`** al abrir su PR (Alembic encadena por id, no por número). **Resuelto (2026-11-08):** entró primero el #22, y la `0011` pasó a colgar de `0013_notifications_init` (backend PR #23): `0010 → 0013 → 0011`, una sola cabeza, upgrade → downgrade → upgrade sin errores |
 | V6 | **`bloquear_unidad` como API pública (C14).** RN-L11 la usa para bloquear cada unidad al aprobar | Está en `develop`; SPEC-04 v1.2.0 (Fase B, rama `docs/spec-04-fase-b`) la declara pública |
 | V7 | `users.datos_publicos_por_ids` para el resumen del solicitante | En `develop` (backend PR #18) |
 | V8 | `inventory.marcar_unidad_mantenimiento` (C17) | Implementada en `feat/inventory-disponibilidad` (sin mergear). La usa la Fase 3, no esta |
@@ -312,6 +312,7 @@ Se planifica en `tasks.md` (tareas F2.x): bandeja del administrador, detalle con
 
 | Versión | Fecha | Cambio |
 | :---- | :---- | :---- |
+| 0.4.1 | 2026-11-08 | Registra el resultado de V5 (C19: la `0011` cuelga de `0013_notifications_init`) y referencia la v1.0.1 del spec (EC-L10). El avance de la fase está en `tasks.md` |
 | 0.4.0 | 2026-11-07 | Agrega la Fase 2, Validar (§8): alcance, prioridad para la demo, verificaciones V5…V8 (cadena de `0011` frente a `0013`), diseño de la bandeja, el `PATCH …/estado`, las unidades libres por línea y las funciones `reservas_futuras_de_unidad` e `historial_de_unidad` para la Fase C de SPEC-04. La Fase 1 queda implementada (backend PR #21) |
 | 0.3.0 | 2026-11-06 | C8 resuelto: `crear_orden` usa `inventory.datos_equipamiento_por_ids` y se borra el adaptador provisorio. Suma `ocupacion_de_unidades` (spec v0.3.1 §10.2) para el Perfil 2 |
 | 0.2.0 | 2026-11-06 | Alineado con SPEC-05 v0.3.0: `AVAL_REQUERIDO` en lugar de `AVAL_NO_HABILITADO`; división `ids_unidades_libres` / `unidades_libres` y `_validar_disponibilidad`; adaptador de C8 con función falsa en los tests; cambio de esquema (`pdf_aval_id`, `renueva_detalle_id`); renovación fuera de este corte; horario global hasta K10; garantía final en el `EXCLUDE` de `0009` (D-L17 descartada); nombres de archivo reales; resultado de V1…V4 |
