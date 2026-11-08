@@ -4,11 +4,11 @@
 | --- | --- |
 | **ID** | SPEC-03 |
 | **Perfil responsable** | Perfil 1 — Identidad, Usuarios, Permisos, Configuración Global y Despliegue |
-| **Estado** | `APROBADO` — 2026-11-03 (todas las recomendaciones de §12, D-01…D-19) |
-| **Versión** | 1.0.0 |
+| **Estado** | `APROBADO` — v1.1.0, 2026-11-08 (D-20…D-22 y RN-77; cambios en §15). La v1.0.0 se aprobó el 2026-11-03 con D-01…D-19. La Fase A está implementada (backend PR #18) y la v1.1.0 no cambia su contrato |
+| **Versión** | 1.1.0 |
 | **Requisitos cubiertos** | Fase A: soporte de PRE-15, PRE-20 y RES-05 (datos del solicitante), C2 de SPEC-05 · Fase B: USR-02, USR-03 (foto), PRE-05 (almacenamiento del aval, C4 de SPEC-05), D-06 de SPEC-01, infraestructura de correo para los avisos de ADR-022 (f) |
 | **Depende de** | SPEC-01 v1.0.0 y SPEC-02 v1.0.1 (`IMPLEMENTADO`, en `develop`) |
-| **Contexto** | Tercera entrevista con la referente (16/10/2026), ADR-022 en `MEMORY.md`; impacto en este spec en §2.4 |
+| **Contexto** | Tercera entrevista con la referente (16/10/2026), ADR-022 en `MEMORY.md`; impacto en este spec en §2.4. SPEC-05 v1.0.0 (`loans`, Fase 1 en `develop`) y SPEC-06 v1.0.0 (`notifications`, ADR-023) dependen de la Fase B (§2.1) |
 | **Módulos afectados** | Backend: `users`, `core`, `files` (nuevo, Perfil 1, D-12) · Frontend: `auth`, `users`, `layout`, `src/lib/api.ts` |
 | **Módulos ajenos** | Ninguno se modifica. Lo que necesitan los Perfiles 3, 4 y 5 va como ítem de coordinación (§13) |
 | **Constitución** | v1.1.0, con la enmienda 1.1.1 propuesta (ADR-019), **sin ratificar** (ver §2.3) |
@@ -25,10 +25,10 @@
 
 El spec se entrega en dos fases independientes:
 
-- **Fase A (prioritaria, chica).** Una función pública de `users`, `datos_publicos_por_ids`, que devuelve nombre y apellido por lote de ids. Desbloquea al Perfil 4 (solicitante en la bandeja de reservas) y al Perfil 3 (C2 de SPEC-05: resumen del solicitante en las respuestas de `loans`). No cambia el esquema ni expone endpoints.
-- **Fase B (tres entregas, cada una con su PR).**
-  - **B1 — USR-02:** recuperación de contraseña por email, con token de un solo uso con vencimiento, respuesta neutra, límite de intentos, revocación de sesiones y pantallas en el frontend. Incluye la infraestructura de correo (`app/core/email.py`), con plantillas por tipo de mensaje y llamable desde cualquier servicio, porque también la van a usar los avisos de llamados de atención y sanciones (ADR-022 f).
-  - **B2 — Archivos:** almacenamiento para la foto de perfil (USR-03) y el PDF de aval de PRE-05 (la resolución del Consejo CICSE/ICSE, obligatoria para estudiantes y docentes; C4 de SPEC-05), con validación de tipo y tamaño, control de acceso a la descarga y limpieza de huérfanos.
+- **Fase A (prioritaria, chica) — implementada** (backend PR #18, 2026-11-06). Una función pública de `users`, `datos_publicos_por_ids`, que devuelve nombre y apellido por lote de ids. Desbloquea al Perfil 4 (solicitante en la bandeja de reservas) y al Perfil 3 (C2 de SPEC-05: resumen del solicitante en las respuestas de `loans`). No cambia el esquema ni expone endpoints.
+- **Fase B (tres entregas, cada una con su PR), en el orden B2 → B1 → B3 (D-20).**
+  - **B1 — USR-02:** recuperación de contraseña por email, con token de un solo uso con vencimiento, respuesta neutra, límite de intentos, revocación de sesiones y pantallas en el frontend. Incluye la infraestructura de correo (`app/core/email.py`), con plantillas por tipo de mensaje y llamable desde cualquier servicio. También la usa `notifications` para los avisos por correo, incluidos los de llamados de atención y sanciones (ADR-023, D-21).
+  - **B2 — Archivos:** almacenamiento para la foto de perfil (USR-03) y el PDF de aval de PRE-05 (la resolución del Consejo CICSE/ICSE, obligatoria para estudiantes y docentes; C4 de SPEC-05), con validación de tipo y tamaño, control de acceso a la descarga y limpieza de huérfanos. Va primero porque `loans` ya está en `develop` y rechaza todo pedido de alta gama hasta que exista (D-20).
   - **B3 — Sesión:** se evalúa refresh token con cookie `HttpOnly` frente a ADR-015. Se recomienda **no** adoptarlo y usar renovación deslizante del access token con tope absoluto de sesión (D-13).
 
 ---
@@ -40,7 +40,7 @@ El spec se entrega en dos fases independientes:
 | # | Capacidad | Requisitos | Fase |
 | --- | --- | --- | --- |
 | A1 | `datos_publicos_por_ids(db, ids)` en `users/service.py`, con `DatosPublicosUsuario` (id, nombre, apellido) | C2 de SPEC-05, pedido del Perfil 4 (`MEMORY.md` §5), P6 | A |
-| B1 | Envío de correo (SMTP) en `app/core/email.py`, configurable por entorno, con plantillas por tipo de mensaje y llamable desde endpoints y servicios | USR-02, ADR-022 (f) | B1 |
+| B1 | Envío de correo (SMTP) en `app/core/email.py`, configurable por entorno, con plantillas por tipo de mensaje y llamable desde endpoints y servicios; incluye el tipo genérico `NOTIFICACION` para `notifications` (RN-77) | USR-02, ADR-022 (f), ADR-023 | B1 |
 | B2 | Solicitud de recuperación con respuesta neutra y límite de intentos | USR-02, P4.5 | B1 |
 | B3 | Restablecimiento con token de un solo uso y vencimiento; revocación de sesiones | USR-02, RN-08 | B1 |
 | B4 | Pantallas "¿Olvidaste tu contraseña?" y "Restablecer contraseña" | USR-02 | B1 |
@@ -57,13 +57,13 @@ El spec se entrega en dos fases independientes:
 | Resumen del solicitante en las respuestas de `loans` | Perfil 3 (ítem K2) |
 | Campo `pdf_aval_id` en `OrdenPedidoCreate` y su UI en el formulario de préstamo | Perfil 3 (ítem K3) |
 | Catálogo de asignaturas y vínculo docente–asignatura (C2 y C3 de SPEC-05) | Decisión abierta D-04; no entra en esta versión |
-| Notificaciones por correo de `notifications` (NOV-03) | Perfil 5; puede reutilizar `app/core/email.py` (ítem K6) |
+| Notificaciones por correo de `notifications` (NOV-03) y su bandeja de salida | Perfil 5, Fase C de SPEC-06 (ADR-023). Envía con `enviar_correo(TipoCorreo.NOTIFICACION, …)` (RN-77) |
 | Horario de atención **por sede** (hoy `horario.apertura` y `horario.cierre` son únicos y los leen `spaces` y `loans`) y parámetro nuevo con el **correo de contacto del laboratorio**, para el aviso de anticipación mínima del Perfil 4 (ADR-022 a, c) | Spec siguiente del Perfil 1. Cambia las claves de `config`: se coordina con los Perfiles 3 y 4 (ítem K10) |
 | **Delegación temporal del rol de Superadministrador**: sólo a un `ADMIN_LOCAL`, con duración fijada al delegar, revocable antes, y al vencer vuelve a su rol y su sede (ADR-022 g, GLO-01) | Spec siguiente del Perfil 1. El cambio de rol al delegar y al vencer revoca las sesiones con `token_version` (RN-08), compatible con B3 |
-| **USR-09 reformulado**: llamados de atención (el 3.º se convierte en falta); con 1 falta el administrador decide si suspende y con 2 la suspensión es automática, por un tiempo fijo que el administrador puede levantar antes. Las cantidades son parámetros de `config`. Cada llamado o sanción se avisa por email (ADR-022 d–f) | Spec siguiente del Perfil 1. Usa la infraestructura de correo de B1 (§5.1); los tipos de mensaje quedan reservados (RN-71) |
+| **USR-09 reformulado**: llamados de atención (el 3.º se convierte en falta); con 1 falta el administrador decide si suspende y con 2 la suspensión es automática, por un tiempo fijo que el administrador puede levantar antes. Las cantidades son parámetros de `config`. Cada llamado o sanción se avisa por email (ADR-022 d–f) | Spec siguiente del Perfil 1. Los avisos se emiten con `crear_notificacion` de `notifications` (tipos `LLAMADO_ATENCION` y `SANCION`, SPEC-06 §6.4), que los manda por correo con el transporte de B1 (ADR-023, D-17) |
 | **Teléfono obligatorio en el registro** (USR-05, ADR-022 b) | Spec siguiente del Perfil 1, según la recomendación de D-16 |
 | Actualización de los requisitos del ERS por la entrevista (DT-29) | Un solo PR al ERS junto con la corrección del CU de USR-02 (ítem K7) |
-| Programación periódica de `limpiar-huerfanos` | Spec de despliegue, junto con el cron de C5 de SPEC-05 |
+| Programación periódica de `limpiar-huerfanos` | Spec de despliegue, junto con `procesar-vencimientos` de `loans` (C5 de SPEC-05) y `enviar-correos` de `notifications` (C-N04 de SPEC-06) |
 | Antivirus o análisis de contenido de los PDF | Trabajo futuro (P10) |
 | USR-06…09, GLO-05, GLO-06 (menú colapsable), Docker y CI | Specs siguientes del Perfil 1 |
 
@@ -71,18 +71,20 @@ El spec se entrega en dos fases independientes:
 
 ## 2. Estado actual y dependencias
 
-### 2.1 Verificado en `develop` (backend `docs/readme-loans`, sin diferencias en `app/` ni `tests/`)
+### 2.1 Verificado en `develop` (backend `3ad6b6b`, frontend `8f7832b`, 2026-11-08)
 
 | Elemento | Estado |
 | --- | --- |
-| `users/service.py` | Servicios internos de UC-01…UC-12. `Sesion` es `@dataclass(frozen=True, slots=True)`. Ninguna función está declarada pública para otros módulos |
-| `spaces/schemas.py` | `ReservaEspacioResponse` expone sólo `id_usuario` |
-| `loans/models.py` | `asignatura_id` sin FK ("todavía no existe el módulo de asignaturas"); SPEC-05 D-L13 lo deja así de forma transitoria |
+| `users/service.py` | Servicios internos de UC-01…UC-12 y, al final, la sección "API pública para otros módulos" con `DatosPublicosUsuario` y `datos_publicos_por_ids` (Fase A, PR #18). La usa `notifications` para el autor de los comunicados (SPEC-06, PR #22); `spaces` (K1) y `loans` (K2) todavía no |
+| `spaces/schemas.py` | `ReservaEspacioResponse` expone sólo `id_usuario` (K1 pendiente) |
+| `loans` | Fase 1 de SPEC-05 en `develop` (PR #21). `OrdenPedidoCreate.pdf_aval_id: UUID \| None`, pero un ítem de alta gama responde `422 AVAL_REQUERIDO` **aunque traiga el aval**, porque todavía no hay `files` para vincularlo (`loans/service.py`). `asignatura_id` sigue sin FK (D-L13) |
+| `notifications` | Fase A de SPEC-06 en `develop` (PR #22). El correo (NOV-03 y avisos de sanciones) es su Fase C, diferida hasta que exista `app/core/email.py` (ADR-023) |
 | `core/settings.py` | Sin variables de correo ni de archivos. `jwt_access_token_expire_minutes` = 60 por defecto |
 | `core/security.py` | Claims `sub`, `rol`, `sede`, `tv`, `iss`, `iat`, `exp`, `jti`; sin `auth_time` |
 | Dependencias | No están `python-multipart` (necesaria para `UploadFile`) ni `Pillow` |
-| Migraciones | Hasta `0010_inventory_gestion`. SPEC-05 prevé una `0011_loans_ciclo_entrega` (ver EC-45) |
-| Frontend | La pantalla de login no tiene enlace de recuperación; no hay foto de perfil. El token vive en `sessionStorage` (ADR-015) |
+| Migraciones | Cadena `… → 0010_inventory_gestion → 0013_notifications_init` (cabeza). SPEC-05 reserva `0011` y `0012`: `0011_loans_resolucion` está en `feat/loans-validar` (PR #23, abierto) con `down_revision = 0013`. El número es una reserva, no el orden de la cadena (D-22, EC-45) |
+| Python | El README dice "≥ 3.11, validado con 3.12"; en el equipo se usan 3.12, 3.13 y 3.14. Un test de la Fase A falla en 3.12 y 3.13 (DT-30, AC-67) |
+| Frontend | La pantalla de login no tiene enlace de recuperación; no hay foto de perfil. El token vive en `sessionStorage` (ADR-015). `App.tsx` sigue sin React Router; el PR #12 del Perfil 5 (abierto) también lo modifica |
 
 ### 2.2 Brechas
 
@@ -91,7 +93,7 @@ El spec se entrega en dos fases independientes:
 | G-1 | Los Perfiles 3 y 4 no pueden mostrar el nombre del solicitante sin importar el modelo `Usuario` o consultarlo por su cuenta | P3.3, P6, PRE-15, RES-05 |
 | G-2 | No hay recuperación de contraseña: un usuario que la olvida depende de que un administrador la resetee (UC-12) | USR-02 |
 | G-3 | El CU de USR-02 del ERS indica informar "que no existe una cuenta asociada", lo que permite enumerar usuarios | P4.5 (prevalece la Constitución, D-06) |
-| G-4 | No hay dónde guardar archivos: USR-03 queda sin foto y `loans` rechaza el alta gama con `AVAL_NO_HABILITADO` (D-L12) | USR-03, PRE-05 |
+| G-4 | No hay dónde guardar archivos: USR-03 queda sin foto y `loans` rechaza todo pedido de alta gama con `422 AVAL_REQUERIDO`, aunque traiga el aval (§2.1) | USR-03, PRE-05 |
 | G-5 | La sesión se corta a los 60 minutos aunque el usuario esté trabajando (EC-32 de SPEC-02) y una pestaña olvidada sigue válida hasta 60 minutos | D-06 de SPEC-01, ADR-015 |
 
 ### 2.3 Enmienda 1.1.1 de la Constitución
@@ -107,7 +109,7 @@ Si el equipo rechaza o modifica la enmienda, la Fase A no cambia de contrato, pe
 
 | Punto de ADR-022 | Efecto en este spec |
 | --- | --- |
-| (f) Los llamados de atención y las sanciones se avisan por email | §5.1: el correo deja de ser sólo de USR-02. Plantillas por tipo de mensaje y envío llamable desde un servicio (RN-71…RN-76, D-17). K6 pasa a ser una decisión pendiente del Perfil 5 |
+| (f) Los llamados de atención y las sanciones se avisan por email | §5.1: el correo deja de ser sólo de USR-02. Plantillas por tipo de mensaje y envío llamable desde un servicio (RN-71…RN-76, D-17). K6 lo respondió el Perfil 5 (ADR-023): los avisos pasan por `notifications`, que usa este transporte con el tipo `NOTIFICACION` (RN-77, D-21) |
 | (i) Los docentes también piden alta gama, con regularidad, y el aval es el PDF de la resolución del Consejo (CICSE/ICSE), obligatorio para estudiantes y docentes | §6: el aval lo sube cualquiera de los dos; la descarga queda para el solicitante y los administradores con jurisdicción, no para el docente de la asignatura (D-18). Reutilizar una resolución en varios pedidos queda como D-19 |
 | (a), (c), (d), (e), (g) Horario por sede, correo de contacto, sanciones y delegación temporal | No entran: §1.2, con destino en el spec siguiente del Perfil 1. **La Fase A no cambia** |
 | (b) Teléfono obligatorio | Decisión D-16: va en el spec siguiente, no en la Fase A |
@@ -179,9 +181,11 @@ solicitantes = await datos_publicos_por_ids(db, (r.id_usuario for r in reservas)
 # ReservaEspacioResponse(..., solicitante=solicitantes.get(r.id_usuario))
 ```
 
-### 4.4 Implementación prevista
+### 4.4 Implementación
 
-Rama `feat/users-datos-publicos` desde `develop`. Sin migración, sin dependencias nuevas. Tests en `tests/users/test_datos_publicos.py`.
+**Implementada** en la rama `feat/users-datos-publicos` (commit `9341c59`, backend PR #18, mergeado en `develop` el 2026-11-06). Sin migración ni dependencias nuevas. Tests en `tests/users/test_datos_publicos.py`.
+
+Consumidores al 2026-11-08: `notifications` muestra el autor de cada comunicado (SPEC-06). El autor es siempre un administrador, no un solicitante, así que no choca con RN-43. Pendientes: `spaces` (K1) y `loans` (K2).
 
 ---
 
@@ -189,7 +193,7 @@ Rama `feat/users-datos-publicos` desde `develop`. Sin migración, sin dependenci
 
 ### 5.1 Infraestructura de correo (`app/core/email.py`)
 
-Es un servicio de **transporte** transversal, en `core`. En este spec lo usa USR-02; en el spec siguiente del Perfil 1 lo van a usar los avisos de llamados de atención y sanciones (ADR-022 f), directamente o a través de `notifications`, según decida el Perfil 5 (K6). Qué se avisa, a quién y cuándo es responsabilidad del módulo que llama; `core` sólo arma el mensaje desde una plantilla y lo envía.
+Es un servicio de **transporte** transversal, en `core`. En este spec lo usa USR-02. Lo usa además `notifications` para todos los avisos por correo: NOV-03 y los llamados de atención y sanciones de ADR-022 (f). Así lo decidió el Perfil 5 al responder K6 (ADR-023, SPEC-06 §6.4). Qué se avisa, a quién y cuándo es responsabilidad del módulo que llama; `core` sólo arma el mensaje desde una plantilla y lo envía.
 
 | Variable de entorno | Uso | Valor por defecto |
 | --- | --- | --- |
@@ -206,8 +210,7 @@ Es un servicio de **transporte** transversal, en `core`. En este spec lo usa USR
 class TipoCorreo(StrEnum):
     """Un valor por tipo de mensaje; cada uno tiene su plantilla (RN-71)."""
     RECUPERACION_PASSWORD = "RECUPERACION_PASSWORD"
-    # Reservados para el spec de USR-09 (ADR-022 d–f); no se implementan en este spec:
-    # LLAMADO_ATENCION, FALTA_REGISTRADA, SUSPENSION, SUSPENSION_LEVANTADA
+    NOTIFICACION = "NOTIFICACION"  # genérico para `notifications` (RN-77, ADR-023)
 
 
 class ErrorEnvioCorreo(Exception):
@@ -230,16 +233,17 @@ async def enviar_correo(
 | ID | Regla |
 | --- | --- |
 | RN-71 | Cada `TipoCorreo` tiene una plantilla de texto plano en `app/core/plantillas_correo/<tipo>.txt`: la primera línea es el asunto y el resto el cuerpo, con variables `$nombre` de `string.Template` (biblioteca estándar, sin dependencia nueva). Una variable faltante se detecta al renderizar, **antes** de enviar. Agregar un tipo de mensaje es agregar un valor al enum y su plantilla, sin tocar el transporte |
-| RN-72 | `enviar_correo` no depende de la request. USR-02 la agenda con `BackgroundTasks` para no revelar por el tiempo de respuesta si la cuenta existe (NFR-20). Un servicio la llama **después** de confirmar su transacción, para no avisar algo que se deshizo (D-17) |
-| RN-73 | Un fallo de transporte lanza `ErrorEnvioCorreo` y quien llama decide: USR-02 lo registra y no cambia la respuesta; en las sanciones, el aviso fallido no deshace la sanción (EC-49) |
+| RN-72 | `enviar_correo` no depende de la request. USR-02 la agenda con `BackgroundTasks` para no revelar por el tiempo de respuesta si la cuenta existe (NFR-20). Fuera de USR-02 se llama **después** de confirmar la transacción que originó el aviso, para no avisar algo que se deshizo. `notifications` lo garantiza con su bandeja de salida (ADR-023, D-17) |
+| RN-73 | Un fallo de transporte lanza `ErrorEnvioCorreo` y quien llama decide: USR-02 lo registra y no cambia la respuesta; `notifications` registra el error en la notificación, y el aviso fallido no deshace la sanción (EC-49) |
 | RN-74 | El log registra el tipo, el id del usuario cuando lo hay y el resultado; **nunca** el contexto ni el cuerpo, que pueden llevar el enlace de recuperación (NFR-19) |
 | RN-75 | Un destinatario por mensaje, sin copias a terceros (P6); asunto con el prefijo "[PrestaMeDios]"; tiempo máximo de conexión SMTP de 10 s |
 | RN-76 | El backend `memoria` guarda tipo, destinatario, asunto y cuerpo, y se limpia entre tests |
+| RN-77 | `TipoCorreo.NOTIFICACION` es el tipo que usa `notifications` para mandar por correo una notificación que ya armó con su propia plantilla (SPEC-06 RN-N7). Contexto: `titulo` y `mensaje`. Asunto `$titulo`; cuerpo `$mensaje` y un pie fijo con el enlace a la aplicación (`FRONTEND_URL`) y la aclaración de que es un aviso automático. Rigen RN-74 y RN-75. Los avisos de llamados de atención y sanciones no tienen un `TipoCorreo` propio: el tipo de aviso lo decide `notifications` (`LLAMADO_ATENCION`, `SANCION`) y este transporte sólo lo envía (D-21) |
 
 - Un fallo de SMTP en la recuperación se registra en el log **sin** el token ni el enlace (NFR-02) y no cambia la respuesta.
 - `.env.example` documenta las variables sin valores reales (NFR-03).
 
-### 5.2 Modelo de datos (migración `00NN_users_recuperacion`, número a fijar al integrar, EC-45)
+### 5.2 Modelo de datos (migración `0015_users_recuperacion`, D-22)
 
 | Tabla | Columnas | Notas |
 | --- | --- | --- |
@@ -299,7 +303,7 @@ Sigue sin React Router (D-09 de SPEC-02): `App.tsx` detecta `#/restablecer` al c
 
 `app/modules/files/{models,schemas,router,service,enums,cli}.py`, montado en `/api/v1/files` con el tag "Archivos" (D-12).
 
-### 6.2 Modelo de datos (migración `00NN_files_init`)
+### 6.2 Modelo de datos (migración `0014_files_init`, D-22)
 
 | Tabla / columna | Definición | Motivo |
 | --- | --- | --- |
@@ -423,7 +427,7 @@ Cada criterio tendrá al menos un test anotado `# AC-NN`, con `pytestmark = pyte
 | AC-64 | Los ids inexistentes se omiten; si todos son inexistentes devuelve `{}` sin error | RN-37 |
 | AC-65 | Incluye usuarios en los cinco estados de cuenta | RN-38 |
 | AC-66 | Devuelve en una misma llamada usuarios de Ushuaia, de Río Grande y un `SUPERADMIN` (sede nula) | RN-39 |
-| AC-67 | `DatosPublicosUsuario` tiene exactamente los campos `id`, `nombre` y `apellido`; asignar un atributo lanza `FrozenInstanceError` | RN-40, P6 |
+| AC-67 | `DatosPublicosUsuario` tiene exactamente los campos `id`, `nombre` y `apellido`. Asignar uno de esos campos lanza `FrozenInstanceError`. Agregar un atributo que no es campo (por ejemplo `dni`) falla y la instancia no tiene `__dict__`. El tipo de excepción no se exige porque depende de la versión de Python: `FrozenInstanceError` en 3.14, `TypeError` en 3.12 y 3.13 (DT-30) | RN-40, P6 |
 | AC-68 | Después de la llamada no hay entidades `Usuario` nuevas en el *identity map* de la sesión (no se cargó DNI, email ni teléfono) | RN-40 |
 | AC-69 | No confirma la transacción: un cambio pendiente del llamador se descarta con `rollback` después de la llamada, y la sesión sigue en la misma transacción | RN-42 |
 | AC-70 | Acepta lista, conjunto y generador, y un lote de 40 000 ids sin error | RN-41 |
@@ -442,7 +446,7 @@ Cada criterio tendrá al menos un test anotado `# AC-NN`, con `pytestmark = pyte
 | AC-78 | La cuarta solicitud con el mismo email en una hora → `429 DEMASIADOS_INTENTOS`, exista o no la cuenta; el límite por IP también se aplica; las filas de más de 24 h se borran | RN-49 |
 | AC-79 | Los dos endpoints funcionan sin token; un campo desconocido → `422`; un fallo de SMTP no cambia el `202` y el log no contiene el token | §5.1, P4.4 |
 | AC-80 | Migración de B1: upgrade → downgrade → upgrade | P7.4 |
-| AC-100 | Cada valor de `TipoCorreo` tiene plantilla y se renderiza con un contexto de ejemplo sin variables sin reemplazar; si falta una variable, `renderizar_correo` falla y no se envía nada | RN-71 |
+| AC-100 | Cada valor de `TipoCorreo` (`RECUPERACION_PASSWORD` y `NOTIFICACION`) tiene plantilla y se renderiza con un contexto de ejemplo sin variables sin reemplazar; si falta una variable, `renderizar_correo` falla y no se envía nada. `NOTIFICACION` con `titulo` y `mensaje` da el asunto `[PrestaMeDios] <titulo>` y un cuerpo con el mensaje y el enlace a la aplicación | RN-71, RN-75, RN-77 |
 | AC-101 | `enviar_correo` se llama desde código de servicio, fuera de una request y sin `BackgroundTasks`, y el mensaje queda en el backend `memoria`; un fallo del transporte llega al llamador como `ErrorEnvioCorreo` y el log no incluye el contexto ni el cuerpo | RN-72…RN-74 |
 
 ### 9.3 Fase B2 — `tests/files/`
@@ -486,7 +490,7 @@ Cada criterio tendrá al menos un test anotado `# AC-NN`, con `pytestmark = pyte
 | ID | Escenario | Resultado |
 | --- | --- | --- |
 | EC-34 | `datos_publicos_por_ids` con un id de un usuario dado de baja que tiene reservas | Se devuelve su nombre (RN-38) |
-| EC-35 | `datos_publicos_por_ids` dentro de una transacción con cambios sin `flush` | El *autoflush* de SQLAlchemy puede emitirlos antes de la consulta; la función no confirma nada (RN-42) |
+| EC-35 | `datos_publicos_por_ids` dentro de una transacción con cambios sin `flush` | Con `autoflush=False` (configuración del proyecto en `app/database.py` y en los tests), los cambios sin `flush` no se emiten: la consulta no ve usuarios que el llamador agregó sin `flush`, y la función no confirma nada (RN-42) |
 | EC-36 | El email de la solicitud de recuperación con mayúsculas o espacios | Se normaliza (RN-04 de SPEC-01) antes de buscar y de calcular el hash del límite |
 | EC-37 | Se pide la recuperación con sesiones abiertas en otras computadoras | Al confirmar se cierran todas (RN-52) |
 | EC-38 | La cuenta se suspende entre el envío del enlace y la confirmación | `422 TOKEN_RECUPERACION_INVALIDO` (RN-51) |
@@ -496,11 +500,11 @@ Cada criterio tendrá al menos un test anotado `# AC-NN`, con `pytestmark = pyte
 | EC-42 | Un PDF de aval cuya orden se rechaza o se cancela | Se conserva vinculado (RN-62) |
 | EC-43 | Un `SUPERADMIN` sube un aval | No aplica: sólo `ESTUDIANTE` y `DOCENTE` crean órdenes (D-L06 de SPEC-05); responde `403` |
 | EC-44 | Un usuario cambia de sede con un aval vinculado | El aval sigue bajo la jurisdicción de la sede en la que se subió (`archivos.sede`) |
-| EC-45 | `loans` integra antes su migración `0011` | Las migraciones de este spec se renumeran al integrar; el número final se fija en el PR |
+| EC-45 | `loans` integra `0011` o `0012`, u otro módulo integra una migración, antes que las de este spec | El nombre no cambia (D-22). Sólo cambia `down_revision`, que pasa a ser la cabeza de `develop` al abrir el PR; antes de mergear, `alembic heads` debe mostrar una sola cabeza |
 | EC-46 | El token vence mientras se completa un formulario sin actividad registrada | El envío falla con `401 TOKEN_EXPIRADO`; se mantiene el comportamiento de EC-32 de SPEC-02 |
 | EC-47 | Un docente pide alta gama con su resolución del Consejo | Mismo flujo que un estudiante: sube el PDF, `loans` lo vincula y lo verifica el administrador de su sede (ADR-022 i) |
 | EC-48 | El docente de la asignatura intenta descargar el aval de un estudiante | `404 ARCHIVO_NO_ENCONTRADO` (D-18) |
-| EC-49 | Falla el correo que avisa un llamado de atención o una sanción (spec siguiente) | La sanción queda registrada igual; el fallo queda en el log sin el contenido (RN-73, D-17) |
+| EC-49 | Falla el correo que avisa un llamado de atención o una sanción (spec siguiente) | La sanción queda registrada igual. `notifications` guarda el error en la notificación, y el log no tiene el contenido (RN-73, RN-74, ADR-023) |
 | EC-50 | Usuarios cargados antes de que el teléfono sea obligatorio | Siguen sin teléfono y operan normalmente hasta el spec siguiente (D-16) |
 
 ---
@@ -520,7 +524,7 @@ Cada criterio tendrá al menos un test anotado `# AC-NN`, con `pytestmark = pyte
 
 ## 12. Decisiones resueltas
 
-> Aprobadas por el Perfil 1 el 2026-11-03: se adoptan todas las recomendaciones (D-01…D-19). D-04 y D-19 quedan resueltas como "fuera de esta versión": el vínculo docente–asignatura sigue pendiente de la decisión del equipo (K4) y la reutilización del aval, de la respuesta de la referente (§12.1).
+> Aprobadas por el Perfil 1 el 2026-11-03: se adoptan todas las recomendaciones (D-01…D-19). D-04 y D-19 quedan resueltas como "fuera de esta versión": el vínculo docente–asignatura sigue pendiente de la decisión del equipo (K4) y la reutilización del aval, de la respuesta de la referente (§12.2). La v1.1.0 suma D-20…D-22 (§12.1).
 
 | ID | Pregunta | Opciones | Recomendación |
 | --- | --- | --- | --- |
@@ -540,11 +544,19 @@ Cada criterio tendrá al menos un test anotado `# AC-NN`, con `pytestmark = pyte
 | D-14 | ¿"Cerrar todas mis sesiones" entra en B3? | (a) Sí · (b) No | **(a)**: es un incremento de `token_version` y sirve en computadoras compartidas |
 | D-15 | Identificador de archivo | (a) UUID v4 · (b) entero | **(a)**: no se puede recorrer por números consecutivos, aunque el control de acceso se aplica igual |
 | D-16 | Teléfono obligatorio en el registro (USR-05, ADR-022 b): ¿dónde entra y qué se hace con los usuarios que ya están cargados sin teléfono? | (a) En el spec siguiente: obligatorio en `RegistroRequest` y `UsuarioAdminCreate`; `PATCH /auth/me` ya no permite borrarlo; la columna **sigue admitiendo nulos** y el frontend pide completarlo con un aviso no bloqueante; pasa a `NOT NULL` en una migración posterior, cuando no queden nulos · (b) En la Fase A · (c) `NOT NULL` ya, con un valor de relleno para los existentes · (d) Un `CHECK (telefono IS NOT NULL) NOT VALID` | **(a)**. (b) demora la Fase A, que no toca el registro. (c) mete datos falsos en la base. (d) parece cómodo pero no sirve: PostgreSQL aplica un `CHECK NOT VALID` a toda fila que se actualiza, así que cualquier edición de un usuario viejo sin teléfono (aprobarlo, suspenderlo, cambiarle el email) fallaría. Además, el texto de USR-05 en el ERS todavía no lo dice (DT-29) y va primero en el PR del ERS (K7) |
-| D-17 | ¿Cómo se envían los avisos que dispara un servicio (sanciones)? | (a) Envío directo después del commit, sin reintentos; el fallo queda en el log · (b) Bandeja de salida transaccional (`correos_salientes`) que llena el servicio en su transacción y despacha un proceso aparte, con reintentos | **(a) en este spec**: la interfaz de §5.1 alcanza y no agrega tablas. (b) se decide en el spec de sanciones, después de que el Perfil 5 responda K6: si los avisos pasan por `notifications`, la bandeja (si hace falta) es de ese módulo. La recuperación nunca usa (b), porque guardaría el enlace con el token en claro |
+| D-17 | ¿Cómo se envían los avisos que dispara un servicio (sanciones)? | (a) Envío directo después del commit, sin reintentos; el fallo queda en el log · (b) Bandeja de salida transaccional (`correos_salientes`) que llena el servicio en su transacción y despacha un proceso aparte, con reintentos | **(a) en este spec**: la interfaz de §5.1 alcanza y no agrega tablas. (b) se decide en el spec de sanciones, después de que el Perfil 5 responda K6: si los avisos pasan por `notifications`, la bandeja (si hace falta) es de ese módulo. La recuperación nunca usa (b), porque guardaría el enlace con el token en claro. **Cerrada el 2026-11-07 por ADR-023:** la bandeja de salida es la tabla `notificaciones` de SPEC-06, y este spec no agrega ninguna |
 | D-18 | ¿El docente de la asignatura descarga el aval de un estudiante? | (a) No · (b) Sí, en modo lectura | **(a)**: el que verifica la resolución es el administrador antes de aprobar; el docente sólo observa (PRE-20) y no necesita el documento (P6.4). Si la referente lo pide, `loans` lo habilita con `abrir_archivo` sin cambiar este spec |
-| D-19 | ¿Una misma resolución del Consejo se reutiliza en varios pedidos? Los docentes piden alta gama con regularidad | (a) No por ahora: un PDF por orden; se pregunta a la referente · (b) Sí: el propietario puede vincular su aval a más de una orden y listar los suyos (`GET /files/archivos?proposito=AVAL_PRESTAMO`) | **(a)**, con la pregunta de §12.1. Habilitar (b) después es chico: relajar la regla de "ya vinculado" para el mismo propietario y agregar el listado |
+| D-19 | ¿Una misma resolución del Consejo se reutiliza en varios pedidos? Los docentes piden alta gama con regularidad | (a) No por ahora: un PDF por orden; se pregunta a la referente · (b) Sí: el propietario puede vincular su aval a más de una orden y listar los suyos (`GET /files/archivos?proposito=AVAL_PRESTAMO`) | **(a)**, con la pregunta de §12.2. Habilitar (b) después es chico: relajar la regla de "ya vinculado" para el mismo propietario y agregar el listado |
 
-### 12.1 Pregunta para la referente
+### 12.1 Decisiones nuevas de la v1.1.0 (aprobadas por el Perfil 1 el 2026-11-08)
+
+| ID | Pregunta | Opciones | Recomendación |
+| --- | --- | --- | --- |
+| D-20 | ¿En qué orden se entrega la Fase B? | (a) B2 → B1 → B3 · (b) B1 → B2 → B3, el orden del plan v1.0 | **(a)**. La Fase 1 de `loans` ya está en `develop` y rechaza todo pedido de alta gama con `422 AVAL_REQUERIDO` hasta que exista `files`: es lo que hoy frena a otro perfil (K3). B1 sólo la espera la Fase C de SPEC-06, que está diferida. B1 y B2 no dependen una de otra: sólo comparten `settings.py`, `.env.example` y `conftest.py`, así que la segunda se rebasa sobre la primera. B3 sigue siendo independiente |
+| D-21 | ¿Cómo manda `notifications` sus correos con este transporte (ADR-023)? | (a) Un tipo genérico `TipoCorreo.NOTIFICACION` con `titulo` y `mensaje` ya armados por `notifications` (RN-77) · (b) Una función aparte, `enviar_mensaje(destinatario, CorreoRenderizado)`, sin plantilla · (c) Un `TipoCorreo` por cada aviso (`LLAMADO_ATENCION`, `SANCION`…), con su plantilla en `core` | **(a)**. Se mantiene una sola entrada al transporte, con RN-71…RN-75 (prefijo, log sin contenido, un destinatario) para todos los correos. El texto de cada aviso lo arma `notifications`, que ya tiene plantillas por tipo (SPEC-06 RN-N7). (b) duplica la entrada al transporte. (c) duplica las plantillas en dos módulos y obliga a tocar `core` por cada aviso nuevo. Reemplaza a los cuatro tipos que la v1.0.0 dejaba reservados |
+| D-22 | ¿Qué número llevan las migraciones de la Fase B? | (a) Números reservados: `0014_files_init` (B2) y `0015_users_recuperacion` (B1). `down_revision` es la cabeza de `develop` al abrir el PR · (b) Renumerar al integrar, como decía EC-45 | **(a)**. `loans` reserva `0011` y `0012` y `notifications` usa `0013` (SPEC-05, SPEC-06). La cadena ya no sigue el orden de los números (`0013` sale de `0010`, y `0011` va a salir de `0013`), así que renumerar no ordena nada y obliga a tocar archivos ya revisados. Responde la parte de numeración de C19 de SPEC-05 |
+
+### 12.2 Pregunta para la referente
 
 1. ¿Una resolución del Consejo (CICSE/ICSE) ampara un solo pedido de alta gama o puede respaldar varios (por ejemplo, todos los de un proyecto de investigación o de un TIF)? (D-19)
 
@@ -554,16 +566,17 @@ Cada criterio tendrá al menos un test anotado `# AC-NN`, con `pytestmark = pyte
 
 | ID | Para | Pedido | Origen |
 | --- | --- | --- | --- |
-| K1 | Perfil 4 | Agregar `solicitante: {id, nombre, apellido} \| null` a `ReservaEspacioResponse` usando `datos_publicos_por_ids` sobre los ids de la página. La referente lo confirmó el 16/10 para el calendario maestro, **sólo para administradores**. Nunca en la disponibilidad (RN-43) | Pedido del Perfil 4 (`MEMORY.md` §5), ADR-022 |
-| K2 | Perfil 3 | Resumen del solicitante en las respuestas de `loans` para administradores (y docentes, según la pregunta 5 de SPEC-05 §15.2), con la misma función | C2 de SPEC-05 |
-| K3 | Perfil 3 | Cuando exista B2: `pdf_aval_id: UUID` en `OrdenPedidoCreate`, **obligatorio si hay ítems de alta gama, tanto para estudiantes como para docentes** (es el PDF de la resolución del Consejo CICSE/ICSE, ADR-022 i); llamar a `vincular_archivo` en la misma transacción. Si `loans` sirve el aval desde el detalle de la orden (con `abrir_archivo` y `respuesta_descarga`), sólo al solicitante y a los administradores con jurisdicción, no al docente de la asignatura (RN-60, D-18). Hasta entonces sigue D-L12 (`AVAL_NO_HABILITADO`) | C4 de SPEC-05, ADR-022 (i) |
+| K1 | Perfil 4 | Agregar `solicitante: {id, nombre, apellido} \| null` a `ReservaEspacioResponse` usando `datos_publicos_por_ids` sobre los ids de la página. La referente lo confirmó el 16/10 para el calendario maestro, **sólo para administradores**. Nunca en la disponibilidad (RN-43). *2026-11-08: la función está en `develop` (PR #18); falta el cambio en `spaces`* | Pedido del Perfil 4 (`MEMORY.md` §5), ADR-022 |
+| K2 | Perfil 3 | Resumen del solicitante en las respuestas de `loans` para administradores (y docentes, según la pregunta 5 de SPEC-05 §15.2), con la misma función. *2026-11-08: la Fase 1 de `loans` todavía no la usa* | C2 de SPEC-05 |
+| K3 | Perfil 3 | Cuando exista B2: con `pdf_aval_id: UUID` en `OrdenPedidoCreate` (ya está en el esquema), **obligatorio si hay ítems de alta gama, tanto para estudiantes como para docentes** (es el PDF de la resolución del Consejo CICSE/ICSE, ADR-022 i), llamar a `vincular_archivo` en la misma transacción. Si `loans` sirve el aval desde el detalle de la orden (con `abrir_archivo` y `respuesta_descarga`), sólo al solicitante y a los administradores con jurisdicción, no al docente de la asignatura (RN-60, D-18). Hasta entonces, la Fase 1 de `loans` responde `422 AVAL_REQUERIDO` a todo pedido de alta gama (por eso D-20 adelanta B2) | C4 de SPEC-05, ADR-022 (i) |
 | K4 | Equipo y Perfil 3 | Decidir el dueño del catálogo de asignaturas y del vínculo docente–asignatura (D-04) | C2 y C3 de SPEC-05 |
 | K5 | Equipo | Ratificar la enmienda 1.1.1 (§2.3) y decidir DT-19 | C13 de SPEC-05 |
-| K6 | Perfil 5 | **Decisión pendiente, no informativa.** Los llamados de atención y las sanciones se avisan por email al estudiante (ADR-022 f; ítem abierto en `MEMORY.md` §5). Decidir si esos avisos pasan por `notifications` (que decide canal y registro, y llama a `app/core/email.py` como transporte) o si el módulo `users` llama directamente al transporte. Propuesta del Perfil 1: que pasen por `notifications` si para el spec de sanciones ya existe su función pública, así el aviso también aparece en la campanita; si no, `users` usa `enviar_correo` y migra después. La respuesta define D-17 en el spec de sanciones. `app/core/email.py` queda además disponible para NOV-03 | ADR-022 (f) |
+| K6 | Perfil 5 | ~~Decidir si los avisos por email de llamados de atención y sanciones pasan por `notifications` o si `users` llama directo al transporte.~~ **Respondido el 2026-11-07 (ADR-023, C-N03 de SPEC-06):** pasan por `notifications`, con la tabla `notificaciones` como bandeja de salida y el comando `enviar-correos`. El transporte que usan es `TipoCorreo.NOTIFICACION` (RN-77, D-21) | ADR-022 (f) |
 | K7 | Equipo (PR al ERS, lo arma el Perfil 1) | **Un solo PR al ERS** que haga las dos cosas: (1) DT-29, reflejar ADR-022 en USR-05, USR-09, GLO-01, GLO-03, GLO-04, RES-03, PRE-05 y PRE-11 y sus casos de uso; (2) corregir el flujo alternativo del CU de USR-02: respuesta neutra en lugar de "informa que no existe una cuenta" (D-06). Así el equipo revisa una sola vez los requisitos que salen de la entrevista y los de este spec | D-06, DT-29 |
-| K8 | Despliegue (Perfil 1) | Variables SMTP en el entorno, Mailpit en el `docker-compose` de desarrollo, programación de `limpiar-huerfanos` junto con `procesar-vencimientos` (C5 de SPEC-05) y `--proxy-headers` si hay proxy inverso (RN-54) | §5, §6 |
+| K8 | Despliegue (Perfil 1) | Variables SMTP en el entorno, Mailpit en el `docker-compose` de desarrollo, programación de `limpiar-huerfanos` junto con `procesar-vencimientos` (C5 de SPEC-05) y `enviar-correos` (C-N04 de SPEC-06), `--proxy-headers` si hay proxy inverso (RN-54) y una versión de Python fija para la imagen y la CI (DT-30) | §5, §6 |
 | K9 | Perfiles 2–5 | El módulo `files` es nuevo; quien necesite archivos usa su API pública (§6.5) en vez de guardar por su cuenta | D-12 |
-| K10 | Perfiles 3 y 4 | Informativo: en el spec siguiente del Perfil 1, `horario.apertura` y `horario.cierre` pasan a ser por sede y se suma el parámetro con el correo de contacto del laboratorio (para el aviso de anticipación del Perfil 4). Este spec no los cambia: hasta entonces se siguen leyendo las claves actuales | ADR-022 (a, c) |
+| K10 | Perfiles 3, 4 y 5 | Informativo: en el spec siguiente del Perfil 1, `horario.apertura` y `horario.cierre` pasan a ser por sede y se suma el parámetro con el correo de contacto del laboratorio (para el aviso de anticipación del Perfil 4). El Perfil 5 también lee el horario, en el portal (C-N05 de SPEC-06). Este spec no los cambia: hasta entonces se siguen leyendo las claves actuales | ADR-022 (a, c), C19 de SPEC-05 |
+| K11 | Perfiles 3 y 5 | Numeración de migraciones (D-22): este spec usa `0014_files_init` y `0015_users_recuperacion`. Quien abra un PR con migración apunta `down_revision` a la cabeza de `develop` de ese momento y comprueba `alembic heads` antes de mergear. Responde la parte de numeración de C19 | C19 de SPEC-05, D-N08 de SPEC-06 |
 
 ---
 
@@ -573,13 +586,13 @@ Cada criterio tendrá al menos un test anotado `# AC-NN`, con `pytestmark = pyte
 | --- | --- | --- | --- | --- |
 | C2 de SPEC-05 / pedido del Perfil 4 (soporte de PRE-15, RES-05) | `users.service.datos_publicos_por_ids` | AC-61…AC-70 | EC-34, EC-35 | A |
 | USR-02 | `POST /auth/recuperacion`, `POST /auth/recuperacion/confirmar`, `core.email.enviar_correo`; pantallas de recuperación | AC-71…AC-80, AC-95, AC-96 | EC-36…EC-40 | B1 |
-| ADR-022 (f) — transporte de los avisos por correo | `core.email.TipoCorreo`, `renderizar_correo`, `enviar_correo` | AC-100, AC-101 | EC-49 | B1 |
+| ADR-022 (f), ADR-023 — transporte de los avisos por correo | `core.email.TipoCorreo` (incluido `NOTIFICACION`), `renderizar_correo`, `enviar_correo` | AC-100, AC-101 | EC-49 | B1 |
 | USR-03 (foto) | `PUT` y `DELETE /auth/me/foto`, `GET /files/archivos/{id}/contenido`; Mi perfil y Navbar | AC-83…AC-85, AC-97 | EC-41 | B2 |
 | USR-04 (moderación de foto) | `DELETE /users/{id}/foto` | AC-89 | — | B2 |
 | PRE-05 (almacenamiento del aval, estudiantes y docentes), C4 de SPEC-05 | `POST /files/archivos`, `files.service.vincular_archivo`, `abrir_archivo`, `respuesta_descarga`, CLI `limpiar-huerfanos` | AC-81, AC-82, AC-85…AC-88 | EC-42…EC-44, EC-47, EC-48 | B2 |
 | USR-05 (teléfono obligatorio, ADR-022 b) | — (spec siguiente, D-16) | — | EC-50 | — |
 | D-06 de SPEC-01, ADR-015 | `POST /auth/renovar`, `POST /auth/me/sesiones/cerrar`; renovación en `AuthContext` | AC-91…AC-94, AC-98 | EC-46 | B3 |
-| P7.4 (migraciones) | `00NN_users_recuperacion`, `00NN_files_init` | AC-80, AC-90 | EC-45 | B1, B2 |
+| P7.4 (migraciones) | `0015_users_recuperacion`, `0014_files_init` | AC-80, AC-90 | EC-45 | B1, B2 |
 
 ---
 
@@ -587,6 +600,7 @@ Cada criterio tendrá al menos un test anotado `# AC-NN`, con `pytestmark = pyte
 
 | Versión | Fecha | Autor | Cambio |
 | --- | --- | --- | --- |
+| 1.1.0 | 2026-11-08 | Perfil 1 (con asistencia de IA) | **Aprobado** por el Perfil 1 el mismo día, con D-20…D-22 tal como se recomiendan. Puesta al día con SPEC-05 v1.0.0 (Fase 1 de `loans` en `develop`) y SPEC-06 v1.0.0 (ADR-023), sin cambios en el contrato de la Fase A, que queda **implementada** (PR #18, §4.4). **Contrato:** `TipoCorreo.NOTIFICACION` para `notifications` (RN-77, D-21, AC-100), que reemplaza a los cuatro tipos reservados para sanciones. **Decisiones nuevas:** orden B2 → B1 → B3 (D-20) y migraciones `0014_files_init` y `0015_users_recuperacion` (D-22, EC-45, K11). **Correcciones:** EC-35 (con `autoflush=False` los cambios sin `flush` no se emiten, plan §9) y AC-67 (el tipo de excepción al agregar un atributo depende de la versión de Python, DT-30). **Al día:** §2.1 verificado contra `develop`, D-17 cerrada por ADR-023, K1–K3, K6, K8 y K10 actualizados, §1.2, RN-72, RN-73 y EC-49. La pregunta para la referente pasa a §12.2 |
 | 1.0.0 | 2026-11-03 | Perfil 1 | **Aprobado** con todas las recomendaciones de §12 (D-01…D-19). Sin cambios de contenido respecto de la v0.2.0 |
 | 0.2.0 | 2026-11-02 | Perfil 1 (con asistencia de IA) | Ajustes por la tercera entrevista (ADR-022), sin cambios en la Fase A. §2.4 nuevo con el impacto. §5.1: el correo pasa a ser un transporte con plantillas por tipo de mensaje (`TipoCorreo`, `renderizar_correo`) y llamable desde servicios, pensando en los avisos de sanciones (RN-71…RN-76, AC-100, AC-101, D-17). §6 y K3: el aval es la resolución del Consejo, obligatoria para estudiantes y docentes; el docente de la asignatura no la descarga (RN-60, AC-81, AC-85, D-18); reutilizar una resolución queda abierto (D-19, §12.1). §1.2: horario por sede y correo de contacto, delegación temporal del Superadministrador, USR-09 reformulado, teléfono obligatorio y DT-29, con destino en el spec siguiente del Perfil 1. D-16 (teléfono obligatorio). D-08 confirmada por la referente. K6 pasa a decisión del Perfil 5; K7 propone un solo PR al ERS con DT-29; K10 nuevo. EC-47…EC-50 |
 | 0.1.0 | 2026-11-02 | Perfil 1 (con asistencia de IA) | Borrador inicial para revisión |
