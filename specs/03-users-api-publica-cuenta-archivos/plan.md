@@ -2,24 +2,26 @@
 
 | Campo | Valor |
 | --- | --- |
-| **Spec** | `specs/03-users-api-publica-cuenta-archivos/spec.md` (v1.0.0, `APROBADO` 2026-11-03) |
-| **Estado del plan** | `BORRADOR` — 2026-11-03 |
+| **Spec** | `specs/03-users-api-publica-cuenta-archivos/spec.md` (v1.1.0, `APROBADO` 2026-11-08; la v1.0.0 se aprobó el 2026-11-03) |
+| **Estado del plan** | `BORRADOR` — v1.1.0, 2026-11-08 (ver §12) |
 | **Perfil** | 1 |
-| **Entrega** | Cuatro PRs de backend y tres de frontend, en el orden de §2 (D-01) |
+| **Entrega** | Cuatro PRs de backend y tres de frontend, en el orden de §2 (D-01, D-20). La Fase A ya está mergeada (PR #18) |
 
 ---
 
-## 1. Punto de partida (`develop` al 2026-11-03)
+## 1. Punto de partida (`develop` al 2026-11-08: backend `3ad6b6b`, frontend `8f7832b`)
 
 | Elemento | Situación | Impacto en el plan |
 | --- | --- | --- |
-| `app/database.py` | `async_sessionmaker(..., autoflush=False)`, igual que el `sessionmaker_` de los tests | `datos_publicos_por_ids` no emite cambios pendientes del llamador. **EC-35 del spec dice lo contrario** (ver §9) |
-| `tests/conftest.py` | `TRUNCATE` de una lista fija de tablas con `CASCADE`; base creada con `create_all`; `crear_usuario` agrega al usuario en la sesión `db` | Las tablas nuevas con FK a `usuarios` se vacían solas por el `CASCADE`; `intentos_recuperacion` (sin FK) hay que sumarla a `_TABLAS`. Los tests de la Fase A llaman a la función con **otra** sesión, porque `db` ya tiene a los usuarios en su *identity map* (AC-68) |
+| `app/database.py` | `async_sessionmaker(..., autoflush=False)`, igual que el `sessionmaker_` de los tests | `datos_publicos_por_ids` no emite cambios pendientes del llamador (EC-35, corregido en spec v1.1.0) |
+| `tests/conftest.py` | `TRUNCATE` de una lista fija de tablas con `CASCADE` (desde SPEC-06 incluye `notificaciones` y `comunicados`); base creada con `create_all`; `crear_usuario` agrega al usuario en la sesión `db`. Desde SPEC-05 tiene además fábricas de `inventory` y `loans` (`crear_equipamiento`, …) | `TRUNCATE ... CASCADE` vacía también las tablas que tienen FK a las de la lista, así que `archivos` y `archivos_contenido` (B2) se vacían solas. `intentos_recuperacion` (B1, sin FK) hay que sumarla a `_TABLAS`. Para AC-86 se puede reutilizar `crear_equipamiento` si hiciera falta una orden real, pero `vincular_archivo` se prueba sin `loans` |
 | `app/core/security.py` | `crear_access_token` y `TokenPayload(sub, tv)` sin `auth_time` | B3 agrega el claim con valor por defecto, sin romper el helper `auth()` de los tests |
-| `app/main.py` | Registro explícito de routers | B2 monta `files` en `/api/v1/files` |
-| `alembic/env.py` | Importa los modelos de cada módulo | B2 registra `app.modules.files.models` |
-| Migraciones | Última: `0010_inventory_gestion`. SPEC-05 prevé `0011_loans_ciclo_entrega` | El número de las de B1 y B2 se fija al abrir cada PR (EC-45) |
-| Frontend | Sin React Router (`App.tsx` decide la pantalla con estado); `src/lib/api.ts` con `apiRequest`, `tokenStore` en `sessionStorage` y `ApiError`; `AuthContext.tsx` con `login`, `logout`, `aplicarToken` | Las pantallas públicas de B1 se resuelven en `App.tsx` leyendo el fragmento; B2 extiende `apiRequest` para `FormData` y `Blob` |
+| `app/main.py` | Registro explícito de routers; desde SPEC-06 monta también `notifications` | B2 monta `files` en `/api/v1/files` |
+| `alembic/env.py` | Importa los modelos de cada módulo (incluido `notifications`) | B2 registra `app.modules.files.models` |
+| Migraciones | Cabeza: `0013_notifications_init` (`down_revision = 0010`). `0011_loans_resolucion` está en `feat/loans-validar` (PR #23) con `down_revision = 0013`; SPEC-05 reserva también `0012` | Nombres fijos: `0014_files_init` (B2) y `0015_users_recuperacion` (B1), según D-22. `down_revision` = la cabeza de `develop` al abrir cada PR; `alembic heads` con una sola cabeza antes de mergear (EC-45) |
+| `loans` | Fase 1 en `develop` (PR #21): `pdf_aval_id` en el esquema; todo alta gama responde `422 AVAL_REQUERIDO` | B2 es lo que lo destraba (K3, D-20). `loans` hace el cambio de su lado; este plan sólo publica `vincular_archivo` |
+| Python | README: "≥ 3.11, validado con 3.12". En el equipo hay 3.12 (Perfil 5), 3.13 (Perfil 2) y 3.14 (Perfil 1) | DT-30: el test de AC-67 falla en 3.12 y 3.13 (A-04). Cada PR de la Fase B se corre al menos en dos versiones hasta que el despliegue fije una (K8) |
+| Frontend | Sin React Router (`App.tsx` decide la pantalla con estado); `src/lib/api.ts` con `apiRequest`, `tokenStore` en `sessionStorage` y `ApiError`; `AuthContext.tsx` con `login`, `logout`, `aplicarToken`. El PR #12 del Perfil 5 (abierto) y la Fase 1 de `loans` también tocan `App.tsx` | Las pantallas públicas de B1 se resuelven en `App.tsx` leyendo el fragmento; B2 extiende `apiRequest` para `FormData` y `Blob`. Rebasar sobre `develop` antes de abrir cada PR de frontend |
 
 ---
 
@@ -27,12 +29,13 @@
 
 | Orden | Fase | Backend | Frontend | Depende de |
 | --- | --- | --- | --- | --- |
-| 1 | A | `feat/users-datos-publicos` | — | — |
-| 2 | B1 | `feat/users-recuperacion` | `feat/auth-recuperacion` | — |
-| 3 | B2 | `feat/files-almacenamiento` | `feat/users-foto` | B1 mergeado (comparte `settings.py`, `conftest.py` y la numeración de migraciones) |
-| 4 | B3 | `feat/auth-renovacion` | `feat/auth-renovacion` | — (puede ir en paralelo con B2: no comparte archivos salvo `settings.py` y `.env.example`) |
+| 1 | A | `feat/users-datos-publicos` ✔ PR #18 | — | — |
+| 1b | A (DT-30) | `fix/users-test-dataclass` | — | — |
+| 2 | B2 | `feat/files-almacenamiento` | `feat/users-foto` | — |
+| 3 | B1 | `feat/users-recuperacion` | `feat/auth-recuperacion` | Nada funcional. Comparte `settings.py`, `.env.example` y `conftest.py` con B2: si B2 ya está mergeada, se rebasa sobre ella |
+| 4 | B3 | `feat/auth-renovacion` | `feat/auth-renovacion` | — (puede ir en paralelo con B2 o B1: sólo comparte `settings.py` y `.env.example`) |
 
-Todas salen de `develop` actualizado y entran por PR hacia `develop` con una revisión. La Fase A se puede mergear apenas esté, sin esperar al resto: desbloquea los ítems K1 y K2.
+Todas salen de `develop` actualizado y entran por PR hacia `develop` con una revisión. **B2 va antes que B1 (D-20):** la Fase 1 de `loans` ya está en `develop` y sin `files` rechaza todo pedido de alta gama. B1 sólo la espera la Fase C de SPEC-06, que está diferida.
 
 ---
 
@@ -41,7 +44,7 @@ Todas salen de `develop` actualizado y entran por PR hacia `develop` con una rev
 | Repo | Paquete | Fase | Justificación |
 | --- | --- | --- | --- |
 | Backend | `python-multipart>=0.0.9` | B2 | FastAPI la exige para `UploadFile` y formularios multipart |
-| Backend | `Pillow>=10.4` | B2 | Volver a codificar la foto, quitar EXIF y neutralizar políglotas (D-11) |
+| Backend | `Pillow>=11.3` | B2 | Volver a codificar la foto, quitar EXIF y neutralizar políglotas (D-11). Mínimo 11.3 para tener paquetes binarios en Python 3.13 y 3.14, las versiones del equipo; confirmarlo con `pip install` en B2-01 |
 | Desarrollo (opcional) | Mailpit (contenedor, no paquete de Python) | B1 | SMTP local para ver los correos sin enviarlos (NFR-22) |
 
 B1 y B3 no agregan dependencias: `smtplib`, `string.Template`, `hashlib`, `hmac` y `secrets` son de la biblioteca estándar. El frontend no agrega ninguna.
@@ -83,6 +86,17 @@ async def datos_publicos_por_ids(db, ids):
 - AC-69: en la sesión nueva se agrega un `ParametroGlobal` modificado sin confirmar, se llama a la función, se verifica `session.in_transaction()`, se hace `rollback` y se comprueba en otra sesión que el cambio no quedó.
 - AC-70: lote de 40 000 ids (casi todos inexistentes) desde una lista, un `set` y un generador.
 
+### 4.4 Estado y corrección de DT-30
+
+**Implementada** (commit `9341c59`, backend PR #18, 2026-11-06): 16 tests, la suite completa con 386 pasados contra PostgreSQL 18 y cobertura de `users` de 94 %.
+
+**DT-30.** `test_datos_publicos_solo_tiene_id_nombre_y_apellido_e_inmutable` asigna `dni`, que no es campo, y espera `FrozenInstanceError`. En un `dataclass(frozen=True, slots=True)`, Python 3.12 y 3.13 lanzan `TypeError` en ese caso (lo reprodujeron el Perfil 2 con 3.13.12 y el Perfil 5 con 3.12.10): el `__setattr__` generado llama a `super()` con la clase original y no con la que crea `slots=True`. Python 3.14, con el que se escribió el test, ya no tiene ese problema. La función no cambia. El test se ajusta a AC-67 v1.1.0:
+
+- asignar `nombre` → `pytest.raises(FrozenInstanceError)`;
+- asignar `dni` → `pytest.raises((FrozenInstanceError, TypeError, AttributeError))`, y `not hasattr(datos, "__dict__")`.
+
+Rama `fix/users-test-dataclass` desde `develop`. Verificación: el archivo en verde en 3.14 y en 3.12 o 3.13 (pedirle a los Perfiles 2 o 5 que lo corran).
+
 ---
 
 ## 5. Fase B1 — Correo y recuperación de contraseña
@@ -94,20 +108,22 @@ async def datos_publicos_por_ids(db, ids):
 | `app/core/settings.py` | Modificar | `EMAIL_BACKEND`, `SMTP_*`, `EMAIL_FROM`, `FRONTEND_URL`, `RECUPERACION_*` (spec §5.1 y §5.2) |
 | `app/core/email.py` | Crear | `TipoCorreo`, `CorreoRenderizado`, `ErrorEnvioCorreo`, `renderizar_correo`, `enviar_correo`, backends `smtp` y `memoria` (`bandeja_memoria()` y `vaciar_bandeja_memoria()` para tests) |
 | `app/core/plantillas_correo/RECUPERACION_PASSWORD.txt` | Crear | Asunto en la primera línea; cuerpo con `$nombre`, `$enlace` y `$vigencia_minutos` |
+| `app/core/plantillas_correo/NOTIFICACION.txt` | Crear | Asunto `$titulo`; cuerpo `$mensaje`, una línea en blanco y el pie fijo con `$enlace_app` (que `renderizar_correo` completa con `FRONTEND_URL`, sin que lo pase el llamador) y "Este es un aviso automático de PrestaMeDios" (RN-77, D-21) |
 | `app/modules/users/models.py` | Modificar | `TokenRecuperacion`, `IntentoRecuperacion` |
 | `app/modules/users/schemas.py` | Modificar | `SolicitudRecuperacion {email}`, `ConfirmacionRecuperacion {token, password_nueva}` (reutiliza el validador de RN-03), `MensajeResponse {detail}` |
 | `app/modules/users/service.py` | Modificar | `solicitar_recuperacion`, `confirmar_recuperacion`, `_invalidar_tokens_recuperacion`; `actualizar_perfil` y `editar_por_admin` invalidan los tokens si cambia el email (RN-53) |
 | `app/modules/users/router.py` | Modificar | `POST /auth/recuperacion` (con `Request` y `BackgroundTasks`) y `POST /auth/recuperacion/confirmar` |
-| `alembic/versions/00NN_users_recuperacion.py` | Crear | Las dos tablas e índices; `downgrade` las borra |
+| `alembic/versions/0015_users_recuperacion.py` | Crear | Las dos tablas e índices; `downgrade` las borra. `down_revision` = la cabeza de `develop` al abrir el PR (D-22) |
 | `tests/conftest.py` | Modificar | `intentos_recuperacion` en `_TABLAS`; `EMAIL_BACKEND=memoria` para la sesión de tests; fixture `correos` que vacía y devuelve la bandeja |
-| `tests/core/test_email.py` | Crear | AC-100, AC-101 |
+| `tests/core/test_email.py` | Crear | AC-100 (las dos plantillas, incluida `NOTIFICACION`), AC-101 |
 | `tests/users/test_recuperacion.py` | Crear | AC-71…AC-79 |
 | `tests/users/test_migracion_recuperacion.py` | Crear | AC-80 (como `test_spaces_migrations.py`) |
 | `.env.example`, `README.md` | Modificar | Variables nuevas sin valores reales; cómo levantar Mailpit; el flujo de recuperación |
 
 ### 5.2 Diseño
 
-- **Plantillas.** `renderizar_correo` lee `plantillas_correo/<tipo>.txt` con `importlib.resources` (funciona igual en Docker) y usa `Template.substitute`, que lanza `KeyError` si falta una variable; se traduce a `ValueError` con el nombre del tipo y de la variable, nunca con los valores (RN-71, RN-74). Las plantillas se cachean.
+- **Plantillas.** `renderizar_correo` lee `plantillas_correo/<tipo>.txt` con `importlib.resources` (funciona igual en Docker) y usa `Template.substitute`, que lanza `KeyError` si falta una variable; se traduce a `ValueError` con el nombre del tipo y de la variable, nunca con los valores (RN-71, RN-74). Las plantillas se cachean. Antes de sustituir, al contexto del llamador se le suma `enlace_app` = `FRONTEND_URL`. Si el llamador manda una clave con ese nombre, se rechaza con `ValueError`, para que el pie no se pueda falsear.
+- **Uso desde `notifications` (D-21).** Su comando `enviar-correos` (Fase C de SPEC-06) llama a `enviar_correo(TipoCorreo.NOTIFICACION, destinatario, {"titulo": …, "mensaje": …})` por cada notificación pendiente y captura `ErrorEnvioCorreo` para registrar el error. Este plan no toca `notifications`: sólo deja el tipo, la plantilla y AC-100.
 - **Transporte.** `enviar_correo` renderiza y delega en el backend elegido por `EMAIL_BACKEND`. El de `smtp` arma un `EmailMessage` y lo envía con `smtplib.SMTP` o `SMTP_SSL` dentro de `asyncio.to_thread`, con `timeout=10`; cualquier `OSError` o `smtplib.SMTPException` se convierte en `ErrorEnvioCorreo` (RN-73, RN-75). Logger `app.core.email`: tipo, resultado y, si se pasa, `usuario_id`.
 - **Solicitud** (`solicitar_recuperacion(db, email, ip) -> Pendiente | None`):
   1. Borra los intentos de más de 24 h.
@@ -127,11 +143,11 @@ async def datos_publicos_por_ids(db, ids):
 | --- | --- |
 | `tokens_recuperacion` (FK `CASCADE`, `UNIQUE(token_hash)`, índice `(usuario_id, usado_en)`); `intentos_recuperacion` con índices `(email_hash, created_at)` y `(ip, created_at)`. Sin `CHECK` (no aplica DT-26) | Borra las dos tablas |
 
-Verificación: `upgrade head` → `downgrade -1` → `upgrade head` en una base de desarrollo.
+Verificación: `upgrade head` → `downgrade -1` → `upgrade head` en una base de desarrollo, y `alembic heads` con una sola cabeza.
 
 ---
 
-## 6. Fase B2 — Archivos y foto de perfil
+## 6. Fase B2 — Archivos y foto de perfil (se entrega antes que B1, D-20)
 
 ### 6.1 Archivos
 
@@ -149,7 +165,7 @@ Verificación: `upgrade head` → `downgrade -1` → `upgrade head` en una base 
 | `app/modules/users/service.py` | Modificar | `reemplazar_foto`, `quitar_foto`, `quitar_foto_por_admin` (bloquean al usuario con `FOR UPDATE`, EC-41; historial RN-59; reglas de UC-12 para el `ADMIN_LOCAL`, RN-64) |
 | `app/modules/users/router.py` | Modificar | `PUT` y `DELETE /auth/me/foto`, `DELETE /users/{id}/foto` |
 | `app/main.py`, `alembic/env.py` | Modificar | Montar el router con el tag "Archivos"; registrar los modelos |
-| `alembic/versions/00NN_files_init.py` | Crear | Enum, tablas, índice y FK `usuarios.foto_id` |
+| `alembic/versions/0014_files_init.py` | Crear | Enum, tablas, índice y FK `usuarios.foto_id`. `down_revision` = la cabeza de `develop` al abrir el PR (hoy `0013_notifications_init`, o `0011_loans_resolucion` si el PR #23 entra antes; D-22) |
 | `requirements.txt` | Modificar | `python-multipart`, `Pillow` |
 | `tests/files/` | Crear | AC-81…AC-88, AC-90; generadores de un JPEG con EXIF (con Pillow) y de un PDF mínimo |
 | `tests/users/test_foto.py` | Crear | AC-83, AC-84, AC-89 |
@@ -169,6 +185,8 @@ Verificación: `upgrade head` → `downgrade -1` → `upgrade head` en una base 
 | `upgrade` | `downgrade` |
 | --- | --- |
 | `proposito_archivo_enum`; `archivos` (FK `propietario_id` `RESTRICT`, `CHECK` de tamaño con SQL directo para esquivar DT-26, índice `(vinculado_en, created_at)`, `sede` con el `sede_enum` existente sin recrearlo); `archivos_contenido` (FK `CASCADE`); `usuarios.foto_id` con su FK | Quita la FK y la columna `foto_id`, borra las tablas y el enum |
+
+Verificación: `upgrade head` → `downgrade -1` → `upgrade head` en una base de desarrollo, y `alembic heads` con una sola cabeza (AC-90).
 
 ---
 
@@ -210,9 +228,10 @@ Verificación de cada PR: `npm run typecheck`, `npm run build`, `npm test` y rec
 
 ---
 
-## 9. Observación sobre el spec aprobado
+## 9. Observaciones sobre el spec
 
-**EC-35** dice que "el *autoflush* de SQLAlchemy puede emitirlos antes de la consulta". No es así en este proyecto: `app/database.py` y los tests crean las sesiones con `autoflush=False`, de modo que los cambios sin `flush` del llamador **no** se emiten y la consulta no los ve. El contrato no cambia (la función sigue sin confirmar nada, RN-42). Se propone corregir el texto en una v1.0.1 documental: "Con `autoflush=False` (configuración del proyecto) los cambios sin `flush` no se emiten: la consulta no ve usuarios agregados y sin `flush` por el llamador, y la función no confirma nada (RN-42)". Requiere el visto bueno del Perfil 1 (AGENTS.md §4).
+- **EC-35** decía que "el *autoflush* de SQLAlchemy puede emitirlos antes de la consulta". No es así en este proyecto: `app/database.py` y los tests crean las sesiones con `autoflush=False`. **Corregido en el spec v1.1.0** con el texto que proponía este plan. El contrato no cambia (RN-42).
+- **AC-67** pedía `FrozenInstanceError` al asignar cualquier atributo. Eso depende de la versión de Python (DT-30, §4.4). **Corregido en el spec v1.1.0**: el tipo de excepción sólo se exige al asignar un campo existente.
 
 ---
 
@@ -220,10 +239,11 @@ Verificación de cada PR: `npm run typecheck`, `npm run build`, `npm test` y rec
 
 | Cuándo | Qué |
 | --- | --- |
-| Al hacer el commit del spec (cuando lo pida el Perfil 1) | `MEMORY.md`: ADR con las decisiones de SPEC-03 (D-03, D-05, D-07, D-10…D-13, D-16…D-18), ítems K1…K10 en §5, snapshot de §1 |
-| Fase A mergeada | Avisar a los Perfiles 3 y 4 (K1, K2); `docs/perfiles.md` §5, interfaz "Datos públicos de usuarios" como publicada |
-| B1 mergeada | README del backend (variables, Mailpit); PR al ERS de K7 (DT-29 + CU de USR-02) |
-| B2 mergeada | `AGENTS.md` §3 y §2 y `docs/perfiles.md` con el módulo `files` (D-12, K9); avisar al Perfil 3 (K3) |
+| Al aprobar la v1.1.0 | `MEMORY.md`: un ADR con las decisiones de SPEC-03 (D-03, D-05, D-07, D-10…D-13, D-16…D-18 y D-20…D-22), que la v1.0.0 nunca registró; ítems K1…K11 en §5 (K6 cerrado por ADR-023); DT-30 en curso; snapshot de §1 |
+| Fase A mergeada (pendiente desde el 2026-11-06) | Avisar a los Perfiles 3 y 4 (K1, K2); `docs/perfiles.md` §4 (lo que queda pendiente del Perfil 1) y §5 (interfaz "Datos públicos de usuarios" como publicada); `AGENTS.md` §3, fila del Perfil 1; en `MEMORY.md` §5, el pedido del Perfil 4 → "Atendido (PR #18)" |
+| DT-30 mergeada | `MEMORY.md`: DT-30 cerrada; respuesta al pedido del Perfil 2 |
+| B2 mergeada | `AGENTS.md` §3 y §2 y `docs/perfiles.md` con el módulo `files` (D-12, K9); avisar al Perfil 3 que ya puede quitar el rechazo de alta gama (K3) |
+| B1 mergeada | README del backend (variables, Mailpit); avisar al Perfil 5 que `TipoCorreo.NOTIFICACION` está disponible para la Fase C de SPEC-06; PR al ERS de K7 (DT-29 + CU de USR-02) |
 | B3 mergeada | Nota en ADR-015: sigue vigente, con renovación deslizante |
 
 ---
@@ -232,8 +252,19 @@ Verificación de cada PR: `npm run typecheck`, `npm run build`, `npm test` y rec
 
 | Riesgo | Mitigación |
 | --- | --- |
-| Choque de numeración con la `0011` de `loans` | Fijar el número al abrir el PR y rebasar si `loans` mergea antes (EC-45) |
+| Dos cabezas de Alembic: `loans` (`0011`, `0012`) y este spec (`0014`, `0015`) se integran en paralelo | Nombres fijos (D-22); `down_revision` a la cabeza de `develop` al abrir el PR; `alembic heads` antes de mergear y, si otra migración entró mientras tanto, rebasar y reapuntar `down_revision` (EC-45) |
+| Versiones de Python distintas en el equipo (3.12, 3.13 y 3.14) | Correr cada PR al menos en dos versiones; no depender de detalles de la biblioteca estándar que cambian entre versiones (DT-30); fijar una versión en el spec de despliegue (K8) |
+| Conflictos en `App.tsx` con el PR #12 del Perfil 5 y con `loans` | Rebasar sobre `develop` antes de abrir los PRs de frontend de B1 y B2; los cambios de `App.tsx` de este spec son mínimos (detectar `#/restablecer`) |
 | El ciclo de FK `usuarios.foto_id` ↔ `archivos.propietario_id` rompe `create_all` | `use_alter=True` en `foto_id`; un test de esquema lo cubre implícitamente al crear la base de tests |
 | Pillow ante imágenes maliciosas | `MAX_IMAGE_PIXELS`, decodificación en un hilo, tamaño máximo de entrada y `422` ante cualquier error |
 | Un SMTP lento demora el servidor | `to_thread` con `timeout=10`; el envío de USR-02 ocurre después de responder |
 | El `BYTEA` crece más de lo previsto | Revisar al superar ~5 GB (D-10); el servicio aísla el almacenamiento |
+
+---
+
+## 12. Historial
+
+| Versión | Fecha | Cambio |
+| --- | --- | --- |
+| 1.1.0 | 2026-11-08 | Alineado con el spec v1.1.0. §1 verificado contra `develop` (`3ad6b6b`): `conftest.py`, `main.py` y la cadena de migraciones de SPEC-05 y SPEC-06, `loans` con alta gama bloqueada y las versiones de Python. §2: B2 antes que B1 (D-20) y la rama de DT-30. §4.4: estado de la Fase A y corrección de DT-30. §5: plantilla `NOTIFICACION` y su uso desde `notifications` (D-21). §5.3 y §6.3: nombres fijos de migración (D-22). §9: EC-35 y AC-67 corregidos en el spec. §10 y §11 al día |
+| 1.0.0 | 2026-11-03 | Plan inicial (`BORRADOR`) |
