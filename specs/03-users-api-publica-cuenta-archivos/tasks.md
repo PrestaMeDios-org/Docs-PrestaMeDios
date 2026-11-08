@@ -1,6 +1,6 @@
 # TASKS-03 — API pública de `users`, recuperación, archivos y renovación de sesión
 
-> **Spec:** `specs/03-users-api-publica-cuenta-archivos/spec.md` v1.1.0 (`APROBADO` 2026-11-08) · **Plan:** `specs/03-users-api-publica-cuenta-archivos/plan.md` v1.1.0 (`BORRADOR`) · **Estado:** `BORRADOR` · **Fecha:** 2026-11-08 (v1.0.0: 2026-11-03) · **Perfil:** 1
+> **Spec:** `specs/03-users-api-publica-cuenta-archivos/spec.md` v1.1.0 (`APROBADO` 2026-11-08) · **Plan:** `specs/03-users-api-publica-cuenta-archivos/plan.md` v1.1.0 (`APROBADO` 2026-11-08) · **Estado:** `APROBADO` (2026-11-08) · **Fecha:** 2026-11-08 (v1.0.0: 2026-11-03) · **Perfil:** 1
 > Marcar `[x]` al cerrar. Cada tarea tiene su verificación; no se pasa a la siguiente con tests en rojo. Cada bloque es un PR (plan §2). **Orden de los bloques de la Fase B: B2 → B1 → B3 (D-20).**
 > Comandos de backend desde `Backend-PrestaMeDios/` (venv activo, `TEST_DATABASE_URL` definida); de frontend desde `Frontend-PrestaMeDios/`.
 
@@ -13,7 +13,7 @@
   *Estado 2026-11-06 (backend, `origin/develop` `b51b5ae`):* el primer intento falló por configuración local (`TEST_DATABASE_URL` con la plantilla en el puerto 5432; el PostgreSQL 18 local escucha en el 5433). Ya corregida la variable, la suite de backend de la rama de la Fase A (`develop` + 16 tests nuevos) dio **386 pasados**: los 370 de `develop` están en verde. El frontend no se corrió: la Fase A no lo toca.
 - [x] **T-01 · Aprobar la v1.1.0.** El Perfil 1 aprueba el spec v1.1.0 (D-20…D-22, RN-77, AC-67 y EC-35 corregidos) y este plan; se registra en `MEMORY.md` lo de plan §10, fila "Al aprobar la v1.1.0".
   *Verificación:* spec en `APROBADO` con la fecha en §15. Sin esto no empieza ningún bloque de la Fase B (AGENTS.md §4).
-  ✔ 2026-11-08: spec `APROBADO` (v1.1.0); en `MEMORY.md` quedan ADR-024, los ítems K de §13 y el estado de DT-30. El plan y las tareas siguen en `BORRADOR`, como en la v1.0.0, y se ajustan a medida que avanza cada bloque.
+  ✔ 2026-11-08: spec `APROBADO` (v1.1.0); en `MEMORY.md` quedan ADR-024, los ítems K de §13 y el estado de DT-30. El plan y estas tareas los aprobó el Perfil 1 el mismo día, después del merge del Docs PR #16. Si durante la implementación cambia el alcance, vuelven a pasar por aprobación (AGENTS.md §4).
 - [ ] **T-02 · Línea base de la Fase B.** Antes de abrir cada bloque: `develop` actualizado; `pytest -q` y `alembic heads` (una sola cabeza); en frontend, `npm run typecheck`, `npm run build` y `npm test`. Anotar el resultado en el PR del bloque.
   *Verificación:* sin fallos de entrada; si los hay, se informan antes de seguir.
 

@@ -3,7 +3,7 @@
 | Campo | Valor |
 | --- | --- |
 | **Spec** | `specs/03-users-api-publica-cuenta-archivos/spec.md` (v1.1.0, `APROBADO` 2026-11-08; la v1.0.0 se aprobó el 2026-11-03) |
-| **Estado del plan** | `BORRADOR` — v1.1.0, 2026-11-08 (ver §12) |
+| **Estado del plan** | `APROBADO` — v1.1.0, aprobado por el Perfil 1 el 2026-11-08 (ver §12) |
 | **Perfil** | 1 |
 | **Entrega** | Cuatro PRs de backend y tres de frontend, en el orden de §2 (D-01, D-20). La Fase A ya está mergeada (PR #18) |
 
@@ -266,5 +266,5 @@ Verificación de cada PR: `npm run typecheck`, `npm run build`, `npm test` y rec
 
 | Versión | Fecha | Cambio |
 | --- | --- | --- |
-| 1.1.0 | 2026-11-08 | Alineado con el spec v1.1.0. §1 verificado contra `develop` (`3ad6b6b`): `conftest.py`, `main.py` y la cadena de migraciones de SPEC-05 y SPEC-06, `loans` con alta gama bloqueada y las versiones de Python. §2: B2 antes que B1 (D-20) y la rama de DT-30. §4.4: estado de la Fase A y corrección de DT-30. §5: plantilla `NOTIFICACION` y su uso desde `notifications` (D-21). §5.3 y §6.3: nombres fijos de migración (D-22). §9: EC-35 y AC-67 corregidos en el spec. §10 y §11 al día |
+| 1.1.0 | 2026-11-08 | **Aprobado** por el Perfil 1. Alineado con el spec v1.1.0. §1 verificado contra `develop` (`3ad6b6b`): `conftest.py`, `main.py` y la cadena de migraciones de SPEC-05 y SPEC-06, `loans` con alta gama bloqueada y las versiones de Python. §2: B2 antes que B1 (D-20) y la rama de DT-30. §4.4: estado de la Fase A y corrección de DT-30. §5: plantilla `NOTIFICACION` y su uso desde `notifications` (D-21). §5.3 y §6.3: nombres fijos de migración (D-22). §9: EC-35 y AC-67 corregidos en el spec. §10 y §11 al día |
 | 1.0.0 | 2026-11-03 | Plan inicial (`BORRADOR`) |

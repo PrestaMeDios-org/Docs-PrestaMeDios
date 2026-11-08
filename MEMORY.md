@@ -2,7 +2,7 @@
 
 > Registro vivo del estado del proyecto, decisiones de arquitectura (ADR), deuda técnica y coordinación entre perfiles. Lo actualizan humanos y agentes de IA al cerrar cada tarea relevante. Entradas nuevas **arriba** dentro de cada sección.
 
-> **Última actualización:** 2026-11-08 · Perfil 1 (SPEC-03 v1.1.0 aprobado: ADR-024, coordinación K1…K11, DT-30). Antes, ese mismo día, Perfil 1 (restaura las entradas del Perfil 5 que borró el Docs PR \#14 y quita las filas duplicadas que dejó la resolución del conflicto del Docs PR \#13). Antes, el 2026-11-07, Perfil 2 (planificación de SPEC-04 v1.2.0), Perfil 3 (plan de la Fase 2 de SPEC-05) y Perfil 5 (SPEC-06 `notifications` aprobado; ADR-023; coordinación C-N01…C-N07)
+> **Última actualización:** 2026-11-08 · Perfil 1 (SPEC-03 v1.1.0 aprobado con su plan y sus tareas: ADR-024, coordinación K1…K11, DT-30). Antes, ese mismo día, Perfil 1 (restaura las entradas del Perfil 5 que borró el Docs PR \#14 y quita las filas duplicadas que dejó la resolución del conflicto del Docs PR \#13). Antes, el 2026-11-07, Perfil 2 (planificación de SPEC-04 v1.2.0), Perfil 3 (plan de la Fase 2 de SPEC-05) y Perfil 5 (SPEC-06 `notifications` aprobado; ADR-023; coordinación C-N01…C-N07)
 
 ---
 
@@ -196,6 +196,7 @@
 
 | Fecha | Autor | Evento |
 | :---- | :---- | :---- |
+| 2026-11-08 | Perfil 1 | **Plan y tareas de SPEC-03 v1.1.0 aprobados**, después del merge del Docs PR \#16. La Fase B puede empezar en el orden B2 → B1 → B3. Antes van A-04 (DT-30) y A-05 (documentación de la Fase A) |
 | 2026-11-08 | Perfil 1 | **SPEC-03 v1.1.0 aprobado**, con asistencia de IA. Lo puso al día con SPEC-05 v1.0.0 y SPEC-06 v1.0.0, sin cambiar el contrato de la Fase A. Decisiones D-20…D-22 y RN-77 (`TipoCorreo.NOTIFICACION`); correcciones de EC-35 y AC-67 (DT-30); plan y tareas v1.1.0 con la Fase B reordenada (B2 → B1 → B3) y las tareas A-04 (DT-30) y A-05 (documentación de la Fase A). ADR-024 registra también las decisiones de la v1.0.0, que no estaban en este archivo. Coordinación K1…K11 en §5 y respuesta a la numeración de C19 |
 | 2026-11-08 | Perfil 1 | Arreglo de `MEMORY.md`, con asistencia de IA. (a) Restaura las entradas del Perfil 5 que el Docs PR \#14 (SPEC-04 v1.2.0) borró al mergearse sobre una copia anterior al Docs PR \#12: ADR-023, la actualización de DT-30, la fila de `notifications` en el frontend, el estado de dos pedidos al Perfil 5 ya respondidos y tres entradas de este registro. (b) Quita las filas duplicadas que dejó la resolución del conflicto del Docs PR \#13 (estado general y módulos del backend), conservando la versión más nueva de cada una. Las entradas de los Perfiles 2 y 3 quedan sin cambios |
 | 2026-11-07 | Perfil 2 | Planificación de lo que queda de SPEC-04, con asistencia de IA: spec v1.2.0 (`BORRADOR`), plan v2.0.0 y tareas v2.0.0. Fase B (desbloqueada): `GET /equipamiento/{id}/disponibilidad` sobre `loans.ocupacion_de_unidades`, detalle del equipo con mini-calendario, botón "Agregar al pedido", C14, C17, C16, C18; Fase C (bloqueada por `loans`): historial por unidad y `reservas_afectadas`. Limpieza E1–E4 de la revisión del Perfil 1 y cierre de D-02 y D-03 de las tareas de la Fase A. Sin migraciones nuevas. Falta la aprobación (P-01) |
