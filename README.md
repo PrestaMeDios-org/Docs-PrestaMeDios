@@ -5,6 +5,7 @@ Documentación compartida del proyecto PrestaMeDios: ERS, Constitución, reglas 
 | Archivo | Contenido |
 | --- | --- |
 | `docs/ERS.md` | ERS (IEEE 830): requisitos, casos de uso, diseño e iteraciones. Fuente de verdad funcional |
+| `docs/diseno/` | Arquitectura, modelo de datos y casos de uso: originales presentados a la cátedra y versiones actualizadas al código |
 | `docs/constitution.md` | Principios no negociables del proyecto |
 | `AGENTS.md` | Guía operativa para agentes de IA |
 | `docs/perfiles.md` | División del trabajo en 5 perfiles y prompts de arranque |
