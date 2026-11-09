@@ -65,24 +65,33 @@
 
 ## Bloque B1 — Correo y recuperación de contraseña (`feat/users-recuperacion`) — segundo (D-20)
 
-- [ ] **B1-01 · Settings.** Variables de correo y de recuperación en `core/settings.py` (spec §5.1 y §5.2), con valores por defecto seguros y sin secretos; `.env.example`. Si B2 ya está mergeada, rebasar sobre ella (comparten `settings.py`, `.env.example` y `conftest.py`).
+- [x] **B1-01 · Settings.** Variables de correo y de recuperación en `core/settings.py` (spec §5.1 y §5.2), con valores por defecto seguros y sin secretos; `.env.example`. Si B2 ya está mergeada, rebasar sobre ella (comparten `settings.py`, `.env.example` y `conftest.py`).
   *Verificación:* la app arranca con el `.env` actual sin variables nuevas.
-- [ ] **B1-02 · Transporte de correo.** `core/email.py` y las plantillas `RECUPERACION_PASSWORD.txt` y `NOTIFICACION.txt` (plan §5.1 y §5.2, RN-77); fixture `correos` y `EMAIL_BACKEND=memoria` en `conftest.py`.
+  ✔ 2026-11-08 (`e82e9e9`): `EMAIL_BACKEND`, `SMTP_*`, `EMAIL_FROM`, `FRONTEND_URL` y `RECUPERACION_*`. Rama `feat/users-recuperacion` apilada sobre `feat/files-almacenamiento` (B2 sin mergear todavía).
+- [x] **B1-02 · Transporte de correo.** `core/email.py` y las plantillas `RECUPERACION_PASSWORD.txt` y `NOTIFICACION.txt` (plan §5.1 y §5.2, RN-77); fixture `correos` y `EMAIL_BACKEND=memoria` en `conftest.py`.
   *Verificación:* `tests/core/test_email.py`: las dos plantillas se renderizan; `NOTIFICACION` arma el asunto con prefijo y el pie con `FRONTEND_URL`; una variable faltante falla sin enviar; un `enlace_app` del llamador se rechaza; llamada desde un servicio fuera de una request; un fallo del transporte simulado llega como `ErrorEnvioCorreo`; el log (con `caplog`) no tiene el contexto. *Cubre:* AC-100, AC-101.
-- [ ] **B1-03 · Modelos y migración.** `TokenRecuperacion` e `IntentoRecuperacion`; `intentos_recuperacion` en `_TABLAS`; migración `0015_users_recuperacion` con `down_revision` = la cabeza de `develop` (D-22).
+  ✔ 2026-11-08 (`39dd6db`): `enviar_correo` acepta además `usuario_id` opcional, sólo para el log (RN-74). Los tests fuerzan `EMAIL_BACKEND=memoria` y vacían la bandeja antes de cada test (fixture autouse).
+- [x] **B1-03 · Modelos y migración.** `TokenRecuperacion` e `IntentoRecuperacion`; `intentos_recuperacion` en `_TABLAS`; migración `0015_users_recuperacion` con `down_revision` = la cabeza de `develop` (D-22).
   *Verificación:* suite existente en verde; `alembic upgrade head` → `downgrade -1` → `upgrade head` en una base de desarrollo; `alembic heads` con una sola cabeza; `tests/users/test_migracion_recuperacion.py`. *Cubre:* AC-80.
-- [ ] **B1-04 · Esquemas.** `SolicitudRecuperacion`, `ConfirmacionRecuperacion` y `MensajeResponse`, con `_INPUT_CONFIG` y ejemplos.
+  ✔ 2026-11-08 (`53022ea`): `0015_users_recuperacion` con `down_revision = 0014_files_init`. upgrade → downgrade -1 → upgrade sobre una base de desarrollo; una sola cabeza.
+- [x] **B1-04 · Esquemas.** `SolicitudRecuperacion`, `ConfirmacionRecuperacion` y `MensajeResponse`, con `_INPUT_CONFIG` y ejemplos.
   *Verificación:* `python -c "from app.main import app; app.openapi()"` sin errores.
-- [ ] **B1-05 · Solicitud.** `solicitar_recuperacion` y `POST /auth/recuperacion` con respuesta neutra, límite por email y por IP y envío con `BackgroundTasks`.
+  ✔ 2026-11-08 (`1f09551`): tests de esquema en `test_schemas.py::TestRecuperacion`.
+- [x] **B1-05 · Solicitud.** `solicitar_recuperacion` y `POST /auth/recuperacion` con respuesta neutra, límite por email y por IP y envío con `BackgroundTasks`.
   *Verificación:* `tests/users/test_recuperacion.py`. *Cubre:* AC-71, AC-72, AC-78, AC-79.
-- [ ] **B1-06 · Confirmación.** `confirmar_recuperacion` y `POST /auth/recuperacion/confirmar` con el `UPDATE ... RETURNING` atómico y RN-52.
+  ✔ 2026-11-08 (`c1f682c`): `429` agregado a `error_responses` de `core/errors.py`.
+- [x] **B1-06 · Confirmación.** `confirmar_recuperacion` y `POST /auth/recuperacion/confirmar` con el `UPDATE ... RETURNING` atómico y RN-52.
   *Verificación:* tests de éxito, tokens inválidos, contraseña débil y concurrencia (dos confirmaciones con `asyncio.gather`, una sesión por request, ADR-013). *Cubre:* AC-73, AC-74, AC-76, AC-77.
-- [ ] **B1-07 · Invalidaciones.** Tokens anteriores al pedir uno nuevo, todos al restablecer y los pendientes al cambiar el email en `actualizar_perfil` y `editar_por_admin`.
+  ✔ 2026-11-08 (`e7de139`, test ajustado en `b65843a`): la contraseña igual al email se controla en el servicio antes de consumir el token y responde el `422` estándar de FastAPI sobre `password_nueva`, como el resto de RN-03 (sin código nuevo).
+- [x] **B1-07 · Invalidaciones.** Tokens anteriores al pedir uno nuevo, todos al restablecer y los pendientes al cambiar el email en `actualizar_perfil` y `editar_por_admin`.
   *Verificación:* tests; los de `test_perfil.py` y `test_edicion.py` siguen en verde. *Cubre:* AC-75.
-- [ ] **B1-08 · Cierre del backend.** `pytest -q` completo; cobertura ≥ 85 % del código nuevo; `/docs` revisado (`202`, `422`, `429`); README con variables y Mailpit; prueba manual de un correo real contra Mailpit. Avisar al Perfil 5 que `TipoCorreo.NOTIFICACION` está disponible (Fase C de SPEC-06).
+  ✔ 2026-11-08 (`31ddbdd`).
+- [x] **B1-08 · Cierre del backend.** `pytest -q` completo; cobertura ≥ 85 % del código nuevo; `/docs` revisado (`202`, `422`, `429`); README con variables y Mailpit; prueba manual de un correo real contra Mailpit. Avisar al Perfil 5 que `TipoCorreo.NOTIFICACION` está disponible (Fase C de SPEC-06).
   *Verificación:* suite en verde y correo visible en Mailpit con el enlace correcto.
-- [ ] **B1-09 · Frontend (`feat/auth-recuperacion`).** `authApi.ts`, `recuperacion.ts` (+ test), `RecoverPasswordPage`, `ResetPasswordPage`, enlace en `LoginPage` y detección del fragmento en `App.tsx` (plan §8). Rebasar sobre `develop` antes del PR: `App.tsx` lo tocan también otros perfiles.
+  ✔ 2026-11-08 (`7edf42c`), salvo Mailpit: 852 pasados contra PostgreSQL 18 (Python 3.14), cada uno de los 9 commits en verde; cobertura `core/email.py` 99 % y `users/service.py` 97 % (sin cubrir sólo la guarda de RN-50 cuando la segunda confirmación pierde el `UPDATE`). README con variables, flujo y Mailpit. En este equipo no hay Docker: la prueba manual se hizo por SMTP real contra un servidor SMTP local mínimo (pedido `202`, correo con el enlace, confirmación `200`, login nuevo `200` y viejo `401`). **Pendiente: la prueba con Mailpit y la corrida en 3.12 o 3.13.** **Backend PR #27** (base `feat/files-almacenamiento`; pasa a `develop` cuando se mergee el #26). Aviso al Perfil 5 en `MEMORY.md` §5.
+- [x] **B1-09 · Frontend (`feat/auth-recuperacion`).** `authApi.ts`, `recuperacion.ts` (+ test), `RecoverPasswordPage`, `ResetPasswordPage`, enlace en `LoginPage` y detección del fragmento en `App.tsx` (plan §8). Rebasar sobre `develop` antes del PR: `App.tsx` lo tocan también otros perfiles.
   *Verificación:* `npm run typecheck`, `npm run build`, `npm test`; recorrido manual completo con el enlace de Mailpit. *Cubre:* AC-95, AC-96.
+  ✔ 2026-11-08: 3 commits (`3fc177c`…`9023000`), cada uno con typecheck y tests en verde; 56 tests. `App.tsx` lee el enlace una sola vez al cargar el módulo, fuera de React (el doble render de `StrictMode` lo perdería). Recorrido manual completo contra el backend de B1 con el SMTP local; el token sólo aparece en el cuerpo del `POST`. Si la app ya está abierta y se pega el enlace en la misma pestaña no se recarga y la pantalla no aparece (abrirlo desde el correo funciona). **Frontend PR #15**.
 
 ## Bloque B3 — Renovación de sesión (`feat/auth-renovacion`)
 
