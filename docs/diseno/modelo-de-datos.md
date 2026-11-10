@@ -320,12 +320,12 @@ Las dos `EXCLUDE` requieren la extensión `btree_gist`.
 | `bloqueo_espacio` | `bloqueos_espacios` | Admite día completo o franja horaria. No guarda qué administrador lo registró |
 | `comunicado` | `comunicados` | Se suman `estado` (archivado) y `vence_en` |
 | `notificacion` | `notificaciones` | `tipo_alerta` → `tipo` + `severidad`; `leida (b)` → `leida_en`; referencia al recurso de origen |
-| `chip_comportamiento` | — | **Pendiente** (USR-09) |
+| `chip_comportamiento` | — | **Pendiente** (USR-09). Desde ADR-022, USR-09 son llamados de atención, faltas y suspensiones; el chip pasa a ser el indicador visual derivado de ese historial |
 | `nota_administrativa` | — | **Pendiente** (GLO-05) |
 | — | `parametros_globales` (+ historial) | Nuevo: reglas operativas editables sin tocar código (GLO-03) |
 | — | `archivos` / `archivos_contenido` | Nuevo: foto de perfil y aval PDF (SPEC-03 B2) |
 | — | `ordenes_historial_estado` | Nuevo: traza de cada transición de una orden |
-| — | `tokens_recuperacion` / `intentos_recuperacion` | Nuevo, en revisión: recuperación de contraseña (USR-02) |
+| — | `tokens_recuperacion` / `intentos_recuperacion` | Nuevo: recuperación de contraseña (USR-02, SPEC-03 B1) |
 
 ## Cómo actualizar este documento
 
