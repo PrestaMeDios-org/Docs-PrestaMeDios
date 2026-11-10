@@ -196,17 +196,17 @@ Debido a que las operaciones del laboratorio requieren la intervención directa 
 **Módulo 1: Información de la Cuenta del Usuario**
 
 * **USR-01 - Registro e inicio de sesión:** El sistema permitirá a estudiantes, docentes y administradores registrarse e iniciar sesión, determinando sus permisos y vistas en base a su rol específico.
-* **USR-02 - Recuperación de contraseña:** Si el usuario olvida su clave, debe tener una opción en la pantalla de login para restablecerla mediante un correo electrónico.
+* **USR-02 - Recuperación de contraseña:** Si el usuario olvida su clave, debe tener una opción en la pantalla de login para restablecerla mediante un correo electrónico. Para no revelar qué correos están registrados, el sistema responde siempre con el mismo mensaje, exista o no la cuenta. El enlace enviado es de un solo uso y tiene una vigencia limitada.
 * **USR-03 - Actualización de datos de contacto:** El estudiante y el docente podrán mantener actualizados su teléfono, correo y foto en su perfil. Los demás datos estarán bloqueados para su edición.
 * **USR-04 - Gestión de usuarios y accesos:** El Superadministrador tendrá acceso a un directorio general de todos los usuarios (estudiantes, docentes y administradores locales). Contará con permisos para editar perfiles, dar de baja o alta usuarios y buscar perfiles mediante filtros por rol y sede.
-* **USR-05 - Registro con validación manual:** El sistema permitirá a los nuevos usuarios completar un formulario de registro. Las cuentas creadas ingresarán en estado "Pendiente en aprobación". El Superadministrador podrá validar, editar o dar de baja perfiles de ambas sedes, mientras que los Administradores Locales sólo tendrán jurisdicción para accionar sobre las cuentas que pertenezcan a su sede asignada.
+* **USR-05 - Registro con validación manual:** El sistema permitirá a los nuevos usuarios completar un formulario de registro con los siguientes datos obligatorios: nombre, apellido, DNI (numérico, de 7 a 8 dígitos), teléfono, correo electrónico y sede. La contraseña debe combinar letras y números. Las cuentas creadas ingresarán en estado "Pendiente en aprobación". El Superadministrador podrá validar, editar o dar de baja perfiles de ambas sedes, mientras que los Administradores Locales sólo tendrán jurisdicción para accionar sobre las cuentas que pertenezcan a su sede asignada.
 
 **Módulo 2: Historial del Usuario**
 
 * **USR-06 - Panel de solicitudes:** El usuario podrá visualizar el estado de sus peticiones (Pendientes / Aprobadas / Rechazadas), ver las fechas límite de devolución y cancelar solicitudes en curso.
 * **USR-07 - Historial de actividad:** El sistema mantendrá un registro accesible para el estudiante o docente donde podrá consultar todos sus equipos utilizados o aulas reservadas previamente.
 * **USR-08 - Logs de auditoría global:** El administrador tendrá acceso a un registro global sobre las reservas de equipamientos y aulas para auditar los movimientos del sistema.
-* **USR-09 - Métricas de comportamiento:** El sistema permitirá al administrador asignar etiquetas visuales ("chips" verdes, amarillos o rojos) al perfil de los estudiantes, formando un historial acumulativo. El administrador gestionará estas incidencias mediante contadores ajustables (+/-), mientras que el docente solo tendrá acceso de lectura a través de un indicador emergente (tooltip) sobre el perfil del alumno.
+* **USR-09 - Llamados de atención, faltas y suspensiones:** El administrador podrá registrar en el perfil de un estudiante llamados de atención por faltas leves (por ejemplo, retrasos o equipos devueltos en mal estado), con un motivo obligatorio. Los llamados se acumulan en un historial: una cantidad configurable de llamados (tres, por defecto) se convierte en una falta. Con una falta, el administrador evalúa si suspende la cuenta. Al llegar a una cantidad configurable de faltas (dos, por defecto), el sistema suspende la cuenta en forma automática. La suspensión dura un tiempo fijo configurable, y el administrador puede levantarla antes. Cada llamado de atención o sanción se notifica al estudiante por correo electrónico. El perfil muestra un indicador visual del estado disciplinario (por ejemplo, verde, amarillo o rojo), que el docente sólo puede consultar, mediante un indicador emergente (tooltip) sobre el perfil del alumno. Las cuentas suspendidas o dadas de baja conservan su historial.
 
 #### Subsistema 2: Préstamos de Equipamiento y Computadoras
 
@@ -219,7 +219,7 @@ Debido a que las operaciones del laboratorio requieren la intervención directa 
 
 * **PRE-03 - Modalidades de solicitud (individual y carrito):** El sistema permitirá generar reservas de dos formas: de manera directa por un único ítem ("forma simple" desde el catálogo) o agrupando múltiples elementos a través del carrito. En ambos casos, el sistema disparará un único formulario unificado para generar la "Orden de Pedido". En dicho formulario, el estudiante deberá indicar obligatoriamente la Asignatura para la cual requiere el préstamo y aceptar una casilla de Términos y Condiciones antes de procesar el pedido. Estas solicitudes irán directo al Administrador.
 * **PRE-04 - Validación de formularios:** El sistema marcará en rojo las casillas obligatorias faltantes. ej materia, bloqueando el envío si el campo está incompleto.
-* **PRE-05 - Solicitudes especiales:** Los equipos "Alta Gama" (especiales) podrán mezclarse en el carrito con equipos comunes. El sistema permitirá agrupar múltiples equipos de Alta Gama en un formulario común donde el estudiante deberá adjuntar obligatoriamente un archivo PDF de validación. Esta solicitud irá directo al Administrador.
+* **PRE-05 - Solicitudes especiales:** El administrador marca en el inventario qué equipos son de "Alta Gama" (especiales). Estos equipos podrán mezclarse en el carrito con equipos comunes. El sistema permitirá agrupar múltiples equipos de Alta Gama en un formulario común donde el estudiante o el docente deberá adjuntar obligatoriamente, en formato PDF, la resolución del Consejo (CICSE/ICSE) que avala el préstamo. Esta solicitud irá directo al Administrador, que verifica la resolución antes de aprobarla.
 * **PRE-06 - Selección de fechas y franjas horarias:** Al solicitar un recurso, el usuario deberá seleccionar mediante un calendario la fecha de retiro y devolución, incluyendo obligatoriamente la hora de retiro y hora de devolución estimadas. Estos selectores de hora estarán restringidos a la franja operativa del laboratorio.
 * **PRE-07 - Límite de reserva temporal:** El sistema restringirá las fechas seleccionables en el calendario de préstamos, permitiendo un límite máximo de 4 días por solicitud para los estudiantes.
 * **PRE-08 - Cancelación automática:** Si un estudiante no se presenta a retirar un equipo reservado dentro de un margen de tolerancia predefinido (ej. 2 horas tras el inicio del turno), el sistema cancelará la reserva automáticamente, liberando el ítem para otros usuarios.
@@ -228,7 +228,7 @@ Debido a que las operaciones del laboratorio requieren la intervención directa 
 
 **Módulo 3: Operaciones de Pañol y Control de Stock**
 
-* **PRE-11 - Renovación de computadoras:** La extensión de préstamos de notebooks se realizará exclusivamente de manera presencial. El administrador contará con un botón en su panel operativo para extender la fecha de devolución.
+* **PRE-11 - Renovación de computadoras:** La renovación de préstamos de notebooks se realizará exclusivamente de manera presencial: el estudiante presenta la notebook en el mostrador para que el administrador constate su estado, y emite desde la aplicación una nueva solicitud de renovación. La renovación no extiende el préstamo vigente: se tramita como una solicitud nueva, para verificar la disponibilidad y dar oportunidad a otros solicitantes, y el administrador la aprueba o la rechaza.
 * **PRE-12 - Gestión de inventario (stock):** El Administrador contará con una vista tipo tabla interactiva filtrable por Sede. Las columnas incluirán flechas de ordenamiento (ascendente/descendente) y mostrarán: Nombre, Categoría, Locker (1-7), Tipo (Especial/Común) y unidades disponibles. Permitirá desplegar los ítems para visualizar las unidades físicas individuales (ej. CAM-S-01) y su historial de usuarios.
 * **PRE-13 - Registro de entrega y devolución:** El Administrador contará con una función en el mostrador para confirmar la entrega física del recurso (cambiando automáticamente su estado a "En Uso") y registrar su retorno (cambiando el estado a "Disponible"). El sistema alertará visualmente en rojo los préstamos demorados. Al momento de registrar esta devolución, el sistema habilitará un campo de texto para añadir observaciones sobre el estado físico del recurso, las cuales quedarán guardadas en el historial particular de esa unidad.
 * **PRE-14 - Bloqueo por mantenimiento:** El administrador podrá cambiar manualmente el estado de una unidad física a "En Mantenimiento" o "Fuera de Servicio", ajustando el stock lógico y bloqueando su reserva.
@@ -248,7 +248,7 @@ Debido a que las operaciones del laboratorio requieren la intervención directa 
 
 * **RES-01 - Calendario interactivo:** El sistema proveerá un calendario visible para mostrar los bloques horarios y la disponibilidad operativa de los espacios físicos del laboratorio (Isla de Edición y Aula-Estudio).
 * **RES-02 - Asignación de turnos:** El sistema permitirá al estudiante o docente enviar una solicitud para reservar un bloque horario, registrando el trámite en estado "Pendiente". El sistema admitirá múltiples solicitudes concurrentes para una misma franja horaria, delegando el bloqueo definitivo del recurso y la actualización del estado a "Ocupado" a la posterior aprobación manual del Administrador.
-* **RES-03 - Cancelación de reserva:** El usuario podrá anular una reserva de espacio previamente asignada a través de su panel, liberando la disponibilidad para el resto de los estudiantes.
+* **RES-03 - Cancelación de reserva:** El usuario podrá anular, a través de su panel, una reserva de espacio pendiente o aprobada cuyo turno todavía no haya comenzado. La franja se libera de inmediato para el resto de los usuarios.
 * **RES-04 - Bloqueo administrativo de espacios:** El administrador tendrá permisos para inhabilitar la disponibilidad de las Isla de Edición seleccionando días completos (por mantenimiento o feriados) o franjas horarias específicas, impidiendo que los usuarios generen nuevas reservas en esos periodos bloqueados.
 * **RES-05 - Aprobación o Rechazo de Solicitudes de Reservas de Espacios:** La confirmación de las reservas de espacios físicos no es automática. El Administrador Local o el Superadministrador evaluarán las peticiones y confirmarán la aprobación o rechazo de la solicitud de manera manual. En caso de registrarse solicitudes concurrentes para un mismo bloque horario, la aprobación de una de ellas adjudicará el espacio al usuario seleccionado y descartará las peticiones superpuestas.
 
@@ -268,13 +268,13 @@ Debido a que las operaciones del laboratorio requieren la intervención directa 
 
 **Módulo 1: Filtros Operativos y Geográficos**
 
-* **GLO-01 - Filtro geográfico por sede y jerarquía de administración:** El sistema diferenciará el nivel de acceso geográfico en los perfiles. Los estudiantes, docentes y Administradores Locales operarán bajo una restricción estricta de sede (Ushuaia o Río Grande), visualizando, aprobando y gestionando únicamente los recursos y solicitudes correspondientes a su locación. Se incorpora el rol de "Superadministrador", el cual poseerá privilegios globales para visualizar, filtrar e intervenir en las bandejas de validación, inventarios y calendarios de ambas sedes (de forma individual o combinada). Al momento de crear una cuenta de administrador, el sistema requerirá asignar obligatoriamente su alcance: "Ushuaia", "Río Grande" o "Ambas sedes".
-* **GLO-02 - Restricción de horarios operativos:** El sistema bloqueara en el calendario los días y horarios en los que el laboratorio se encuentre cerrado, impidiendo realizar reservas en esos periodos.
+* **GLO-01 - Filtro geográfico por sede y jerarquía de administración:** El sistema diferenciará el nivel de acceso geográfico en los perfiles. Los estudiantes, docentes y Administradores Locales operarán bajo una restricción estricta de sede (Ushuaia o Río Grande), visualizando, aprobando y gestionando únicamente los recursos y solicitudes correspondientes a su locación. Se incorpora el rol de "Superadministrador", el cual poseerá privilegios globales para visualizar, filtrar e intervenir en las bandejas de validación, inventarios y calendarios de ambas sedes (de forma individual o combinada). Al momento de crear una cuenta de administrador, el sistema requerirá asignar obligatoriamente su alcance: "Ushuaia", "Río Grande" o "Ambas sedes". El Superadministrador podrá delegar temporalmente su rol en un Administrador Local (por ejemplo, durante sus vacaciones). Al delegar fija la duración, y puede revocar la delegación antes de que venza; al vencer o ser revocada, el Administrador Local vuelve a su alcance de sede.
+* **GLO-02 - Restricción de horarios operativos:** El sistema bloqueará en el calendario los días y horarios en los que el laboratorio de cada sede se encuentre cerrado, según el horario de atención de esa sede (GLO-03), impidiendo realizar reservas en esos periodos.
 
 **Módulo 2: Panel de Control del Administrador**
 
-* **GLO-03 - Panel de parámetros:** El sistema provee una interfaz para el administrador que le permite modificar variables operativas sin necesidad de alterar el código.
-* **GLO-04 - Gestión dinámica del calendario:** El administrador dispondrá de un control interactivo para inhabilitar fechas específicas manualmente ante imprevistos, bloqueando la posibilidad de generar nuevas reservas en esos días y permitiendo rehabilitarlas si la situación se normaliza.
+* **GLO-03 - Panel de parámetros:** El sistema provee una interfaz para el administrador que le permite modificar variables operativas sin necesidad de alterar el código. Entre ellas: el horario de atención de cada sede (por ejemplo, de 9:00 a 16:00 en Ushuaia y de 10:00 a 17:00 en Río Grande), la anticipación mínima de las solicitudes (24 horas), los plazos máximos de préstamo (4 días corridos en general y 15 para notebooks), la tolerancia para el retiro, el aviso de vencimiento (24 horas), la ventana máxima de reserva a futuro (120 días), el correo de contacto del laboratorio y las cantidades de las sanciones de USR-09 (llamados por falta, faltas para la suspensión automática y duración de la suspensión).
+* **GLO-04 - Gestión dinámica del calendario:** El administrador dispondrá de un control interactivo para inhabilitar manualmente un rango de fechas ante imprevistos, opcionalmente limitado a una franja horaria, con un motivo obligatorio. El bloqueo impide generar nuevas reservas en ese período, y el motivo se muestra al pasar el mouse sobre el día bloqueado. El administrador puede revertir el bloqueo si la situación se normaliza.
 * **GLO-05 - Anotaciones privadas e internas:** El administrador dispondrá de un panel de notas privadas con título, contenido y etiquetas. Las notas podrán configurarse como personales o compartirse globalmente con los demás administradores mediante tags institucionales.
 
 **Módulo 3: Preferencias de Interfaz**
@@ -369,8 +369,8 @@ Dado que el equipo consta de 5 integrantes y un plazo limitado de 16 semanas, Sc
 * **Actor:** Estudiante, Docente, Administrador
 * **Precondiciones:** El usuario no posee una cuenta activa en el sistema.
 * **Flujo principal:**
-1. El usuario accede a la pantalla de registro y completa el formulario con sus datos.
-2. El usuario envía la solicitud de creación de cuenta.
+1. El usuario accede a la pantalla de registro y completa el formulario con sus datos obligatorios: nombre, apellido, DNI, teléfono, correo electrónico, sede y contraseña.
+2. El usuario envía la solicitud de creación de cuenta. El sistema valida el formato de los datos (DNI numérico de 7 a 8 dígitos, contraseña con letras y números) y marca los campos incorrectos o faltantes antes de aceptar el envío.
 3. El sistema registra el perfil en estado "Pendiente en aprobación", asociándolo a la sede elegida, y bloquea el inicio de sesión.
 4. El Administrador Local (de la sede correspondiente) o el Superadministrador accede a su bandeja de directorio.
 5. El administrador valida los datos de forma manual y aprueba la solicitud.
@@ -423,20 +423,20 @@ Dado que el equipo consta de 5 integrantes y un plazo limitado de 16 semanas, Sc
 
 * **Actor:** Estudiante, Docente, Administrador
 * **Precondiciones:**
-1. El usuario posee una cuenta registrada en el sistema.
+1. El usuario posee una cuenta activa en el sistema.
 2. La cuenta tiene una dirección de correo electrónico asociada.
 
 
 * **Flujo principal:**
 1. El sistema solicita la dirección de correo electrónico asociada a la cuenta.
 2. El usuario ingresa su dirección de correo electrónico.
-3. El sistema verifica que exista una cuenta asociada a la dirección proporcionada.
-4. El sistema genera un enlace de recuperación de contraseña.
+3. El sistema informa que, si existe una cuenta activa asociada a esa dirección, recibirá un correo con las instrucciones.
+4. El sistema genera un enlace de recuperación de un solo uso y con vigencia limitada.
 5. El sistema envía el enlace de recuperación al correo electrónico del usuario.
 6. El usuario accede al enlace recibido.
 7. El sistema muestra un formulario para establecer una nueva contraseña.
 8. El usuario ingresa y confirma su nueva contraseña.
-9. El sistema valida la nueva contraseña y actualiza las credenciales de la cuenta.
+9. El sistema valida la nueva contraseña, actualiza las credenciales de la cuenta y cierra las sesiones abiertas.
 10. El sistema informa que la contraseña fue actualizada correctamente.
 
 
@@ -445,13 +445,31 @@ Dado que el equipo consta de 5 integrantes y un plazo limitado de 16 semanas, Sc
 2. El usuario puede iniciar sesión utilizando la nueva contraseña.
 
 
-* **Flujo alternativo:**
-* **Condición:** Correo electrónico no registrado.
+* **Flujo alternativo - 01:**
+* **Condición:** Correo electrónico no registrado o cuenta que no está activa (pendiente, rechazada, suspendida o inactiva).
 * **Acciones:**
-1. El usuario ingresa una dirección de correo electrónico que no está asociada a una cuenta.
+1. El usuario ingresa una dirección de correo electrónico que no está asociada a una cuenta activa.
 
 
-* **Respuesta del sistema:** El sistema informa que no existe una cuenta asociada a la dirección ingresada y permite al usuario volver a ingresar una dirección de correo electrónico o regresar a la pantalla de inicio de sesión.
+* **Respuesta del sistema:** El sistema muestra el mismo mensaje que en el paso 3 del flujo principal y no envía ningún correo. Así no revela qué direcciones están registradas.
+
+
+* **Flujo alternativo - 02:**
+* **Condición:** El enlace ya se usó, venció o fue reemplazado por uno más reciente.
+* **Acciones:**
+1. El usuario accede a un enlace de recuperación que ya no es válido.
+
+
+* **Respuesta del sistema:** El sistema informa que el enlace no es válido y permite solicitar uno nuevo.
+
+
+* **Flujo alternativo - 03:**
+* **Condición:** Se superó la cantidad de solicitudes permitidas en un período.
+* **Acciones:**
+1. El usuario solicita la recuperación repetidas veces en poco tiempo.
+
+
+* **Respuesta del sistema:** El sistema rechaza la solicitud e indica que vuelva a intentarlo más tarde.
 
 
 
@@ -541,24 +559,53 @@ Dado que el equipo consta de 5 integrantes y un plazo limitado de 16 semanas, Sc
 
 
 
-**Caso de uso:** Asignación de métricas de comportamiento (USR-09)
+**Caso de uso:** Llamados de atención y sanciones (USR-09)
 
 * **Actor:** Administrador, Docente
-* **Precondiciones:** El alumno cuenta con un reporte por falta o desempeño destacado.
+* **Precondiciones:** El estudiante cometió una falta leve (por ejemplo, un retraso en la devolución o un equipo devuelto en mal estado) y el administrador tiene jurisdicción sobre su sede.
 * **Flujo principal:**
-1. El administrador ubica la ficha del alumno o se encuentra en el registro de devoluciones.
-2. Ajusta los indicadores para asignar los "chips" correspondientes (verde, amarillo o rojo) con el contador numérico (+/-).
-3. El sistema consolida la información en el expediente del estudiante.
+1. El administrador ubica la ficha del estudiante o se encuentra en el registro de devoluciones.
+2. Registra un llamado de atención con un motivo obligatorio.
+3. El sistema agrega el llamado al historial del estudiante y le avisa por correo electrónico.
+4. Si el estudiante alcanza la cantidad de llamados configurada (tres, por defecto), el sistema los convierte en una falta y se lo avisa por correo electrónico.
+5. El sistema actualiza el indicador visual del estado disciplinario en la ficha.
 
 
-* **Postcondiciones:** La métrica disciplinaria queda asentada en la ficha individual.
-* **Flujo alternativo:**
-* **Condición:** El docente requiere consultar las métricas de un alumno.
+* **Postcondiciones:** El llamado de atención, y la falta si corresponde, quedan asentados en el historial del estudiante.
+* **Flujo alternativo - 01:**
+* **Condición:** El estudiante acumula una falta.
+* **Acciones:**
+1. El administrador evalúa el caso y decide suspender la cuenta.
+
+
+* **Respuesta del sistema:** El sistema suspende la cuenta por el tiempo configurado, impide el inicio de sesión (el estudiante ve "Tu cuenta está suspendida") y avisa la sanción por correo electrónico.
+
+
+* **Flujo alternativo - 02:**
+* **Condición:** El estudiante alcanza la cantidad de faltas configurada (dos, por defecto).
+* **Acciones:**
+1. El administrador registra el llamado de atención que completa esa falta.
+
+
+* **Respuesta del sistema:** El sistema suspende la cuenta en forma automática por el tiempo configurado y avisa la sanción por correo electrónico.
+
+
+* **Flujo alternativo - 03:**
+* **Condición:** El administrador considera que la suspensión debe terminar antes de tiempo.
+* **Acciones:**
+1. El administrador levanta la suspensión desde la ficha del estudiante.
+
+
+* **Respuesta del sistema:** El sistema reactiva la cuenta y conserva el historial de llamados, faltas y suspensiones.
+
+
+* **Flujo alternativo - 04:**
+* **Condición:** El docente requiere consultar el estado disciplinario de un alumno.
 * **Acciones:**
 1. El docente coloca el puntero sobre la ficha del usuario.
 
 
-* **Respuesta del sistema:** El sistema despliega una ventana informativa (tooltip) no editable con las etiquetas asociadas.
+* **Respuesta del sistema:** El sistema despliega una ventana informativa (tooltip) no editable con el estado disciplinario del alumno.
 
 
 
@@ -619,11 +666,11 @@ Dado que el equipo consta de 5 integrantes y un plazo limitado de 16 semanas, Sc
 * **Flujo principal:**
 1. El usuario selecciona unidades clasificadas como "Alta Gama" (permitiendo combinarlas con recursos comunes en el carrito).
 2. El sistema unifica estos elementos en la Orden de Pedido.
-3. El usuario adjunta en forma obligatoria el archivo de validación en formato PDF.
+3. El usuario adjunta en forma obligatoria, en formato PDF, la resolución del Consejo (CICSE/ICSE) que avala el préstamo.
 4. Confirma y envía la solicitud.
 
 
-* **Postcondiciones:** La petición se encamina de manera directa a la bandeja del Administrador.
+* **Postcondiciones:** La petición se encamina de manera directa a la bandeja del Administrador, que verifica la resolución antes de aprobarla. Sólo el solicitante y los administradores con jurisdicción pueden descargar el PDF.
 * **Flujo alternativo:**
 * **Condición:** El usuario no adjunta el comprobante de aprobación en formato PDF.
 * **Acciones:**
@@ -689,24 +736,26 @@ Dado que el equipo consta de 5 integrantes y un plazo limitado de 16 semanas, Sc
 
 
 
-**Caso de uso:** Extensión de préstamos de portátiles (PRE-11)
+**Caso de uso:** Renovación de préstamos de notebooks (PRE-11)
 
-* **Actor:** Administrador
-* **Precondiciones:** Se tramita la prórroga en el plazo de devolución de un equipo informático.
+* **Actor:** Estudiante, Administrador
+* **Precondiciones:** El estudiante tiene en su poder una notebook prestada y quiere seguir usándola.
 * **Flujo principal:**
-1. El usuario acude personalmente al sector de mostrador.
-2. El Administrador accede a la herramienta de administración.
-3. Ejecuta la modificación para extender el término límite de entrega.
+1. El estudiante acude personalmente al mostrador con la notebook.
+2. El Administrador constata el estado del equipo.
+3. El estudiante emite desde la aplicación una nueva solicitud de renovación, precargada con la notebook que tiene en su poder.
+4. El sistema valida la solicitud como cualquier otra (franja horaria, plazo máximo y asignatura), salvo la anticipación mínima, que no se exige porque se emite en el mostrador.
+5. El Administrador aprueba la solicitud de renovación.
 
 
-* **Postcondiciones:** Se registra la nueva fecha límite de devolución en la plataforma.
+* **Postcondiciones:** Se registra un nuevo préstamo de la notebook con su propia fecha de devolución; el préstamo anterior se cierra.
 * **Flujo alternativo:**
-* **Condición:** El equipo posee una reserva previa asignada a otro usuario.
+* **Condición:** La notebook tiene una reserva aprobada de otro usuario que se superpone con el nuevo período.
 * **Acciones:**
-1. El administrador solicita extender el período sobre un recurso reservado.
+1. El estudiante solicita renovar una notebook reservada por otra persona.
 
 
-* **Respuesta del sistema:** El sistema rechaza la solicitud de extensión por solapamiento de reservas.
+* **Respuesta del sistema:** El sistema impide asignar esa notebook para el nuevo período. El Administrador puede asignar otra notebook libre o rechazar la renovación; en ese caso, el estudiante devuelve la notebook en la fecha original.
 
 
 
@@ -797,13 +846,22 @@ Dado que el equipo consta de 5 integrantes y un plazo limitado de 16 semanas, Sc
 
 
 * **Postcondiciones:** La orden de reserva queda asentada a la espera de la validación del administrador.
-* **Flujo alternativo:**
+* **Flujo alternativo - 01:**
 * **Condición:** El bloque horario ya ha sido aprobado para otro usuario previamente.
 * **Acciones:**
 1. El usuario intenta seleccionar un bloque que figura en gris o rojo en la grilla.
 
 
 * **Respuesta del sistema:** El sistema inhabilita la selección de la celda y bloquea el envío del formulario.
+
+
+* **Flujo alternativo - 02:**
+* **Condición:** El turno elegido empieza antes de la anticipación mínima configurada (24 horas, GLO-03).
+* **Acciones:**
+1. El usuario envía una solicitud para un turno demasiado próximo.
+
+
+* **Respuesta del sistema:** El sistema rechaza la solicitud y muestra un aviso con el correo de contacto del laboratorio, para que el usuario canalice la urgencia por ese medio.
 
 
 
@@ -819,7 +877,7 @@ Dado que el equipo consta de 5 integrantes y un plazo limitado de 16 semanas, Sc
 
 
 * **Postcondiciones:** El turno queda adjudicado oficialmente a un único usuario.
-* **Flujo alternativo:**
+* **Flujo alternativo - 01:**
 * **Condición:** Quedan peticiones "Pendientes" que solapan con la reserva recién aprobada.
 * **Acciones:**
 1. El administrador aprueba una solicitud para un bloque en disputa.
@@ -828,18 +886,34 @@ Dado que el equipo consta de 5 integrantes y un plazo limitado de 16 semanas, Sc
 * **Respuesta del sistema:** El sistema rechaza automáticamente el resto de las solicitudes concurrentes para esa misma franja, cambia su estado a "Rechazada" y notifica la denegación a los usuarios afectados.
 
 
+* **Flujo alternativo - 02:**
+* **Condición:** El administrador decide rechazar una solicitud.
+* **Acciones:**
+1. El administrador rechaza la solicitud e ingresa obligatoriamente el motivo.
+
+
+* **Respuesta del sistema:** El sistema cambia el estado a "Rechazada" y le muestra el motivo al solicitante.
+
+
 
 **Caso de uso:** Cancelación de reserva de espacios (RES-03)
 
 * **Actor:** Estudiante, Docente
-* **Precondiciones:** El usuario cuenta con una reserva de espacio vigente.
+* **Precondiciones:** El usuario cuenta con una reserva de espacio pendiente o aprobada cuyo turno todavía no comenzó.
 * **Flujo principal:**
 1. El usuario accede al panel de peticiones o historial.
-2. Marca la reserva asignada y procede a dar de baja la solicitud.
+2. Marca la reserva y procede a dar de baja la solicitud.
 3. El sistema procesa la anulación del trámite.
 
 
-* **Postcondiciones:** La reserva queda invalidada y el espacio restaura su disponibilidad de forma inmediata en el calendario general.
+* **Postcondiciones:** La reserva queda cancelada y el espacio restaura su disponibilidad de forma inmediata en el calendario general.
+* **Flujo alternativo:**
+* **Condición:** El turno de la reserva ya comenzó.
+* **Acciones:**
+1. El usuario intenta cancelar la reserva.
+
+
+* **Respuesta del sistema:** El sistema no permite la cancelación e informa que el turno ya está en curso.
 
 **Caso de uso:** Bloqueo administrativo de espacios (RES-04, GLO-02)
 
@@ -942,13 +1016,22 @@ Dado que el equipo consta de 5 integrantes y un plazo limitado de 16 semanas, Sc
 
 
 * **Postcondiciones:** Las bandejas de validación de préstamos, el directorio de usuarios, el calendario y los catálogos despliegan únicamente la información y los permisos correspondientes a la ubicación habilitada o escogida.
-* **Flujo alternativo:**
+* **Flujo alternativo - 01:**
 * **Condición:** El Superadministrador requiere auditar las solicitudes o stock general de todo el laboratorio.
 * **Acciones:**
 1. El Superadministrador selecciona la opción "Ambas sedes" en el selector global.
 
 
 * **Respuesta del sistema:** El sistema consolida y unifica las vistas operativas mostrando los recursos y trámites pendientes tanto de Ushuaia como de Río Grande en una misma pantalla.
+
+
+* **Flujo alternativo - 02:**
+* **Condición:** El Superadministrador se ausentará por un período (por ejemplo, vacaciones).
+* **Acciones:**
+1. El Superadministrador elige un Administrador Local y le delega temporalmente su rol, indicando la duración.
+
+
+* **Respuesta del sistema:** Durante ese período, el Administrador Local opera con los privilegios globales del Superadministrador. Al vencer el plazo, o si el Superadministrador revoca antes la delegación, el sistema le devuelve su alcance de sede. Ningún otro rol puede recibir la delegación.
 
 
 
@@ -960,15 +1043,18 @@ Dado que el equipo consta de 5 integrantes y un plazo limitado de 16 semanas, Sc
 * **Precondiciones:** El administrador posee privilegios activos en el entorno.
 * **Flujo principal:**
 1. El administrador entra al área de parámetros del sistema.
-2. Altera las variables de funcionamiento (tiempos de tolerancia, ventanas de anticipación) o inactiva fechas específicas ante eventos de fuerza mayor.
+2. Altera las variables de funcionamiento (horario de atención de cada sede, tiempos de tolerancia, anticipación mínima, plazos, correo de contacto del laboratorio, cantidades de las sanciones) o inactiva un rango de fechas ante eventos de fuerza mayor, opcionalmente limitado a una franja horaria, indicando obligatoriamente el motivo.
 3. Confirma y aplica los cambios.
 
 
-* **Postcondiciones:** La lógica de la plataforma se actualiza de forma dinámica sin requerir ajustes en la estructura.
+* **Postcondiciones:** La lógica de la plataforma se actualiza de forma dinámica sin requerir ajustes en la estructura, y cada cambio de parámetro queda registrado en un historial. Los días bloqueados muestran su motivo al pasar el mouse sobre ellos en el calendario.
 * **Flujo alternativo:**
 * **Condición:** La contingencia finaliza y se restablece el servicio.
 * **Acciones:**
 1. El administrador accede al panel de control y remueve el bloqueo de los días afectados.
+
+
+* **Respuesta del sistema:** El sistema rehabilita esos días para nuevas reservas.
 
 
 
@@ -1151,7 +1237,7 @@ Como el Reglamento no fija cantidades para las sanciones, después de la entrevi
 * La delegación del rol de Superadministrador sólo puede recibirla un Administrador Local. El Superadministrador fija su duración al delegar (por ejemplo, unos días o una semana, o el período de sus vacaciones) y puede revocarla antes del vencimiento.
 * Se confirmó que no hay estudiantes sin DNI argentino y que los docentes también solicitan, con regularidad, equipos de alta gama.
 
-Estas definiciones impactan en USR-05 (teléfono obligatorio), USR-09 (llamados de atención, faltas y suspensión automática), GLO-01 (delegación temporal), GLO-03 (horario por sede y correo de contacto del laboratorio), GLO-04, RES-03, PRE-05 y PRE-11. Los requisitos y casos de uso afectados se actualizarán en este documento y, luego, en los specs correspondientes.
+Estas definiciones impactan en USR-05 (teléfono obligatorio), USR-09 (llamados de atención, faltas y suspensión automática), GLO-01 (delegación temporal), GLO-03 (horario por sede y correo de contacto del laboratorio), GLO-04, RES-03, PRE-05 y PRE-11. El 10/11/2026 se actualizaron en este documento esos requisitos y sus casos de uso, junto con GLO-02 (horario por sede) y los casos de uso de reserva y de aprobación de espacios (aviso de anticipación con el correo del laboratorio y motivo obligatorio del rechazo). En la misma revisión, el caso de uso de recuperación de contraseña (USR-02) pasó a responder siempre con el mismo mensaje, exista o no la cuenta, para no revelar qué correos están registrados. Los specs de cada perfil incorporan estas reglas a medida que se implementan.
 
 ---
 
