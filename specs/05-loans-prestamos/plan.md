@@ -1,8 +1,8 @@
 # PLAN-05 — Préstamos (`loans`): Fases 1 y 2
 
-> **Estado:** `BORRADOR` · **Versión:** 0.4.1 · **Fecha:** 2026-11-08 · **Perfil:** 3
+> **Estado:** `BORRADOR` · **Versión:** 0.4.2 · **Fecha:** 2026-11-10 · **Perfil:** 3
 > **Spec:** `specs/05-loans-prestamos/spec.md` v1.0.1 (`APROBADO` v1.0.0; la v1.0.1 corrige EC-L10) (§14, Fases 1 y 2) · **Tareas:** `specs/05-loans-prestamos/tasks.md`
-> Este plan define el **cómo** de la Fase 1, Solicitar (§1…§7, implementada en el backend PR #21), y de la Fase 2, Validar (§8). Las Fases 3 a 5 se planifican cuando se cierre cada fase anterior.
+> Este plan define el **cómo** de la Fase 1, Solicitar (§1…§7, implementada en el backend PR #21), y de la Fase 2, Validar (§8, implementada en el backend PR #23 y #28, salvo las notificaciones). Las Fases 3 a 5 se planifican cuando se cierre cada fase anterior.
 
 ---
 
@@ -312,6 +312,7 @@ Se planifica en `tasks.md` (tareas F2.x): bandeja del administrador, detalle con
 
 | Versión | Fecha | Cambio |
 | :---- | :---- | :---- |
+| 0.4.2 | 2026-11-10 | La Fase 2 queda implementada en `develop` (backend PR #23 y #28), salvo T2.13 (espera `crear_notificacion`). `files` ya está en `develop`, así que T1.12 (aval) se desbloquea |
 | 0.4.1 | 2026-11-08 | Registra el resultado de V5 (C19: la `0011` cuelga de `0013_notifications_init`) y referencia la v1.0.1 del spec (EC-L10). El avance de la fase está en `tasks.md` |
 | 0.4.0 | 2026-11-07 | Agrega la Fase 2, Validar (§8): alcance, prioridad para la demo, verificaciones V5…V8 (cadena de `0011` frente a `0013`), diseño de la bandeja, el `PATCH …/estado`, las unidades libres por línea y las funciones `reservas_futuras_de_unidad` e `historial_de_unidad` para la Fase C de SPEC-04. La Fase 1 queda implementada (backend PR #21) |
 | 0.3.0 | 2026-11-06 | C8 resuelto: `crear_orden` usa `inventory.datos_equipamiento_por_ids` y se borra el adaptador provisorio. Suma `ocupacion_de_unidades` (spec v0.3.1 §10.2) para el Perfil 2 |
