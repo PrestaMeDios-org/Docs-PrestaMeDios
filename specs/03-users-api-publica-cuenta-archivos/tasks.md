@@ -1,6 +1,6 @@
 # TASKS-03 — API pública de `users`, recuperación, archivos y renovación de sesión
 
-> **Spec:** `specs/03-users-api-publica-cuenta-archivos/spec.md` v1.1.0 (`APROBADO` 2026-11-08) · **Plan:** `specs/03-users-api-publica-cuenta-archivos/plan.md` v1.1.0 (`APROBADO` 2026-11-08) · **Estado:** `APROBADO` (2026-11-08) · **Fecha:** 2026-11-08 (v1.0.0: 2026-11-03) · **Perfil:** 1
+> **Spec:** `specs/03-users-api-publica-cuenta-archivos/spec.md` v1.1.0 (`APROBADO` 2026-11-08) · **Plan:** `specs/03-users-api-publica-cuenta-archivos/plan.md` v1.1.0 (`APROBADO` 2026-11-08) · **Estado:** `COMPLETADO` (2026-11-10; aprobado el 2026-11-08) · **Fecha:** 2026-11-08 (v1.0.0: 2026-11-03) · **Perfil:** 1
 > Marcar `[x]` al cerrar. Cada tarea tiene su verificación; no se pasa a la siguiente con tests en rojo. Cada bloque es un PR (plan §2). **Orden de los bloques de la Fase B: B2 → B1 → B3 (D-20).**
 > Comandos de backend desde `Backend-PrestaMeDios/` (venv activo, `TEST_DATABASE_URL` definida); de frontend desde `Frontend-PrestaMeDios/`.
 
@@ -14,8 +14,9 @@
 - [x] **T-01 · Aprobar la v1.1.0.** El Perfil 1 aprueba el spec v1.1.0 (D-20…D-22, RN-77, AC-67 y EC-35 corregidos) y este plan; se registra en `MEMORY.md` lo de plan §10, fila "Al aprobar la v1.1.0".
   *Verificación:* spec en `APROBADO` con la fecha en §15. Sin esto no empieza ningún bloque de la Fase B (AGENTS.md §4).
   ✔ 2026-11-08: spec `APROBADO` (v1.1.0); en `MEMORY.md` quedan ADR-024, los ítems K de §13 y el estado de DT-30. El plan y estas tareas los aprobó el Perfil 1 el mismo día, después del merge del Docs PR #16. Si durante la implementación cambia el alcance, vuelven a pasar por aprobación (AGENTS.md §4).
-- [ ] **T-02 · Línea base de la Fase B.** Antes de abrir cada bloque: `develop` actualizado; `pytest -q` y `alembic heads` (una sola cabeza); en frontend, `npm run typecheck`, `npm run build` y `npm test`. Anotar el resultado en el PR del bloque.
+- [x] **T-02 · Línea base de la Fase B.** Antes de abrir cada bloque: `develop` actualizado; `pytest -q` y `alembic heads` (una sola cabeza); en frontend, `npm run typecheck`, `npm run build` y `npm test`. Anotar el resultado en el PR del bloque.
   *Verificación:* sin fallos de entrada; si los hay, se informan antes de seguir.
+  ✔ Las líneas base de B2, B1 y B3 quedaron anotadas en sus PRs y en este archivo (la de B3, al comienzo de su bloque). Corrida final del 2026-11-10 sobre `develop` con las tres fases mergeadas (backend `e54ad16`, Python 3.14.8, PostgreSQL 18): `alembic heads` con una sola cabeza (`0015_users_recuperacion`) y `pytest -q` con **895 pasados** en 6 min; cobertura de `app/core`, `app/modules/users` y `app/modules/files` del 96 % en conjunto (`files/service.py` 99 %, `users/service.py` 97 %, `core/email.py` 99 %; las CLI quedan por debajo: `files/cli.py` 75 %, `users/cli.py` 49 %).
 
 ## Bloque A — Datos públicos de usuarios (`feat/users-datos-publicos`)
 
@@ -27,11 +28,13 @@
 - [x] **A-03 · Cierre.** `pytest -q` completo; cobertura de `app/modules/users` ≥ 85 %; una línea en el README del backend.
   *Verificación:* suite en verde; PR hacia `develop` con la trazabilidad RN-35…RN-43 → AC-61…AC-70 y la mención de la enmienda 1.1.1 (spec §2.3).
   ✔ 2026-11-06: `pytest -q` completo con 386 pasados; cobertura de `app/modules/users` 94 % (`service.py` 98 %, con la función nueva cubierta entera); README actualizado (párrafo "API pública de `users` para otros módulos"). Commit `9341c59`, **backend PR #18 mergeado en `develop`**.
-- [ ] **A-04 · DT-30 (`fix/users-test-dataclass`).** Ajustar el test de AC-67 a la redacción de la v1.1.0 (plan §4.4): `FrozenInstanceError` al asignar `nombre`, cualquiera de `FrozenInstanceError`, `TypeError` o `AttributeError` al asignar `dni`, y sin `__dict__`. Sin cambios en `users/service.py`.
+- [x] **A-04 · DT-30 (`fix/users-test-dataclass`).** Ajustar el test de AC-67 a la redacción de la v1.1.0 (plan §4.4): `FrozenInstanceError` al asignar `nombre`, cualquiera de `FrozenInstanceError`, `TypeError` o `AttributeError` al asignar `dni`, y sin `__dict__`. Sin cambios en `users/service.py`.
   *Verificación:* `pytest tests/users/test_datos_publicos.py -q` en verde en 3.14 y en 3.12 o 3.13 (con los Perfiles 2 o 5). PR hacia `develop` que cierre DT-30. *Cubre:* AC-67.
   ⏳ 2026-11-08 (en revisión, backend PR #25): test corregido en `fix/users-test-dataclass` (desde `develop` en `3ad6b6b`), commit `4c56d6c`, sólo `tests/users/test_datos_publicos.py`. Con Python 3.14.8 (única versión instalada en el equipo del Perfil 1) y PostgreSQL 18: el archivo, 16 pasados; `pytest -q` completo, 581 pasados. Falta: la corrida en 3.12 o 3.13 (Perfiles 2 o 5) y el merge.
-- [ ] **A-05 · Documentación de la Fase A.** Lo de plan §10, fila "Fase A mergeada": `docs/perfiles.md` §4 y §5, `AGENTS.md` §3 y `MEMORY.md` §5; avisar a los Perfiles 3 y 4 (K1, K2).
+  ✔ 2026-11-09: **backend PR #25 mergeado en `develop`**; DT-30 cerrada. La corrida en 3.12 o 3.13 no quedó registrada: pasa a K8 (versión de Python fija para la imagen y la CI).
+- [x] **A-05 · Documentación de la Fase A.** Lo de plan §10, fila "Fase A mergeada": `docs/perfiles.md` §4 y §5, `AGENTS.md` §3 y `MEMORY.md` §5; avisar a los Perfiles 3 y 4 (K1, K2).
   *Verificación:* PR a `Docs-PrestaMeDios`; los avisos quedan registrados en `MEMORY.md` §5.
+  ✔ 2026-11-10 (rama `docs/spec-03-cierre`, junto con C-03): `docs/perfiles.md` v1.2.0 (§2, §3, §4 y §5 con las tres interfaces publicadas), `AGENTS.md` §2 y §3, y en `MEMORY.md` §5 el pedido del Perfil 4 queda atendido. K2 ya está resuelto: `loans` usa `datos_publicos_por_ids` en la bandeja y el detalle (backend PR #23). K1 sigue abierto para el Perfil 4 (`ReservaEspacioResponse` sin `solicitante`).
 
 ## Bloque B2 — Archivos y foto de perfil (`feat/files-almacenamiento`) — primero (D-20)
 
@@ -109,6 +112,9 @@
 
 ## Bloque C — Cierre
 
-- [ ] **C-01 · Frontend completo.** `npm run typecheck`, `npm run build` y `npm test` sobre `develop` con las tres ramas de frontend mergeadas. *Cubre:* AC-99.
-- [ ] **C-02 · Trazabilidad.** Matriz requisito → función o endpoint → test completa (spec §14), con cada test anotado `# AC-NN`.
-- [ ] **C-03 · Documentación.** Lo indicado en plan §10 para cada fase; spec a `IMPLEMENTADO` con su historial.
+- [x] **C-01 · Frontend completo.** `npm run typecheck`, `npm run build` y `npm test` sobre `develop` con las tres ramas de frontend mergeadas. *Cubre:* AC-99.
+  ✔ 2026-11-10, `develop` en `e1ae84e` (incluye además `loans` PR #18 y `notifications` PR #12), con `npm ci`: typecheck sin errores, build correcto y Vitest con 16 archivos y **126 tests** pasados.
+- [x] **C-02 · Trazabilidad.** Matriz requisito → función o endpoint → test completa (spec §14), con cada test anotado `# AC-NN`.
+  ✔ 2026-11-10: AC-61…AC-94, AC-100 y AC-101 tienen al menos un test anotado en el backend (búsqueda de `AC-NN` en `tests/`). AC-95…AC-99 son de frontend: Vitest cubre la lógica y el resto se verificó a mano (B1-09, B2-09, B3-03); los tests de Vitest no llevan la anotación. Los bordes sin test propio (EC-37, EC-40, EC-46, EC-49, EC-50) están justificados en §14.
+- [x] **C-03 · Documentación.** Lo indicado en plan §10 para cada fase; spec a `IMPLEMENTADO` con su historial.
+  ✔ 2026-11-10 (rama `docs/spec-03-cierre`): spec en `IMPLEMENTADO`; plan y tareas en `COMPLETADO`; `docs/perfiles.md` v1.2.0; `AGENTS.md` §2 y §3; en `MEMORY.md`, snapshot, módulos `core`, `users` y `files`, nota en ADR-015 (fila "B3 mergeada"), DT-30 cerrada, estado de K1, K2, K3 y K6 en §5 y bitácora. **Queda fuera de este cierre:** el PR al ERS de K7 (DT-29 y CU de USR-02), que pide plan §10 en la fila "B1 mergeada". Sigue como deuda del Perfil 1.
