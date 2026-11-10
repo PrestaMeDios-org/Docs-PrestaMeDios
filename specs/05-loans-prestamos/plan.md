@@ -1,7 +1,7 @@
 # PLAN-05 — Préstamos (`loans`): Fases 1 y 2
 
-> **Estado:** `BORRADOR` · **Versión:** 0.4.2 · **Fecha:** 2026-11-10 · **Perfil:** 3
-> **Spec:** `specs/05-loans-prestamos/spec.md` v1.0.1 (`APROBADO` v1.0.0; la v1.0.1 corrige EC-L10) (§14, Fases 1 y 2) · **Tareas:** `specs/05-loans-prestamos/tasks.md`
+> **Estado:** `BORRADOR` · **Versión:** 0.4.3 · **Fecha:** 2026-11-10 · **Perfil:** 3
+> **Spec:** `specs/05-loans-prestamos/spec.md` v1.0.2 (`APROBADO` v1.0.0; la v1.0.1 corrige EC-L10 y la v1.0.2 agrega el aval) (§14, Fases 1 y 2) · **Tareas:** `specs/05-loans-prestamos/tasks.md`
 > Este plan define el **cómo** de la Fase 1, Solicitar (§1…§7, implementada en el backend PR #21), y de la Fase 2, Validar (§8, implementada en el backend PR #23 y #28, salvo las notificaciones). Las Fases 3 a 5 se planifican cuando se cierre cada fase anterior.
 
 ---
@@ -26,7 +26,7 @@ Mientras se aprueba la v0.3.0 y llega `files` (SPEC-03), `POST /ordenes` se entr
 | Tema | En este corte | Cuándo se completa |
 | :---- | :---- | :---- |
 | **Renovación** (RN-L24, `renueva_detalle_id`) | **Fuera de alcance.** El esquema ya acepta el campo, pero el servicio responde `501 NO_IMPLEMENTADO` | Tarea propia (T1.14), con su propio diseño de disponibilidad: la notebook a renovar está `prestado`, no figura en `unidades_asignables` y debe contar como libre para esa orden |
-| **Aval** (RN-L09, `pdf_aval_id`) | Toda orden con un ítem de alta gama responde `422 AVAL_REQUERIDO`, traiga o no `pdf_aval_id`, porque todavía no se puede vincular el archivo | Cuando `files` esté en `develop` (T1.12) |
+| **Aval** (RN-L09, `pdf_aval_id`) | **Resuelto** (2026-11-10, T1.12): se vincula con `files.vincular_archivo` en la misma transacción, la orden guarda `aval_archivo_id` (migración `0016`) y `GET /ordenes/{id}/aval` lo sirve al dueño y a los administradores con jurisdicción | — |
 | **Lectura de equipamiento** (C8) | **Resuelto** (2026-11-06): `crear_orden` usa `inventory.datos_equipamiento_por_ids` (PR #19 del backend) | — |
 | **Horario por sede** (K10, AC-L63) | Se leen `horario.apertura` y `horario.cierre` globales | Cuando `config` publique las claves por sede (T1.13): cambia la lectura, no la regla |
 
@@ -312,6 +312,7 @@ Se planifica en `tasks.md` (tareas F2.x): bandeja del administrador, detalle con
 
 | Versión | Fecha | Cambio |
 | :---- | :---- | :---- |
+| 0.4.3 | 2026-11-10 | T1.12 (aval) implementada en `feat/loans-aval`, según la spec v1.0.2 |
 | 0.4.2 | 2026-11-10 | La Fase 2 queda implementada en `develop` (backend PR #23 y #28), salvo T2.13 (espera `crear_notificacion`). `files` ya está en `develop`, así que T1.12 (aval) se desbloquea |
 | 0.4.1 | 2026-11-08 | Registra el resultado de V5 (C19: la `0011` cuelga de `0013_notifications_init`) y referencia la v1.0.1 del spec (EC-L10). El avance de la fase está en `tasks.md` |
 | 0.4.0 | 2026-11-07 | Agrega la Fase 2, Validar (§8): alcance, prioridad para la demo, verificaciones V5…V8 (cadena de `0011` frente a `0013`), diseño de la bandeja, el `PATCH …/estado`, las unidades libres por línea y las funciones `reservas_futuras_de_unidad` e `historial_de_unidad` para la Fase C de SPEC-04. La Fase 1 queda implementada (backend PR #21) |

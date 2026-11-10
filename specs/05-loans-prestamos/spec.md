@@ -1,6 +1,6 @@
 # SPEC-05 — Préstamos de equipamiento y notebooks (`loans`)
 
-> **Estado:** `APROBADO` (v1.0.0); la v1.0.1 corrige EC-L10 y espera el OK del Perfil 1 · **Versión:** 1.0.1 · **Fecha:** 2026-11-08 · **Perfil:** 3 (Préstamos y concurrencia)
+> **Estado:** `APROBADO` (v1.0.0); las v1.0.1 (EC-L10) y v1.0.2 (aval) esperan el OK del Perfil 1 · **Versión:** 1.0.2 · **Fecha:** 2026-11-10 · **Perfil:** 3 (Préstamos y concurrencia)
 > **Requisitos:** PRE-03…PRE-11, PRE-13, PRE-15…PRE-18, PRE-20 (`docs/ERS.md` del repo `Docs-PrestaMeDios`, Subsistema 2, módulos 2, 3 y 4, incluida la Iteración 5)
 > **Depende de:** SPEC-01 (`core`, autenticación), SPEC-02 (alcance de sede, `config`), SPEC-03 (`users.datos_publicos_por_ids`, `files` para el aval, horario por sede K10) y SPEC-04 (`inventory/service.py`)
 > **Constitución:** v1.1.0, con la enmienda 1.1.1 propuesta (ADR-019) · **Plan y tareas:** `plan.md` y `tasks.md` en esta misma carpeta (Fase 1)
@@ -135,6 +135,7 @@ Base: `/api/v1/loans` · tag "Préstamos y Solicitudes" · todos exigen `Authori
 | `GET /ordenes/docente` | DOCENTE | Panel de observación docente | 200 | 401, 403 |
 | `GET /ordenes` | ADMIN_LOCAL, SUPERADMIN | Bandeja (`estado`=`pendiente` por defecto, `sede` solo SUPERADMIN, `limit`, `offset`) | 200 | 401, 403 |
 | `GET /ordenes/{orden_id}` | dueño, admin con alcance, docente de la asignatura | Detalle | 200 | 401, 404 |
+| `GET /ordenes/{orden_id}/aval` | dueño, admin con alcance | El PDF de aval de la orden (PRE-05), servido con `files.abrir_archivo` y `respuesta_descarga` (RN-61 de SPEC-03). El docente de la asignatura no lo descarga (RN-60 de SPEC-03). Una orden sin aval responde `404 ARCHIVO_NO_ENCONTRADO` | 200 | 401, 404 |
 | `PATCH /ordenes/{orden_id}/estado` | ver §4 | Aprobar, rechazar o cancelar | 200 | 401, 403, 404, 409, 422 |
 | `GET /ordenes/{orden_id}/unidades-libres` | ADMIN_LOCAL, SUPERADMIN | Por cada línea de la orden, las unidades del modelo en la sede que están `disponible` y sin otra línea `reservado` o `entregado` que se solape con su período, para asignar al aprobar (RN-L10, RN-L12) | 200 | 401, 403, 404 |
 | `PATCH /ordenes/{orden_id}/detalles/{detalle_id}/estado` | ADMIN_LOCAL, SUPERADMIN | Entregar, devolver o cancelación forzada | 200 | 401, 403, 404, 409, 422 |
@@ -152,7 +153,7 @@ Los cambios de estado usan `PATCH /<recurso>/{id}/estado` (Constitución §4.2).
 | `DetalleEstadoUpdate` | `estado` ∈ {`entregado`, `devuelto`, `cancelado`}, `observacion?` (solo `devuelto`, ≤ 500), `motivo?`, `a_mantenimiento?` (solo `devuelto`) | `cancelado` (forzada) exige `motivo` |
 | `ObservacionDocenteUpdate` | `observacion` (1..500) | |
 | `ReglasResponse` | `sede`, `horario_apertura`, `horario_cierre`, `anticipacion_min_horas`, `max_dias_general`, `max_dias_notebook`, `tolerancia_retiro_horas` | Valores vigentes de `config` para la **sede del solicitante**; `SUPERADMIN` la indica con `?sede=` (ADR-022 a, K10) |
-| `OrdenPedidoResponse` / `DetallePrestamoResponse` | Los actuales, más `entregado_en`, `devuelto_en`, `observacion_devolucion`, `motivo_cancelacion` en el detalle; `resuelto_en` y `situacion` (derivada, RN-L31) en la orden; el aval según K3 de SPEC-03. Para administradores y docentes, un resumen del solicitante obtenido con `users.datos_publicos_por_ids` (`id`, `nombre`, `apellido`); **nunca** DNI, email ni teléfono (P6) | `demorado` y `situacion` son derivados |
+| `OrdenPedidoResponse` / `DetallePrestamoResponse` | Los actuales, más `entregado_en`, `devuelto_en`, `observacion_devolucion`, `motivo_cancelacion` en el detalle; `resuelto_en`, `situacion` (derivada, RN-L31) y `aval_archivo_id` (el PDF de aval, K3 de SPEC-03; se descarga con `GET /ordenes/{id}/aval`) en la orden. Para administradores y docentes, un resumen del solicitante obtenido con `users.datos_publicos_por_ids` (`id`, `nombre`, `apellido`); **nunca** DNI, email ni teléfono (P6) | `demorado` y `situacion` son derivados |
 
 Todos los campos llevan `Field(..., examples=[...])` y las respuestas de error se documentan en OpenAPI (Constitución §9).
 
@@ -169,7 +170,9 @@ Todos los campos llevan `Field(..., examples=[...])` y las respuestas de error s
 | `FRANJA_FUERA_DE_HORARIO` | 422 | Hora de retiro o devolución fuera del horario de la sede del solicitante |
 | `ANTICIPACION_INSUFICIENTE` | 422 | Retiro antes de `ahora + solicitud.anticipacion_min_horas` |
 | `LIMITE_DIAS_EXCEDIDO` | 422 | Rango mayor al máximo de alguna línea (incluye `equipamiento_id` y el máximo en el mensaje) |
-| `AVAL_REQUERIDO` | 422 | Orden con ítems de alta gama sin `pdf_aval_id`. Los errores de `vincular_archivo` (archivo ajeno, propósito incorrecto) se propagan con su propio código |
+| `AVAL_REQUERIDO` | 422 | Orden con ítems de alta gama sin `pdf_aval_id` |
+| `ARCHIVO_INVALIDO` | 422 | De `files.vincular_archivo`: el aval no existe, es de otro usuario, tiene otro propósito o ya está vinculado a otra orden (un solo código, D-19 de SPEC-03). No se crea la orden |
+| `ARCHIVO_NO_ENCONTRADO` | 404 | `GET /ordenes/{id}/aval` de una orden sin aval |
 | `RETIRO_VENCIDO` | 422 | Aprobar una orden cuyo retiro ya pasó, sin ajuste horario |
 | `ASIGNACIONES_INVALIDAS` | 422 | Faltan, sobran, se repiten o no pertenecen a la orden |
 | `UNIDAD_NO_ASIGNABLE` | 422 | Unidad de otra sede o modelo, o en `mantenimiento`/`baja` |
@@ -198,13 +201,14 @@ Los `401` y `403` por rol los produce `require_roles` con los códigos que defin
 | Tabla | Cambio | Motivo |
 | :---- | :---- | :---- |
 | `ordenes_pedido` | `resuelto_por_id` (FK `usuarios`, `SET NULL`), `resuelto_en` (`timestamptz`) | Quién y cuándo resolvió (aprobó, rechazó o canceló); auditoría (USR-08) |
+| `ordenes_pedido` | `aval_archivo_id` (`UUID`, FK `archivos`, `RESTRICT`, nulo) | Qué PDF de `files` es el aval de la orden (RN-L09, AC-L60). `files` solo marca el archivo como vinculado; sin esta columna la orden no podría servir su aval |
 | `detalles_prestamo` | `entregado_en`, `devuelto_en` (`timestamptz`, nulos) | Registro de entrega y devolución (PRE-13) |
 | `detalles_prestamo` | `observacion_devolucion` (`String(500)`, nula) | Estado físico al devolver; alimenta el historial de la unidad (PRE-12, PRE-13) |
 | `detalles_prestamo` | `motivo_cancelacion` (`String(500)`, nula) | Cancelación forzada (PRE-17) |
 | `detalles_prestamo` | `CHECK` `entrega_registrada` (`estado <> 'entregado' OR entregado_en IS NOT NULL`) y `devolucion_registrada` (`estado <> 'devuelto' OR (entregado_en IS NOT NULL AND devuelto_en IS NOT NULL)`) | Coherencia en la base (P7.1) |
 | `ordenes_historial_estado` (nueva) | `id` (`BigInteger`, `Identity`), `orden_id` (FK, `CASCADE`), `estado_anterior?`, `estado_nuevo`, `motivo?`, `actor_id` (FK `usuarios`, `SET NULL`), `created_at`; índice `(orden_id, created_at)` | Traza inmutable de transiciones, igual que `usuarios_historial_estado` (P7.3, D-L10) |
 
-Reparto: `0011_loans_resolucion` (Fase 2) lleva `resuelto_por_id`, `resuelto_en` y `ordenes_historial_estado`; `0012_loans_ciclo_entrega` (Fase 3) lleva las columnas y los `CHECK` de entrega, devolución y cancelación forzada. El vínculo con el aval lo guarda `files` (SPEC-03); si K3 requiere una columna en `ordenes_pedido`, va en `0011`. **La numeración final se acuerda con el Perfil 1 antes de abrir el PR**, porque SPEC-03 también agrega migraciones (su EC-45). Los `CHECK` usan nombres cortos. Cada migración tiene `downgrade` y se valida con upgrade → downgrade → upgrade (P7.4).
+Reparto: `0011_loans_resolucion` (Fase 2) lleva `resuelto_por_id`, `resuelto_en` y `ordenes_historial_estado`; `0012_loans_ciclo_entrega` (Fase 3) lleva las columnas y los `CHECK` de entrega, devolución y cancelación forzada. `0016_loans_aval` (T1.12) lleva `aval_archivo_id`: no entró en la `0011` porque `files` llegó después de mergearla. Cadena vigente: `0010` → `0013` (SPEC-06) → `0011` → `0014`, `0015` (SPEC-03) → `0016` (C19). **La numeración se acuerda con el Perfil 1 antes de abrir cada PR**. Los `CHECK` usan nombres cortos. Cada migración tiene `downgrade` y se valida con upgrade → downgrade → upgrade (P7.4).
 
 ---
 
@@ -254,7 +258,7 @@ Una orden `aprobada` no tiene estado final propio: el avance lo muestran las lí
 | RN-L06 | Plazo máximo por línea = el menor entre el parámetro del tipo (`prestamo.notebook.max_dias` si `es_notebook`, si no `prestamo.general.max_dias`) y `max_dias_prestamo` del ítem. Se cuenta en días corridos incluyendo el día de retiro y el de devolución. La orden debe cumplir el límite de **cada** línea (D-L03, D-L04). Ver C18 sobre cómo `inventory` fija `max_dias_prestamo` |
 | RN-L07 | Asignatura obligatoria para `ESTUDIANTE`; el `DOCENTE` solicita para uso de cátedra (PRE-03, PRE-09) |
 | RN-L08 | Debe aceptarse la normativa (PRE-03) |
-| RN-L09 | Los ítems de alta gama requieren aval PDF (PRE-05). Lo suben estudiantes y docentes con `POST /api/v1/files/archivos` (`proposito=AVAL_PRESTAMO`) y la orden lo referencia con `pdf_aval_id`. El servicio llama a `vincular_archivo(db, archivo_id, *, propietario_id, proposito)` sin `commit`, **en la misma transacción** que crea la orden. Lo descargan el solicitante y los administradores con jurisdicción, no el docente de la asignatura (SPEC-03 RN-60, D-18). Sin aval: `422 AVAL_REQUERIDO` |
+| RN-L09 | Los ítems de alta gama requieren aval PDF (PRE-05). Lo suben estudiantes y docentes con `POST /api/v1/files/archivos` (`proposito=AVAL_PRESTAMO`) y la orden lo referencia con `pdf_aval_id`. El servicio llama a `vincular_archivo(db, archivo_id, *, propietario_id, proposito)` sin `commit`, **en la misma transacción** que crea la orden. La orden guarda el id en `aval_archivo_id`; si la creación falla, el archivo no queda vinculado. Lo descargan el solicitante y los administradores con jurisdicción con `GET /ordenes/{id}/aval`, no el docente de la asignatura (SPEC-03 RN-60, D-18). Sin aval: `422 AVAL_REQUERIDO`. Si la orden no tiene ítems de alta gama, `pdf_aval_id` se ignora: no se vincula ni se guarda, y `files` limpia el archivo huérfano |
 | RN-L10 | Cada `equipamiento_id` debe existir, estar activo y tener, **para el período pedido**, al menos una unidad libre en la sede del solicitante. Unidad libre = figura en `unidades_asignables(db, equipamiento_id, sede)` (`disponible` en el estante: una unidad prestada no se promete hasta que vuelva) **y** no tiene ninguna línea `reservado` o `entregado` cuyo período se solape con `[retiro, devolucion)`. Si el pedido trae varias líneas del mismo modelo, las unidades libres deben alcanzar. Si no, `409 EQUIPAMIENTO_NO_DISPONIBLE`. Las líneas `pendiente` no cuentan. Es una verificación previa (P7.2): la garantía final es el `EXCLUDE` al aprobar. El solicitante no elige unidades |
 | RN-L11 | Toda aprobación es manual (R1). Se asigna **una unidad por línea**, que debe ser de la sede, del modelo pedido y asignable según `inventory` (`disponible`: una unidad `prestado` no se asigna hasta que se devuelva). La pertenencia al modelo se verifica con la lista de unidades que `inventory` devuelve para ese `equipamiento_id`, porque `unidad_es_asignable` no recibe el modelo. Que la unidad no tenga otra línea activa con un período solapado lo garantiza el `EXCLUDE`. Al asignar, `loans` bloquea cada unidad con `inventory.bloquear_unidad` (en orden ascendente de id) y verifica sede, modelo (`equipamiento_id` de la unidad devuelta) y estado `disponible`; el ítem activo se comprueba con `unidad_es_asignable` |
 | RN-L12 | Solo `reservado` y `entregado` ocupan. **Una unidad no puede tener dos líneas ocupantes con períodos que se solapan**: lo garantiza el `EXCLUDE` sobre `(unidad_fisica_id, periodo)` de `0009`, y su violación (`23P01`) se traduce a `409`. Dos reservas de la misma unidad en fechas distintas pueden convivir (ERS PRE-11 y PRE-17). El servicio puede consultar antes para dar un error específico, pero nunca reemplaza a la restricción (P7.2). Una unidad se libera cuando su línea pasa a `devuelto`, `cancelado` o `no_retirado` |
@@ -547,7 +551,7 @@ Se eligió la **opción B: criterio por fechas, solo unidades `disponible`**. Un
 | :---- | :---- | :---- | :---- | :---- |
 | PRE-03 | CU-L01 | `POST /ordenes`, `GET /reglas` | AC-L02…L06, L12, L13, L56, L57, L63 | 1 |
 | PRE-04 | CU-L01 | `POST /ordenes` (y validación de la interfaz) | AC-L04…L06 | 1 |
-| PRE-05 | CU-L02 | `POST /ordenes` (con `pdf_aval_id`) | AC-L14, L60 | 1 |
+| PRE-05 | CU-L02 | `POST /ordenes` (con `pdf_aval_id`), `GET /ordenes/{id}/aval` | AC-L14, L60 | 1 |
 | PRE-06 | CU-L01 | `POST /ordenes` | AC-L07…L09 | 1 |
 | PRE-07 | CU-L01 | `POST /ordenes` | AC-L10, L11 | 1 |
 | PRE-08 | CU-L12 | `procesar-vencimientos` | AC-L45…L48 | 4 |
@@ -568,6 +572,7 @@ Se eligió la **opción B: criterio por fechas, solo unidades `disponible`**. Un
 
 | Versión | Fecha | Cambio |
 | :---- | :---- | :---- |
+| 1.0.2 | 2026-11-10 | **Pendiente del OK del Perfil 1.** Aval de alta gama (T1.12, K3 de SPEC-03): `ordenes_pedido.aval_archivo_id` en la migración `0016_loans_aval` (§7.2), porque `files` no guarda a qué orden pertenece el PDF; `GET /ordenes/{id}/aval` (§6.1); `aval_archivo_id` en la respuesta (§6.2); errores `ARCHIVO_INVALIDO` y `ARCHIVO_NO_ENCONTRADO` (§6.3); RN-L09 aclara que sin alta gama `pdf_aval_id` se ignora |
 | 1.0.1 | 2026-11-08 | **Pendiente del OK del Perfil 1.** Corrige EC-L10, que contradecía a AC-L32: si la aprobación gana la carrera, la cancelación del solicitante choca con una orden `aprobada` y responde `403 CANCELACION_NO_PERMITIDA`, no `409`. Lo encontró `test_concurrencia.py` (T2.8). Sin otros cambios de contrato |
 | 1.0.0 | 2026-11-07 | **Aprobado** por el Perfil 1 (PR #7 y #10 de `Docs-PrestaMeDios`). Corrige §10.1 y C8, que todavía decían que la lectura de equipamiento no estaba publicada (revisión de seguimiento del Perfil 1, 2026-11-07). Sin cambios de contrato respecto de la v0.3.1. Siguen abiertos como coordinación C19 (horario por sede y numeración de migraciones) y C20 (sanciones) |
 | 0.3.1 | 2026-11-06 | §10.2: agrega `ocupacion_de_unidades` (ocupación por unidad y período en una sola consulta, para el mini-calendario del Perfil 2, con su aval) y precisa el uso de `unidades_libres`. C8 resuelto por `inventory.datos_equipamiento_por_ids` (PR #19 del backend) |
