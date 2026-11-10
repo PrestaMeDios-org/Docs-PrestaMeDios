@@ -196,7 +196,7 @@ Debido a que las operaciones del laboratorio requieren la intervención directa 
 **Módulo 1: Información de la Cuenta del Usuario**
 
 * **USR-01 - Registro e inicio de sesión:** El sistema permitirá a estudiantes, docentes y administradores registrarse e iniciar sesión, determinando sus permisos y vistas en base a su rol específico.
-* **USR-02 - Recuperación de contraseña:** Si el usuario olvida su clave, debe tener una opción en la pantalla de login para restablecerla mediante un correo electrónico.
+* **USR-02 - Recuperación de contraseña:** Si el usuario olvida su clave, debe tener una opción en la pantalla de login para restablecerla mediante un correo electrónico. Para no revelar qué correos están registrados, el sistema responde siempre con el mismo mensaje, exista o no la cuenta. El enlace enviado es de un solo uso y tiene una vigencia limitada.
 * **USR-03 - Actualización de datos de contacto:** El estudiante y el docente podrán mantener actualizados su teléfono, correo y foto en su perfil. Los demás datos estarán bloqueados para su edición.
 * **USR-04 - Gestión de usuarios y accesos:** El Superadministrador tendrá acceso a un directorio general de todos los usuarios (estudiantes, docentes y administradores locales). Contará con permisos para editar perfiles, dar de baja o alta usuarios y buscar perfiles mediante filtros por rol y sede.
 * **USR-05 - Registro con validación manual:** El sistema permitirá a los nuevos usuarios completar un formulario de registro. Las cuentas creadas ingresarán en estado "Pendiente en aprobación". El Superadministrador podrá validar, editar o dar de baja perfiles de ambas sedes, mientras que los Administradores Locales sólo tendrán jurisdicción para accionar sobre las cuentas que pertenezcan a su sede asignada.
@@ -423,20 +423,20 @@ Dado que el equipo consta de 5 integrantes y un plazo limitado de 16 semanas, Sc
 
 * **Actor:** Estudiante, Docente, Administrador
 * **Precondiciones:**
-1. El usuario posee una cuenta registrada en el sistema.
+1. El usuario posee una cuenta activa en el sistema.
 2. La cuenta tiene una dirección de correo electrónico asociada.
 
 
 * **Flujo principal:**
 1. El sistema solicita la dirección de correo electrónico asociada a la cuenta.
 2. El usuario ingresa su dirección de correo electrónico.
-3. El sistema verifica que exista una cuenta asociada a la dirección proporcionada.
-4. El sistema genera un enlace de recuperación de contraseña.
+3. El sistema informa que, si existe una cuenta activa asociada a esa dirección, recibirá un correo con las instrucciones.
+4. El sistema genera un enlace de recuperación de un solo uso y con vigencia limitada.
 5. El sistema envía el enlace de recuperación al correo electrónico del usuario.
 6. El usuario accede al enlace recibido.
 7. El sistema muestra un formulario para establecer una nueva contraseña.
 8. El usuario ingresa y confirma su nueva contraseña.
-9. El sistema valida la nueva contraseña y actualiza las credenciales de la cuenta.
+9. El sistema valida la nueva contraseña, actualiza las credenciales de la cuenta y cierra las sesiones abiertas.
 10. El sistema informa que la contraseña fue actualizada correctamente.
 
 
@@ -445,13 +445,31 @@ Dado que el equipo consta de 5 integrantes y un plazo limitado de 16 semanas, Sc
 2. El usuario puede iniciar sesión utilizando la nueva contraseña.
 
 
-* **Flujo alternativo:**
-* **Condición:** Correo electrónico no registrado.
+* **Flujo alternativo - 01:**
+* **Condición:** Correo electrónico no registrado o cuenta que no está activa (pendiente, rechazada, suspendida o inactiva).
 * **Acciones:**
-1. El usuario ingresa una dirección de correo electrónico que no está asociada a una cuenta.
+1. El usuario ingresa una dirección de correo electrónico que no está asociada a una cuenta activa.
 
 
-* **Respuesta del sistema:** El sistema informa que no existe una cuenta asociada a la dirección ingresada y permite al usuario volver a ingresar una dirección de correo electrónico o regresar a la pantalla de inicio de sesión.
+* **Respuesta del sistema:** El sistema muestra el mismo mensaje que en el paso 3 del flujo principal y no envía ningún correo. Así no revela qué direcciones están registradas.
+
+
+* **Flujo alternativo - 02:**
+* **Condición:** El enlace ya se usó, venció o fue reemplazado por uno más reciente.
+* **Acciones:**
+1. El usuario accede a un enlace de recuperación que ya no es válido.
+
+
+* **Respuesta del sistema:** El sistema informa que el enlace no es válido y permite solicitar uno nuevo.
+
+
+* **Flujo alternativo - 03:**
+* **Condición:** Se superó la cantidad de solicitudes permitidas en un período.
+* **Acciones:**
+1. El usuario solicita la recuperación repetidas veces en poco tiempo.
+
+
+* **Respuesta del sistema:** El sistema rechaza la solicitud e indica que vuelva a intentarlo más tarde.
 
 
 
