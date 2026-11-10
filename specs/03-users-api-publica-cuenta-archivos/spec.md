@@ -4,7 +4,7 @@
 | --- | --- |
 | **ID** | SPEC-03 |
 | **Perfil responsable** | Perfil 1 — Identidad, Usuarios, Permisos, Configuración Global y Despliegue |
-| **Estado** | `APROBADO` — v1.1.0, 2026-11-08 (D-20…D-22 y RN-77; cambios en §15). La v1.0.0 se aprobó el 2026-11-03 con D-01…D-19. La Fase A está implementada (backend PR #18) y la v1.1.0 no cambia su contrato |
+| **Estado** | `IMPLEMENTADO` — 2026-11-10, todo en `develop`: Fase A (backend PR #18), B2 (backend PR #26, frontend PR #14), B1 (backend PR #27 y #29, frontend PR #15) y B3 (backend PR #31, frontend PR #17). Trazabilidad en §14. Contrato: v1.1.0, `APROBADO` el 2026-11-08 (D-20…D-22 y RN-77); la v1.0.0 se aprobó el 2026-11-03 con D-01…D-19 |
 | **Versión** | 1.1.0 |
 | **Requisitos cubiertos** | Fase A: soporte de PRE-15, PRE-20 y RES-05 (datos del solicitante), C2 de SPEC-05 · Fase B: USR-02, USR-03 (foto), PRE-05 (almacenamiento del aval, C4 de SPEC-05), D-06 de SPEC-01, infraestructura de correo para los avisos de ADR-022 (f) |
 | **Depende de** | SPEC-01 v1.0.0 y SPEC-02 v1.0.1 (`IMPLEMENTADO`, en `develop`) |
@@ -582,17 +582,22 @@ Cada criterio tendrá al menos un test anotado `# AC-NN`, con `pytestmark = pyte
 
 ## 14. Trazabilidad
 
-| Requisito | Función o endpoint | Criterios | Bordes | Fase |
-| --- | --- | --- | --- | --- |
-| C2 de SPEC-05 / pedido del Perfil 4 (soporte de PRE-15, RES-05) | `users.service.datos_publicos_por_ids` | AC-61…AC-70 | EC-34, EC-35 | A |
-| USR-02 | `POST /auth/recuperacion`, `POST /auth/recuperacion/confirmar`, `core.email.enviar_correo`; pantallas de recuperación | AC-71…AC-80, AC-95, AC-96 | EC-36…EC-40 | B1 |
-| ADR-022 (f), ADR-023 — transporte de los avisos por correo | `core.email.TipoCorreo` (incluido `NOTIFICACION`), `renderizar_correo`, `enviar_correo` | AC-100, AC-101 | EC-49 | B1 |
-| USR-03 (foto) | `PUT` y `DELETE /auth/me/foto`, `GET /files/archivos/{id}/contenido`; Mi perfil y Navbar | AC-83…AC-85, AC-97 | EC-41 | B2 |
-| USR-04 (moderación de foto) | `DELETE /users/{id}/foto` | AC-89 | — | B2 |
-| PRE-05 (almacenamiento del aval, estudiantes y docentes), C4 de SPEC-05 | `POST /files/archivos`, `files.service.vincular_archivo`, `abrir_archivo`, `respuesta_descarga`, CLI `limpiar-huerfanos` | AC-81, AC-82, AC-85…AC-88 | EC-42…EC-44, EC-47, EC-48 | B2 |
-| USR-05 (teléfono obligatorio, ADR-022 b) | — (spec siguiente, D-16) | — | EC-50 | — |
-| D-06 de SPEC-01, ADR-015 | `POST /auth/renovar`, `POST /auth/me/sesiones/cerrar`; renovación en `AuthContext` | AC-91…AC-94, AC-98 | EC-46 | B3 |
-| P7.4 (migraciones) | `0015_users_recuperacion`, `0014_files_init` | AC-80, AC-90 | EC-45 | B1, B2 |
+Verificada el 2026-11-10 contra `develop` (backend `e54ad16`, frontend `e1ae84e`): cada criterio de backend tiene al menos un test anotado `# AC-NN` (tarea C-02). Rutas de tests relativas a `Backend-PrestaMeDios/tests/` y a `Frontend-PrestaMeDios/src/`.
+
+| Requisito | Función o endpoint | Criterios | Bordes | Tests | Fase |
+| --- | --- | --- | --- | --- | --- |
+| C2 de SPEC-05 / pedido del Perfil 4 (soporte de PRE-15, RES-05) | `users.service.datos_publicos_por_ids` | AC-61…AC-70 | EC-34, EC-35 | `users/test_datos_publicos.py` | A |
+| USR-02 | `POST /auth/recuperacion`, `POST /auth/recuperacion/confirmar`, `core.email.enviar_correo`; pantallas de recuperación | AC-71…AC-80, AC-95, AC-96 | EC-36…EC-40 | `users/test_recuperacion.py`, `users/test_schemas.py`, `users/test_migracion_recuperacion.py`; `features/auth/recuperacion.test.ts` | B1 |
+| ADR-022 (f), ADR-023 — transporte de los avisos por correo | `core.email.TipoCorreo` (incluido `NOTIFICACION`), `renderizar_correo`, `enviar_correo` | AC-100, AC-101 | EC-49 | `core/test_email.py` | B1 |
+| USR-03 (foto) | `PUT` y `DELETE /auth/me/foto`, `GET /files/archivos/{id}/contenido`; Mi perfil y Navbar | AC-83…AC-85, AC-97 | EC-41 | `users/test_foto.py`, `files/test_service.py`, `files/test_archivos.py`; `features/users/services/foto.test.ts`, `lib/api.test.ts` | B2 |
+| USR-04 (moderación de foto) | `DELETE /users/{id}/foto` | AC-89 | — | `users/test_foto.py` | B2 |
+| PRE-05 (almacenamiento del aval, estudiantes y docentes), C4 de SPEC-05 | `POST /files/archivos`, `files.service.vincular_archivo`, `abrir_archivo`, `respuesta_descarga`, CLI `limpiar-huerfanos` | AC-81, AC-82, AC-85…AC-88 | EC-42…EC-44, EC-47, EC-48 | `files/test_archivos.py`, `files/test_service.py`, `files/test_api_publica.py`, `files/test_cli.py` | B2 |
+| USR-05 (teléfono obligatorio, ADR-022 b) | — (spec siguiente, D-16) | — | EC-50 | — | — |
+| D-06 de SPEC-01, ADR-015 | `POST /auth/renovar`, `POST /auth/me/sesiones/cerrar`; renovación en `AuthContext` | AC-91…AC-94, AC-98 | EC-46 | `users/test_renovacion.py`, `core/test_security.py`; `features/auth/renovacion.test.ts` | B3 |
+| P7.4 (migraciones) | `0015_users_recuperacion`, `0014_files_init` | AC-80, AC-90 | EC-45 | `users/test_migracion_recuperacion.py`, `files/test_migracion_0014.py` | B1, B2 |
+| Frontend completo | `npm run typecheck`, `npm run build`, Vitest | AC-99 | — | 16 archivos, 126 tests en `develop` (tarea C-01) | Cierre |
+
+**Bordes sin test propio.** EC-37 lo cubre AC-73 (un access token previo responde `TOKEN_REVOCADO` después de restablecer). EC-40 es un valor por defecto (20 por hora); el mecanismo del límite por IP lo prueba `test_limite_por_ip` (AC-78). EC-46 mantiene el comportamiento de EC-32 de SPEC-02 y se verificó a mano en B3. EC-49 y EC-50 corresponden al spec siguiente y a la Fase C de SPEC-06. **Criterios de frontend** (AC-95…AC-98): los tests de Vitest cubren la lógica (lectura del fragmento, cliente con `FormData` y `Blob`, `debeRenovar`); el resto se verificó con el recorrido manual registrado en las tareas B1-09, B2-09 y B3-03. Los tests de Vitest no llevan la anotación `AC-NN`.
 
 ---
 
@@ -600,6 +605,7 @@ Cada criterio tendrá al menos un test anotado `# AC-NN`, con `pytestmark = pyte
 
 | Versión | Fecha | Autor | Cambio |
 | --- | --- | --- | --- |
+| 1.1.0 | 2026-11-10 | Perfil 1 (con asistencia de IA) | **`IMPLEMENTADO`**, sin cambios de contrato. Tareas de cierre (C-01…C-03): §14 con los archivos de test de cada fila y los bordes sin test propio, verificada contra `develop` (backend `e54ad16`, frontend `e1ae84e`). Las lecturas del spec hechas durante la implementación (por ejemplo, que `cerrar_sesiones` conserva `auth_time` y exige el cambio de contraseña resuelto) quedan en `tasks.md` (B3-02) |
 | 1.1.0 | 2026-11-08 | Perfil 1 (con asistencia de IA) | **Aprobado** por el Perfil 1 el mismo día, con D-20…D-22 tal como se recomiendan. Puesta al día con SPEC-05 v1.0.0 (Fase 1 de `loans` en `develop`) y SPEC-06 v1.0.0 (ADR-023), sin cambios en el contrato de la Fase A, que queda **implementada** (PR #18, §4.4). **Contrato:** `TipoCorreo.NOTIFICACION` para `notifications` (RN-77, D-21, AC-100), que reemplaza a los cuatro tipos reservados para sanciones. **Decisiones nuevas:** orden B2 → B1 → B3 (D-20) y migraciones `0014_files_init` y `0015_users_recuperacion` (D-22, EC-45, K11). **Correcciones:** EC-35 (con `autoflush=False` los cambios sin `flush` no se emiten, plan §9) y AC-67 (el tipo de excepción al agregar un atributo depende de la versión de Python, DT-30). **Al día:** §2.1 verificado contra `develop`, D-17 cerrada por ADR-023, K1–K3, K6, K8 y K10 actualizados, §1.2, RN-72, RN-73 y EC-49. La pregunta para la referente pasa a §12.2 |
 | 1.0.0 | 2026-11-03 | Perfil 1 | **Aprobado** con todas las recomendaciones de §12 (D-01…D-19). Sin cambios de contenido respecto de la v0.2.0 |
 | 0.2.0 | 2026-11-02 | Perfil 1 (con asistencia de IA) | Ajustes por la tercera entrevista (ADR-022), sin cambios en la Fase A. §2.4 nuevo con el impacto. §5.1: el correo pasa a ser un transporte con plantillas por tipo de mensaje (`TipoCorreo`, `renderizar_correo`) y llamable desde servicios, pensando en los avisos de sanciones (RN-71…RN-76, AC-100, AC-101, D-17). §6 y K3: el aval es la resolución del Consejo, obligatoria para estudiantes y docentes; el docente de la asignatura no la descarga (RN-60, AC-81, AC-85, D-18); reutilizar una resolución queda abierto (D-19, §12.1). §1.2: horario por sede y correo de contacto, delegación temporal del Superadministrador, USR-09 reformulado, teléfono obligatorio y DT-29, con destino en el spec siguiente del Perfil 1. D-16 (teléfono obligatorio). D-08 confirmada por la referente. K6 pasa a decisión del Perfil 5; K7 propone un solo PR al ERS con DT-29; K10 nuevo. EC-47…EC-50 |
