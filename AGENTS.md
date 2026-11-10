@@ -28,6 +28,7 @@ Proyecto-PrestaMeDios/            ← raíz del workspace (NO es un repo git; co
 │   ├── MEMORY.md                 ← memoria persistente del proyecto
 │   ├── docs/
 │   │   ├── ERS.md                ← ERS / documento académico (fuente de verdad funcional)
+│   │   ├── diseno/               ← arquitectura, modelo de datos y casos de uso (Mermaid + originales en historico/)
 │   │   ├── constitution.md       ← principios y reglas del proyecto
 │   │   └── perfiles.md           ← división del trabajo en 5 perfiles (subordinado a este archivo)
 │   ├── specs/                    ← especificaciones SDD

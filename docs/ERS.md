@@ -1028,6 +1028,7 @@ Dado que el equipo consta de 5 integrantes y un plazo limitado de 16 semanas, Sc
 
 > **Figura 1.** Diagrama de casos de uso del sistema PrestaMeDios.
 > Para el Diagrama de Casos de Uso nos abstraemos de los casos de uso secundarios, solo mostramos la funcionalidad del sistema a través de los casos de uso principales o más significativos. Omitimos la diferenciación entre Superadministradores y Administradores Locales, agrupándolos en Administradores.
+> **Original:** [`docs/diseno/historico/casos-de-uso-v1.png`](diseno/historico/casos-de-uso-v1.png) · **Versión actualizada al código:** [`docs/diseno/casos-de-uso.md`](diseno/casos-de-uso.md)
 
 ---
 
@@ -1039,6 +1040,7 @@ A partir del análisis de los casos de uso, se procedió a modelar la persistenc
 
 > **Figura 2.** Diagrama Entidad-Relación del sistema PrestaMeDios.
 > **Link:** DER-PrestaMeDios
+> **Original:** [`docs/diseno/historico/der-v1.webp`](diseno/historico/der-v1.webp) · **Modelo actual:** [`docs/diseno/modelo-de-datos.md`](diseno/modelo-de-datos.md)
 
 ### Principales Pantallas de la Aplicación
 
@@ -1098,6 +1100,7 @@ En el módulo `spaces`, las reservas pendientes no ocupan el espacio hasta ser a
 
 > **Figura 8.** Borrador de Diagrama de Infraestructura de PrestaMeDios
 > **Link v1:** Diagrama de Infraestructura v1
+> **Original:** [`docs/diseno/historico/arquitectura-v1.webp`](diseno/historico/arquitectura-v1.webp) · **Versión actualizada al código:** [`docs/diseno/arquitectura.md`](diseno/arquitectura.md)
 
 ---
 
