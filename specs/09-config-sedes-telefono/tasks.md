@@ -1,6 +1,6 @@
 # TASKS-09 — Horario y correo de contacto por sede, y teléfono obligatorio
 
-> **Spec:** `specs/09-config-sedes-telefono/spec.md` v1.0.0 (`APROBADO` el 2026-11-11) · **Plan:** `specs/09-config-sedes-telefono/plan.md` v0.1.0 (`BORRADOR`, se aprueba con el merge de su PR) · **Estado:** `PENDIENTE`
+> **Spec:** `specs/09-config-sedes-telefono/spec.md` v1.0.0 (`APROBADO` el 2026-11-11) · **Plan:** `specs/09-config-sedes-telefono/plan.md` v1.0.0 (`APROBADO` el 2026-11-11) · **Estado:** `PENDIENTE`
 > Marcar `[x]` al cerrar. Cada tarea tiene su verificación; no se pasa a la siguiente con tests en rojo. Cada bloque es un PR (plan §2). **Orden de merge: A antes que B (D-12).**
 > Comandos de backend desde `Backend-PrestaMeDios/` (venv activo, `TEST_DATABASE_URL` definida); de frontend desde `Frontend-PrestaMeDios/`.
 
@@ -8,7 +8,7 @@
 
 ## Bloque 0 — Preparación
 
-- [ ] **T-00 · Documentación de la aprobación.** Después del merge del Docs PR #29, registrar en `MEMORY.md` lo de plan §7, fila "Al aprobar el spec": ADR, las dos DT nuevas, H1…H4 en §5 y las preguntas de spec §10.1 en §6.
+- [ ] **T-00 · Documentación de la aprobación.** Registrar (el Docs PR #29 ya está mergeado) en `MEMORY.md` lo de plan §7, fila "Al aprobar el spec": ADR, las dos DT nuevas, H1…H4 en §5 y las preguntas de spec §10.1 en §6.
   *Verificación:* PR a `Docs-PrestaMeDios` sin conflictos con `main`.
 - [ ] **T-01 · Línea base.** `develop` actualizado en backend y frontend; `pytest -q`, `alembic heads` (una sola cabeza); `npm run typecheck`, `npm run build` y `npm test`.
   *Verificación:* resultados anotados en el PR del bloque A; si algo falla de entrada, se informa antes de seguir.

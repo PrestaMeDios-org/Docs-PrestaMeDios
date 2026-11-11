@@ -3,7 +3,7 @@
 | Campo | Valor |
 | --- | --- |
 | **Spec** | `specs/09-config-sedes-telefono/spec.md` (v1.0.0, `APROBADO` el 2026-11-11) |
-| **Estado del plan** | `BORRADOR` — 2026-11-11, se aprueba con el merge de su PR en `Docs-PrestaMeDios` |
+| **Estado del plan** | `APROBADO` — v1.0.0, aprobado por el Perfil 1 el 2026-11-11 |
 | **Perfil** | 1 |
 | **Entrega** | Dos PRs de backend y dos de frontend: primero la Fase A y después la B (D-12) |
 
@@ -203,4 +203,5 @@ Primera tarea de la fase, antes de cambiar los esquemas:
 
 | Versión | Fecha | Autor | Cambio |
 | --- | --- | --- | --- |
+| 1.0.0 | 2026-11-11 | Perfil 1 | **Aprobado**, sin cambios de contenido respecto de la v0.1.0 |
 | 0.1.0 | 2026-11-11 | Perfil 1 (con asistencia de IA) | Plan inicial sobre SPEC-09 v1.0.0 |
