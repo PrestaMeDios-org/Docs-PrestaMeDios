@@ -6,9 +6,9 @@
 
 ## 1. Enfoque
 
-El módulo ya está integrado con autenticación, sede, calendario, reservas y bloqueos (SPEC-02; `docs/perfiles.md:170-173`). Este plan separa esa línea base de las brechas observadas en los requisitos revisados del ERS: K1 (nombre del solicitante), K10 (parámetros por sede), GLO-04 (reversión de bloqueos), C-N02 (notificaciones) y DT-09 (estados como `ENUM`). La auditoría de Backend fue sobre `origin/develop` `3e85feb`; el checkout local estaba en `e5d0b29`, y no se ejecutaron tests.
+El módulo ya está integrado con autenticación, sede, calendario, reservas y bloqueos (SPEC-02; docs/perfiles.md §4, Perfil 4). Este plan separa esa línea base de las brechas observadas: K1 (nombre del solicitante), K10 (parámetros por sede), GLO-04 (reversión de bloqueos), C-N02 (notificaciones) y DT-09 (estados como `ENUM`). La auditoría funcional de Backend fue sobre `origin/develop` `3e85feb`. En Backend `develop` `e54ad16c9dea04eb91473c21e8ceb07e7339c41a`, una primera ejecución tuvo errores transitorios de conexión y la repetición pasó con 58 tests exitosos.
 
-Las brechas se implementarán tarea por tarea, sólo después de aprobación explícita del spec, con criterios de aceptación y pruebas PostgreSQL reales (Constitución P1 y P9, `docs/constitution.md:18-25,77-81`; `AGENTS.md:75-82`).
+Las brechas se implementarán tarea por tarea, sólo después de aprobación explícita del spec, con criterios de aceptación y pruebas PostgreSQL reales (Constitución P1, P9; SDD §4 de AGENTS.md).
 
 ## 2. Estado actual y brechas
 
@@ -16,12 +16,12 @@ Las brechas se implementarán tarea por tarea, sólo después de aprobación exp
 | --- | --- | --- |
 | Modelos e integridad temporal | `Espacio`, `ReservaEspacio`, `BloqueoEspacio`; exclusión GIST en reservas aprobadas/en uso (`Backend-PrestaMeDios/app/modules/spaces/models.py:26-112`). | Mantener garantía concurrente y revisar en aprobación la ausencia de `CHECK` de base para rangos. |
 | API y permisos | Rutas de espacios, reservas, estados, bloqueos y disponibilidad; sesión obligatoria y alcance por rol/sede (`Backend-PrestaMeDios/app/modules/spaces/router.py:38-176`; `Backend-PrestaMeDios/app/modules/spaces/service.py:111-121,163-168,183-186,238-280`). | Extender los contratos dentro del módulo `spaces` sin aceptar usuario o sede no confiables. |
-| Horario y anticipación | Horario global y reglas de anticipación/ventana desde `config` (`Backend-PrestaMeDios/app/modules/spaces/service.py:99-104,190-213`). | Coordinar K10 con Perfil 1; cambiar las lecturas sólo cuando `config` publique parámetros por sede. |
-| Datos del solicitante | La respuesta actual no incluye nombre/apellido (`Backend-PrestaMeDios/app/modules/spaces/schemas.py:85-99`); `users.datos_publicos_por_ids` está disponible (`docs/perfiles.md:222`). | Completar K1 sólo para consultas administrativas. |
-| Bloqueos | Crear/listar; bloques completos o parciales; no pueden pisar reservas activas (`Backend-PrestaMeDios/app/modules/spaces/router.py:129-156`; `Backend-PrestaMeDios/app/modules/spaces/service.py:375-405`). | Implementar la reversión GLO-04 sin borrar el historial ni cancelar reservas automáticamente. |
-| Notificaciones | `spaces` no invoca `notifications`; la interfaz de SPEC-06 define los eventos y `crear_notificaciones` (`Backend-PrestaMeDios/app/modules/spaces/service.py:307-405`; `specs/06-notifications-comunicaciones/spec.md:148-180,202-204,322-323`). | Atender C-N02 cuando la función esté disponible en el backend. |
+| Horario y anticipación | Horario global y reglas de anticipación/ventana desde `config` (`Backend-PrestaMeDios/app/modules/spaces/service.py:99-104,190-213`). | Consumir SPEC-09 §4.4-§4.5/H1 cuando la Fase A esté en Backend `develop`; ya no requiere acordar claves con Perfil 1. |
+| Datos del solicitante | La respuesta actual no incluye nombre/apellido (`Backend-PrestaMeDios/app/modules/spaces/schemas.py:85-99`); `users.datos_publicos_por_ids` está disponible (docs/perfiles.md §5, K1). | Completar K1 sólo para consultas administrativas. |
+| Bloqueos | Crear/listar; bloques completos o parciales; no pueden pisar reservas activas (`Backend-PrestaMeDios/app/modules/spaces/router.py:129-156`; `Backend-PrestaMeDios/app/modules/spaces/service.py:375-405`). | En SPEC-08 v1.1.0, decidir baja lógica vs. DELETE físico y política de bloqueos generales con Backend #32 / Frontend #20. No decidir ahora si se conserva el historial. |
+| Notificaciones | `spaces` no invoca `notifications`; SPEC-06 publica los eventos y `crear_notificaciones` (SPEC-06 §6.1-§6.2, C-N02) (`Backend-PrestaMeDios/app/modules/spaces/service.py:307-405`). | Atender C-N02 cuando la función esté disponible en el backend. |
 | Frontend | Calendario mensual, solicitudes propias, bandeja administrativa, alta de espacios y creación de bloqueos (`Frontend-PrestaMeDios/src/features/spaces/pages/SpacesPage.tsx:65-67,85-122,149-174,240-281,287-327,482-681`). | Añadir visualización de motivo y acción para revertir bloqueos; preservar el alcance de sede al cambiar de contexto. |
-| Validación de pruebas | Tests de contrato, integración y migraciones existen en `origin/develop`; no se ejecutaron por checkout distinto y `TEST_DATABASE_URL` unset (`Backend-PrestaMeDios/tests/spaces/test_contratos.py:35-120`; `Backend-PrestaMeDios/tests/spaces/test_espacios_reservas.py:50-417`; `Backend-PrestaMeDios/tests/test_spaces_migrations.py:13-37`). | Ejecutar tras implementación en un checkout `develop` y PostgreSQL configurado. |
+| Validación de pruebas | Repetición en Backend `develop` `e54ad16c9dea04eb91473c21e8ceb07e7339c41a`, `pytest -q tests/spaces tests/test_spaces_migrations.py`: 58 passed, 0 failed, 0 errors, 0 skipped (22.39 s). La primera ejecución había dado 22 passed y 36 errores de conexión; la repetición pasó sin cambios de código. | Resultado vigente: suite Backend completa. |
 
 ## 3. Fases y dependencias
 
@@ -35,25 +35,25 @@ Verificar requisitos, API, modelos, frontend, tests existentes y discrepancias. 
 2. Incluir el resumen sólo en respuestas a administradores con jurisdicción; no en disponibilidad ni en respuestas del usuario común.
 3. Ajustar el mapper/UI de la bandeja administrativa y pruebas para privacidad por sede y ausencia de DNI, email y teléfono.
 
-**Dependencia:** `users.datos_publicos_por_ids` ya está publicado (`docs/perfiles.md:46,222`; `MEMORY.md:146,149`). Sin migración esperada.
+**Dependencia:** `users.datos_publicos_por_ids` ya está publicado (docs/perfiles.md §5, K1). Sin migración esperada.
 
-### Fase 2 — Parámetros operativos por sede (K10)
+### Fase 2 — Parámetros operativos por sede (K10/H1)
 
-1. Coordinar con Perfil 1 la disponibilidad de horario de apertura/cierre por sede y correo de contacto del laboratorio en `config`.
-2. Actualizar el servicio de `spaces` para leer los parámetros de la sede del espacio al validar, calcular disponibilidad y construir el aviso de anticipación.
-3. Actualizar calendario y selector de franjas en frontend para reflejar los valores del servidor y mostrar el correo de contacto ante `ANTICIPACION_INSUFICIENTE`.
+1. Depender de la Fase A de SPEC-09 disponible en Backend `develop`; no reabrir el acuerdo de claves con Perfil 1. El contrato publica `config.service.datos_de_sede(db, sede)` y `datos_de_sedes(db)` (SPEC-09 §4.4; H1).
+2. Actualizar `spaces` para consumir `datos_de_sede(db, espacio.sede)` en la validación del horario y el cálculo de disponibilidad.
+3. Actualizar frontend para obtener las sedes con `GET /api/v1/config/sedes` y presentar el horario/correo de la sede ante `ANTICIPACION_INSUFICIENTE`, conforme a SPEC-09 §4.5 y H1.
 4. Mantener el límite máximo de 120 días y manejar de forma clara la discrepancia actual entre la navegación mensual del frontend y el límite de servidor.
 
-**Dependencia:** entrega de claves/contratos de Perfil 1 (K10, `MEMORY.md:149,159`; requisitos `docs/ERS.md:272,276,859-864,1226`). Este plan no modifica `config`.
+**Dependencia:** SPEC-09 Fase A disponible en Backend `develop`; K10/H1; ERS GLO-02, GLO-03, ADR-022. Este plan no modifica `config`.
 
 ### Fase 3 — Reversión de bloqueos (GLO-04)
 
-1. Aprobar el modelo de reversión: conservar cada bloqueo histórico y hacer que la reversión sea explícita e idempotente; no borrarlo físicamente ni cancelar reservas aprobadas de forma implícita (P7.3 y AC-S08).
-2. Agregar el contrato administrativo de reversión y la persistencia necesaria mediante migración reversible si el modelo actual no alcanza.
+1. En SPEC-08 v1.1.0, decidir baja lógica frente a DELETE físico y la política para bloqueos generales, coordinando con Backend #32 y Frontend #20. Esta v1.0.0 no decide si el historial se conserva o elimina; respetar P7.3 al resolverlo.
+2. Tras esa decisión, agregar el contrato administrativo de reversión y definir si hace falta cambiar la persistencia y su migración.
 3. Mostrar motivo y estado del bloqueo en el calendario; añadir la acción de revertir con autorización por sede.
 4. Verificar que, revertido el bloqueo, el intervalo vuelva a ofrecerse sólo si no hay reserva adjudicada ni otro bloqueo activo.
 
-La ruta propuesta sigue el patrón `PATCH /<recurso>/{id}/estado`; el nombre del estado y el payload quedan sujetos a aprobación del spec (Constitución §4.2, `docs/constitution.md:115-120`). La API actual sólo tiene `POST/GET /bloqueos` (`Backend-PrestaMeDios/app/modules/spaces/router.py:129-156`).
+La ruta futura y su payload quedan sujetos a SPEC-08 v1.1.0; la API actual sólo tiene `POST/GET /bloqueos` (`Backend-PrestaMeDios/app/modules/spaces/router.py:129-156`).
 
 ### Fase 4 — Eventos de notificación (C-N02 / S7)
 
@@ -61,7 +61,7 @@ La ruta propuesta sigue el patrón `PATCH /<recurso>/{id}/estado`; el nombre del
 2. Emitir `RESERVA_CANCELACION_FORZADA` sólo cuando una acción administrativa cancele efectivamente una reserva por una contingencia.
 3. Añadir llamadas dentro de la transacción de `spaces`, sin `commit` propio; probar rollback y que ninguna notificación se envíe si la transición no se confirma.
 
-**Dependencia:** Perfil 5 / SPEC-06 §6.1-6.2 y C-N02; el contrato admite creación transaccional y notificaciones múltiples (`specs/06-notifications-comunicaciones/spec.md:148-180,202-204,322-323`).
+**Dependencia:** Perfil 5 / SPEC-06 §6.1-§6.2 y C-N02; el contrato admite creación transaccional y notificaciones múltiples.
 
 ### Fase 5 — Deuda DT-09 y cierre
 
@@ -69,7 +69,7 @@ La ruta propuesta sigue el patrón `PATCH /<recurso>/{id}/estado`; el nombre del
 2. Si el equipo prioriza DT-09, definir compatibilidad, migración reversible y valores persistidos antes de cambiar el modelo.
 3. Ejecutar validaciones backend, frontend y migraciones en entornos adecuados; registrar resultados verdaderos y actualizar la memoria sólo en el alcance autorizado.
 
-**Dependencia:** decisión del equipo (`MEMORY.md:131`; `docs/perfiles.md:173`).
+**Dependencia:** decisión del equipo (DT-09; docs/perfiles.md §4, Perfil 4).
 
 ## 4. Archivos previstos
 
@@ -87,14 +87,14 @@ La ruta propuesta sigue el patrón `PATCH /<recurso>/{id}/estado`; el nombre del
 | Frontend | `src/features/spaces/types/index.ts` | Modificar | Tipos para solicitante y estado de bloqueo. |
 | Frontend | `src/features/spaces/**/*.test.*` | Crear/modificar | Verificación de la UI y los mappers. |
 
-No se prevén dependencias externas nuevas. Las pruebas de integración deben ejecutarse contra PostgreSQL real (Constitución P9, `docs/constitution.md:77-81`; `Backend-PrestaMeDios/README.md:163`).
+No se prevén dependencias externas nuevas. Las pruebas de integración deben ejecutarse contra PostgreSQL real (Constitución P9; `Backend-PrestaMeDios/README.md:163`).
 
 ## 5. Riesgos y coordinación
 
 | Riesgo | Mitigación |
 | --- | --- |
-| `config` aún usa horario global, pese al ERS por sede | No desplegar un fallback silencioso; coordinar K10 antes de cambiar la regla. |
+| `config` aún usa horario global, pese al ERS por sede | Consumir SPEC-09 §4.4-§4.5/H1 al estar su Fase A en Backend `develop`; no agregar fallbacks. |
 | Solicitudes superpuestas deben disparar varias notificaciones atómicas | Usar `crear_notificaciones` en la transacción y probar rollback. |
-| Reversión de bloqueos puede afectar calendario y auditoría | Conservar el bloqueo como histórico y evitar cancelación implícita de reservas aprobadas. |
+| Reversión de bloqueos puede afectar calendario y auditoría | Dejar baja lógica vs. DELETE físico y política de bloqueos generales para SPEC-08 v1.1.0, coordinado con Backend #32 y Frontend #20; no asumir cancelación de reservas. |
 | Frontend muestra cuatro meses mientras el servidor limita a 120 días | Tratar respuesta del servidor como autoridad y comunicar claramente el límite. |
 | Tests locales no disponibles con el checkout actual | No afirmar resultados; configurar PostgreSQL y usar el ref correcto antes del cierre técnico. |
