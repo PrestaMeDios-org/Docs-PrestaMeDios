@@ -113,7 +113,7 @@ specs/ en estado BORRADOR, y no escribas código hasta que yo lo apruebe.
 | :---- | :---- |
 | Implementado (backend, SPEC-04 Fase A) | Modelos y esquemas de `Categoria`, `Equipamiento` y `UnidadFisica`; alta y listado filtrable por sede, categoría y texto; alta de unidades con sede automática (PRE-19); edición y baja lógica de equipamiento y unidades; matriz de estados en `PATCH /unidades/{id}/estado` (PRE-14; `prestado` sólo lo fija `loans`); vista reducida para estudiantes y docentes; `inventory/service.py` público para `loans`; `CHECK` de locker 1–7 (migración `0010`); autenticación, alcance de sede y plazo por defecto desde `config` |
 | Implementado (frontend, SPEC-04 Fase A) | Catálogo conectado a la API (se eliminó el mock); tabla de stock en `admin-stock` con alta, edición, baja lógica y cambio de estado |
-| Pendiente | Sólo la Fase B de SPEC-04: disponibilidad por fechas y mini-calendario (PRE-01) e historial por unidad (PRE-12). Necesita las funciones de lectura de `loans` (SPEC-05 §10.2) |
+| Pendiente | La Fase C de SPEC-04: historial por unidad (PRE-12) y `reservas_afectadas`. Las funciones de lectura de `loans` que necesita (SPEC-05 §10.2) ya están en `develop` (backend PR \#23); la Fase B está en `develop` (PR \#24) |
 | Límites | Entrega, devolución, renovación y bandeja de órdenes **no** son de este perfil (son del Perfil 3). El estado de la unidad (`disponible`, `prestado`, `mantenimiento`, `baja`) se debe coordinar con `loans` (ver §5) |
 
 **Prompt de arranque:**
@@ -137,11 +137,13 @@ y no escribas código hasta que yo lo apruebe.
 
 | Estado | Detalle |
 | :---- | :---- |
-| Implementado (backend, en `develop`) | Enums, esquemas Pydantic de orden y detalle, modelos ORM, migración `0009_loans_init` con `EXCLUDE USING gist` sobre `(unidad_fisica_id, periodo)` para detalles `reservado`/`entregado`. 5 endpoints en `/api/v1/loans` que exigen sesión y rol y responden `501 NO_IMPLEMENTADO` (PR \#16). Tests de contrato y esquemas. Spec: `specs/05-loans-prestamos/spec.md` (`BORRADOR`) |
-| Pendiente | Toda la lógica (servicio), los tests, la integración con la autenticación real, el PDF de aval (PRE-05), la cancelación automática (PRE-08), la entrega y devolución (PRE-13), la renovación (PRE-11), el calendario maestro (PRE-16), la cancelación forzada (PRE-17), el panel docente (PRE-20) y el frontend (formulario unificado con fechas y asignatura) |
-| Deuda registrada | En `MEMORY.md` §4: DT-16 (spec sin aprobar) y DT-20 (estado de la unidad duplicado con `inventory` hasta que `loans` use `inventory/service.py`). DT-17 y DT-18 se resolvieron en el PR \#16 |
+| Implementado (backend, en `develop`) | SPEC-05 v1.0.0 `APROBADO` (2026-11-07). **Fase 1** (PR \#21): reglas, crear orden con validaciones de franja, anticipación, plazo y unidades libres, y consulta de las propias. **Fase 2** (PR \#23 y \#28): bandeja, detalle para administradores, unidades libres por línea, aprobar con asignación de unidades y ajuste horario, rechazar y cancelar, con concurrencia probada y migración `0011`. Funciones públicas para `inventory`: `unidades_libres`, `ocupacion_de_unidades`, `historial_de_unidad` y `reservas_futuras_de_unidad` |
+| Implementado (frontend, en `develop`) | Tipos, `loansApi` y carrito conectado al catálogo (PR \#18) |
+| En curso | Aval de alta gama (PRE-05, T1.12) en `feat/loans-aval`, según la spec v1.0.2, que espera el OK del Perfil 1 |
+| Pendiente | Frontend: formulario de solicitud, "Mis solicitudes" y las pantallas de la Fase 2. Backend: notificaciones de cada transición (espera `crear_notificacion`, SPEC-06 Fase B), horario por sede (K10), renovación (PRE-11), entrega y devolución y cancelación forzada (Fase 3: PRE-13, PRE-17), no retiro automático, calendario maestro y panel docente (Fase 4: PRE-08, PRE-16, PRE-20) |
+| Deuda registrada | En `MEMORY.md` §4: DT-20 (estado de la unidad duplicado con `inventory`): ya se respeta al aprobar; se termina de cerrar en la Fase 3, cuando la entrega y la devolución usen `marcar_unidad_prestada` y `liberar_unidad`. DT-16 se cerró con la aprobación de SPEC-05 y DT-17 y DT-18 en el PR \#16 |
 
-**Antes de seguir programando:** llevar SPEC-05 (`specs/05-loans-prestamos/spec.md`) a `APROBADO`. Ya resuelve en papel DT-16 a DT-20; el PR \#16 aplicó en el código la parte de DT-17 y DT-18 (`get_current_user`, `RolUsuario`, `AppError`). Falta, sobre todo, usar `inventory/service.py` para el estado de la unidad (DT-20).
+**Siguiente:** plan y tareas de la Fase 3 (mostrador) en `specs/05-loans-prestamos/plan.md` y `tasks.md`, y el frontend de las Fases 1 y 2.
 
 **Prompt de arranque:**
 
@@ -238,6 +240,7 @@ estado BORRADOR, y no escribas código hasta que yo lo apruebe.
 
 | Versión | Fecha | Cambio |
 | :---- | :---- | :---- |
+| 1.2.1 | 2026-11-11 | Perfil 3 al día (SPEC-05 aprobado, Fases 1 y 2 en `develop`, aval en curso); el Perfil 2 ya no depende de `loans` para su Fase C |
 | 1.2.0 | 2026-11-10 | Cierre de SPEC-03 (Perfil 1): estado del Perfil 1 al día (§4); `datos_publicos_por_ids`, `files` y el transporte de correo en "Lo que ya existe" (§2) y como interfaces publicadas (§5) |
 | 1.1.0 | 2026-11-02 | Estado al día con `develop`: Perfil 2 con SPEC-04 Fase A implementada; Perfil 3 con endpoints protegidos (`501`) y SPEC-05 en borrador; Perfil 1 con SPEC-03 por fases; nueva interfaz "Datos públicos de usuarios" (§5) |
 | 1.0.0 | 2026-10-23 | Versión inicial. Adapta el documento "Perfiles de tareas v1" (externo) a la asignación de `AGENTS.md` y al código: los requisitos del Módulo 3 de Préstamos quedan en `loans`; el Perfil 1 asume USR-06…09, GLO-05, GLO-06 y el despliegue; se corrigen los roles (cuatro), el horario (configurable) y la autenticación (`Depends`); se aclara que "infraestructura" es física; se incorpora el flujo SDD |

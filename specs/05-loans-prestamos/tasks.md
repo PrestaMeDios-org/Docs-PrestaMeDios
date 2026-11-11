@@ -1,7 +1,7 @@
 # TASKS-05 — Préstamos (`loans`): Fases 1 y 2
 
-> **Estado:** `BORRADOR` · **Versión:** 0.4.1 · **Fecha:** 2026-11-08 · **Perfil:** 3
-> **Spec:** `specs/05-loans-prestamos/spec.md` v1.0.1 (`APROBADO` v1.0.0; la v1.0.1 corrige EC-L10) · **Plan:** `specs/05-loans-prestamos/plan.md` v0.4.1
+> **Estado:** `BORRADOR` · **Versión:** 0.4.4 · **Fecha:** 2026-11-11 · **Perfil:** 3
+> **Spec:** `specs/05-loans-prestamos/spec.md` v1.0.2 (`APROBADO` v1.0.0; la v1.0.1 corrige EC-L10 y la v1.0.2 agrega el aval) · **Plan:** `specs/05-loans-prestamos/plan.md` v0.4.4
 > Cada tarea es chica y verificable. Las tareas que dependen de otros perfiles (`files`, K10) se aíslan para que el resto avance.
 
 Leyenda: `[ ]` pendiente · `[~]` bloqueada o en curso · `[x]` hecha
@@ -26,7 +26,7 @@ Implementada y mergeada en `develop` (backend PR #21).
 | **T1.9** | Cierre: `ruff check`, `pytest -q` completo, revisar `/docs`, actualizar `MEMORY.md` y el estado del spec, abrir el PR | Plan §6 | Backend PR #21 mergeado en `develop` (151 tests de `loans`; 496 en la suite, con la DT-30 de `users` como único fallo) | `[x]` |
 | **T1.10** | Esquema: `pdf_aval_id: UUID \| None` y `renueva_detalle_id: int \| None` en `OrdenPedidoCreate`; una renovación lleva una sola línea | AC-L04, RN-L24 | `tests/loans/test_schemas.py`: sin aval ni renovación por defecto, UUID válido e inválido, renovación con una y con dos líneas, id no positivo | `[x]` |
 | **T1.11** | Usar `inventory.datos_equipamiento_por_ids` (C8) en `crear_orden` y borrar el adaptador provisorio | AC-L12 | `test_crear_orden.py` corre contra la base real, sin la función falsa; se borra el test del `501` sin C8 | `[x]` |
-| **T1.12** | Aval de alta gama: `vincular_archivo` en la misma transacción que la orden; con aval válido se crea, sin aval `422 AVAL_REQUERIDO`; los errores de `files` se propagan | AC-L14, L60 | Depende de **`files`** (SPEC-03) en `develop`. Si la creación falla, el archivo no queda vinculado | `[~]` |
+| **T1.12** | Aval de alta gama: `vincular_archivo` en la misma transacción que la orden, `aval_archivo_id` en la orden (migración `0016_loans_aval`) y `GET /ordenes/{id}/aval` para el dueño y los administradores con jurisdicción | AC-L14, L60 | `tests/loans/test_aval.py` (estudiante y docente, ajeno, inexistente, ya usado, otra validación que falla, commit que falla, sin alta gama, descarga con y sin alcance) y `test_migracion_0016.py`; migración verificada contra una base temporal. En `feat/loans-aval`, sin PR: se abre cuando el Perfil 1 apruebe la v1.0.2 (AGENTS §4, paso 3) | `[~]` |
 | **T1.13** | Horario por sede en `GET /reglas` y en la franja de `crear_orden` (`sede` en `ReglasResponse`, `?sede=` para el `SUPERADMIN`) | AC-L63, RN-L04 | Depende de **K10** (claves por sede en `config`). Cambia solo la lectura de parámetros | `[~]` |
 | **T1.14** | Renovación (RN-L24): `renueva_detalle_id` debe ser una línea `entregado` propia de una notebook (si no, `422 RENOVACION_NO_PERMITIDA`), sin anticipación mínima, y la unidad renovada cuenta como libre para esa orden | PRE-11, RN-L24 | **Fuera de este corte.** Necesita su propio diseño de disponibilidad, porque la notebook está `prestado` y `unidades_asignables` no la devuelve | `[ ]` |
 | **T1.15** | `ocupacion_de_unidades(db, unidad_ids, desde, hasta)` (spec §10.2): por unidad, los períodos ocupados que se solapan con el rango, en una sola consulta y sin identidad, para el mini-calendario del Perfil 2 | PRE-01, INV-26 | `tests/loans/test_ocupacion.py`: períodos por unidad ordenados, estados que no ocupan, solapamiento semiabierto sin recorte, entrada vacía sin consulta, una sola consulta, repetidos, unidad inexistente, período inválido, resultado inmutable y sin identidad | `[x]` |
@@ -50,12 +50,12 @@ Dependen de que el contrato de `POST /ordenes` esté estable (después de T1.6) 
 
 | ID | Tarea | Requisito | Verificación | Estado |
 | :---- | :---- | :---- | :---- | :---- |
-| **F1.1** | Estructura `src/features/loans/{components,pages,services,types}` y DTOs `snake_case` espejo de los esquemas, con `mappers.ts` | — | Los tipos compilan con TypeScript estricto | `[ ]` |
-| **F1.2** | Servicio `loansApi` sobre `src/lib/api.ts` (`reglas`, `crearOrden`, `misOrdenes`, `obtenerOrden`) con `ApiError {status, code, detail}` | — | Prueba con el servidor local | `[ ]` |
-| **F1.3** | Carrito (estado local con provider propio) | PRE-03 | Agregar, quitar y repetir ítems | `[ ]` |
+| **F1.1** | Estructura `src/features/loans/{components,pages,services,types}` y DTOs `snake_case` espejo de los esquemas, con `mappers.ts` | — | Frontend PR #18 | `[x]` |
+| **F1.2** | Servicio `loansApi` sobre `src/lib/api.ts` (`reglas`, `crearOrden`, `misOrdenes`, `obtenerOrden`) con `ApiError {status, code, detail}` | — | Frontend PR #18 | `[x]` |
+| **F1.3** | Carrito (estado local con provider propio) | PRE-03 | Frontend PR #18: `CarritoContext` exportable, para el botón del catálogo | `[x]` |
 | **F1.4** | Formulario unificado: calendario de retiro y devolución con selectores de hora limitados por `GET /reglas`, asignatura (solo estudiante), casilla de normativa, errores en rojo y botón deshabilitado mientras se envía | PRE-03, 04, 06, 07, 09 | El backend sigue siendo la garantía (P2.2) | `[ ]` |
 | **F1.5** | Pantalla "Mis solicitudes" con estados y paginación | USR-06 | Lista las propias y muestra `demorado` | `[ ]` |
-| **F1.6** | Botón "Solicitar" en el catálogo de `inventory`, deshabilitado sin unidades libres | PRE-03 | Coordinado con el Perfil 2 (C11, C16) | `[~]` |
+| **F1.6** | Botón "Solicitar" en el catálogo de `inventory`, deshabilitado sin unidades libres | PRE-03 | Frontend PR #18: carrito conectado al catálogo (C11) | `[x]` |
 | **F1.7** | Manejo de errores del servidor: `409 EQUIPAMIENTO_NO_DISPONIBLE` (volver al carrito), `422` de plazo (resaltar la línea) | PRE-04 | Mensajes en español, según `code` | `[ ]` |
 
 ---
@@ -75,12 +75,12 @@ Plan §8. Rama `feat/loans-validar`. Las tareas T2.1…T2.8 son las de la demo; 
 | **T2.6** | `PATCH …/estado`: rechazar con motivo y cancelar la propia `pendiente`; historial de estados en cada transición | AC-L27, L28, L31, L32 | `test_rechazar_cancelar.py`: sin motivo `422`; líneas `rechazado` o `cancelado`; dueño que cancela una `aprobada` `403 CANCELACION_NO_PERMITIDA`; dueño que intenta aprobar `403`; transición inválida `409`; fila en `ordenes_historial_estado` | `[x]` |
 | **T2.7** | `PATCH …/estado`: aprobar con asignaciones (plan §8.5.5), bloqueo de la orden y de las unidades en orden, traducción de `23P01` | AC-L19…L22, L26, L30, L47, L53 | `test_aprobar.py`: aprobación válida con `resuelto_*`; unidad `prestado`, en `mantenimiento` o `baja`, de otra sede o de otro modelo `422 UNIDAD_NO_ASIGNABLE`; asignaciones incompletas, repetidas o ajenas `422`; retiro vencido `422`; unidad con reserva solapada `409 UNIDAD_NO_DISPONIBLE` sin cambios parciales | `[x]` |
 | **T2.8** | Concurrencia: dos aprobaciones sobre la misma unidad, dos acciones sobre la misma orden y cancelación simultánea con aprobación | AC-L23, L24, L55; EC-L10 | `test_concurrencia.py` con pedidos en paralelo y sesiones independientes | `[x]` |
-| **T2.9** | Cancelar una orden `aprobada` (administrador): motivo obligatorio, sin líneas `entregado`, unidades liberadas | AC-L33, L34 | `test_rechazar_cancelar.py`: con motivo queda `cancelada` y la unidad se puede asignar a otro pedido; sin motivo `422`; con una línea `entregado` `409` | `[ ]` |
-| **T2.10** | Ajuste horario al aprobar (PRE-18): franja y plazo por línea, retiro futuro, todas las líneas, `fin_ocupacion` igual a la nueva devolución | AC-L25, AC-L30 | `test_aprobar.py`: ajuste válido; fuera de franja o de plazo `422`; orden con retiro vencido que se aprueba con ajuste | `[ ]` |
+| **T2.9** | Cancelar una orden `aprobada` (administrador): motivo obligatorio, sin líneas `entregado`, unidades liberadas | AC-L33, L34 | Backend PR #28 (`test_rechazar_cancelar.py`) | `[x]` |
+| **T2.10** | Ajuste horario al aprobar (PRE-18): franja y plazo por línea, retiro futuro, todas las líneas, `fin_ocupacion` igual a la nueva devolución | AC-L25, AC-L30 | Backend PR #28 (`test_aprobar.py`) | `[x]` |
 | **T2.11** | `reservas_futuras_de_unidad(db, unidad_id, desde)` (spec §10.2) | PRE-17 | `test_lecturas_inventory.py`: solo `reservado` con retiro desde la fecha, ordenadas; sin identidad; una consulta | `[x]` |
 | **T2.12** | `historial_de_unidad(db, unidad_id, actor, *, limit, offset)` (spec §10.2) con los campos de SPEC-04 §5.5 (`entregado_en`, `devuelto_en` y `observacion_devolucion` en `None` hasta `0012`) | PRE-12 | `test_lecturas_inventory.py`: orden por retiro descendente, alcance del `ADMIN_LOCAL`, solicitante con nombre y apellido, paginación | `[x]` |
 | **T2.13** | Notificaciones `ORDEN_APROBADA`, `ORDEN_RECHAZADA`, `ORDEN_CANCELADA` y `ORDEN_HORARIO_AJUSTADO` dentro de la transacción (plan §8.5.8) | §10.3, C-N01 | Depende de `crear_notificacion` (SPEC-06 Fase B) en `develop` | `[~]` |
-| **T2.14** | Cierre: `test_contratos.py` sin `501` para la bandeja y el `PATCH`; `ruff check`, `pytest -q` completo, `/docs`, `MEMORY.md`, este archivo y el PR | Plan §8.9 | PR con `base: develop` | `[ ]` |
+| **T2.14** | Cierre: `test_contratos.py` sin `501` para la bandeja y el `PATCH`; `ruff check`, `pytest -q` completo, `/docs`, `MEMORY.md`, este archivo y el PR | Plan §8.9 | Backend PR #23 y #28 mergeados en `develop`; suite completa en verde (895 tests al 2026-11-10) | `[x]` |
 
 **Avance (2026-11-08):** T2.0…T2.8, T2.11 y T2.12 hechas en el backend PR #23 (`feat/loans-validar`), con 255 tests en `tests/loans/`. T2.9 y T2.10 responden `501` y van en un PR aparte, después del merge del #23. T2.13 sigue esperando `crear_notificacion`.
 
