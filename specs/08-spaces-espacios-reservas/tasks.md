@@ -1,8 +1,8 @@
 # TASKS-08 — Espacios y reservas (`spaces`)
 
-> **Estado:** Línea base IMPLEMENTADO (retroactivo, aprobado por el Perfil 1 el 2026-11-11) · Fases 1–5 BORRADOR · **Versión:** 1.0.0 · **Fecha:** 2026-11-11 · **Perfil:** 4
-> **Spec:** `specs/08-spaces-espacios-reservas/spec.md` v1.0.0 (línea base IMPLEMENTADO; Fases 1–5 BORRADOR) · **Plan:** `specs/08-spaces-espacios-reservas/plan.md` v1.0.0 (línea base IMPLEMENTADO; Fases 1–5 BORRADOR)
-> Las tareas de las Fases 1–5 quedan pendientes de aprobación de esas fases. Los bloques de código ya implementados se registran por separado abajo; esta revisión sólo modifica documentación.
+> **Estado:** `APROBADO` (v1.1.0, aprobada por el Perfil 1 el 2026-11-11) · línea base v1.0.0 aprobada retroactivamente · **Versión:** 1.1.0 · **Fecha:** 2026-11-11 · **Perfil:** 4
+> **Spec:** `specs/08-spaces-espacios-reservas/spec.md` v1.1.0 (`APROBADO`) · **Plan:** `specs/08-spaces-espacios-reservas/plan.md` v1.1.0 (`APROBADO`)
+> Las tareas de las Fases 1–5 quedan pendientes de aprobación; ninguna casilla significa que los cambios abiertos en Backend #32 o Frontend #20 ya estén integrados. Esta revisión sólo modifica documentación.
 
 Leyenda: `[ ]` pendiente · `[~]` bloqueada/en curso · `[x]` completada.
 
@@ -36,14 +36,16 @@ Estos bloques describen trabajo que ya existe en `origin/develop`; las casillas 
 
 | ID | Tarea | Criterios | Verificación | Estado |
 | --- | --- | --- | --- | --- |
-| **T1.1** | Completar el contrato `ReservaEspacioResponse` con `DatosPublicosUsuario` opcional, obtenido por `users.datos_publicos_por_ids`. | AC-S09 | Dueño y admin con alcance reciben datos según permisos; UI no ve datos ajenos ni PII adicional. | `[ ]` |
-| **T1.2** | Incorporar el resumen en la bandeja de administradores y en el mapper de frontend, no en disponibilidad. | AC-S09, AC-S12 | Tests de contrato, consulta por sede y renderizado de la bandeja. | `[ ]` |
+| **T1.1** | Completar `ReservaEspacioResponse` y las respuestas de `GET /reservas`, `POST /reservas` y `PATCH /reservas/{id}/estado`: sólo admins con jurisdicción reciben `solicitante_nombre`/`solicitante_apellido`; el dueño omite ambas claves y disponibilidad no las incluye. | AC-S09, AC-S14 | `test_solicitante_solo_admin_con_jurisdiccion_en_reservas`, `test_solicitante_ausente_en_post_y_respuesta_del_dueno`, `test_privacidad_de_reservas`, `test_disponibilidad_intervalos_y_alcance`. No exponer DNI/email/teléfono. | `[ ]` |
+| **T1.2** | Completar el enriquecimiento administrativo de `GET /reservas` en lote con `users.datos_publicos_por_ids`; aplicar la misma interfaz pública a respuestas administrativas unitarias, sin N consultas. Ajustar mapper/bandeja. | AC-S09, AC-S14 | `test_datos_publicos_por_ids_se_consultan_en_lote`; tests de contrato para GET y PATCH; test del mapper/bandeja. | `[ ]` |
+| **T1.3** | (RES-02, Frontend, sin abrir fase nueva) Consolidar cada serie de horarios contiguos en una reserva; enviar series no contiguas como reservas separadas y conservar sólo las series fallidas para reintento. Mostrar la selección agrupada antes de confirmar. | AC-S17 | Tests propuestos en `src/features/spaces/pages/SpacesPage.test.tsx`: `testAgrupaHorariosContiguos`, `testEnviaCorridasNoContiguasPorSeparado`, `testConservaSoloCorridasFallidasParaReintento`; no se identificó suite automatizada de `spaces` en Frontend #20. | `[ ]` |
+| **T1.4** | (RES-02, Frontend, sin abrir fase nueva) Mantener seleccionables las franjas con solicitud `Pendiente` ajena; conservar deshabilitación por pasado, reserva adjudicada y bloqueo activo. No cambiar RN-S02 ni hacer que la UI sustituya la validación del backend. | AC-S18 | Test propuesto `SpacesPage.test.tsx::testPermiteSeleccionarPendienteAjena`; conservar `tests/spaces/test_espacios_reservas.py::TestValidacionesDeCreacion::test_franja_ocupada_y_concurrencia`. | `[ ]` |
 
 ### Fase 2 — K10: horario por sede y aviso
 
 | ID | Tarea | Criterios | Dependencia | Estado |
 | --- | --- | --- | --- | --- |
-| **T2.1** | Cuando la Fase A de SPEC-09 esté en Backend `develop`, integrar el contrato definido: `config.service.datos_de_sede(db, sede)` para otros módulos y `GET /api/v1/config/sedes` para frontend. | AC-S03 | SPEC-09 está en `BORRADOR`; cuando su Fase A esté en Backend `develop`, seguir §4.4-§4.5 y H1. No requiere acordar claves nuevas con Perfil 1. | `[ ]` |
+| **T2.1** | Cuando la Fase A de SPEC-09 esté en Backend `develop`, integrar el contrato definido: `config.service.datos_de_sede(db, sede)` para otros módulos y `GET /api/v1/config/sedes` para frontend. | AC-S03 | SPEC-09 está aprobado (Docs PR #31); cuando su Fase A esté en Backend `develop`, seguir §4.4-§4.5 y H1. No requiere acordar claves nuevas con Perfil 1. | `[ ]` |
 | **T2.2** | Leer `datos_de_sede(db, espacio.sede)` en la validación del horario y el cálculo de disponibilidad; conservar la zona del laboratorio. | AC-S01, AC-S03, AC-S07 | T2.1 | `[ ]` |
 | **T2.3** | Obtener horario/correo por sede desde `GET /api/v1/config/sedes` y mostrar el correo ante `ANTICIPACION_INSUFICIENTE`; no confirmar solicitudes rechazadas. | AC-S03 | T2.1, T2.2; SPEC-09 §4.5/H1 | `[ ]` |
 | **T2.4** | Resolver el límite de ventana entre calendario por meses y máximo de 120 días configurado por servidor. | AC-S11 | Contrato actual `CalendarGrid` y `config`. | `[ ]` |
@@ -52,9 +54,10 @@ Estos bloques describen trabajo que ya existe en `origin/develop`; las casillas 
 
 | ID | Tarea | Criterios | Verificación | Estado |
 | --- | --- | --- | --- | --- |
-| **T3.1** | En SPEC-08 v1.1.0, decidir baja lógica frente a DELETE físico y política para bloqueos generales; no fijar ahora conservación/eliminación de historial. | AC-S08 | Coordinación Backend #32 / Frontend #20; evaluar P7.3 antes de aprobar el diseño. | `[ ]` |
-| **T3.2** | Implementar el servicio y endpoint administrativo de reversión que se apruebe, validando sede y autorización. | AC-S07, AC-S08 | `ADMIN_LOCAL` dentro/fuera de sede, `SUPERADMIN`, bloqueo inexistente/revertido y reserva activa. | `[ ]` |
-| **T3.3** | Añadir acción en UI y exponer motivo/estado del bloqueo en el calendario. | AC-S08 | Tests del componente y recorrido manual con roles y sedes. | `[ ]` |
+| **T3.1** | Presentar para decisión D-S01: conservar historial con `revertido_en`/`revertido_por` y `PATCH /bloqueos/{id}/estado`, en vez de `DELETE` físico; justificar por Constitución P7.3 y valor histórico de la contingencia. No ejecutar código antes de aprobación. | AC-S08, AC-S16 | Revisión de alternativas en spec; la opción recomendada no está aprobada. | `[ ]` |
+| **T3.2** | Si se aprueba D-S01, agregar estado de reversión a bloqueo, migración Alembic manual y reversible, `down_revision` a cabeza de `develop` y verificación `alembic heads`. | AC-S08, AC-S16 | Test upgrade/downgrade/upgrade; `tests/test_spaces_migrations.py::test_migracion_reversion_bloqueos`; comprobar una sola cabeza. | `[ ]` |
+| **T3.3** | Implementar `POST /bloqueos/general` (sólo SUPERADMIN, ambas sedes y todos los espacios) y `PATCH /bloqueos/{id}/estado`; los IDs de grupo usan `id_grupo UUID NULL`, el revertido del grupo es atómico. | AC-S15, AC-S16 | `TestBloqueos::test_bloqueo_general_solo_superadmin_y_en_ambas_sedes`, `::test_bloqueo_general_es_atomico_si_hay_reserva_activa`, `::test_bloqueo_general_sin_espacios`, `::test_reversion_logica_y_alcance`, `::test_admin_local_no_revierte_bloqueo_general`, `::test_revertir_bloqueo_general_revierte_grupo_completo`, `::test_bloqueo_no_encontrado`, `::test_reversion_de_bloqueo_ya_revertido`. | `[ ]` |
+| **T3.4** | Mostrar motivo y estado del bloqueo y añadir acción de reversión con confirmación; un bloqueo general se revierte como grupo. Sólo bloqueos activos afectan disponibilidad; no cancelar ni alterar reservas existentes. | AC-S08, AC-S16 | Tests propuestos: `CalendarGrid.test.tsx::testMuestraMotivoYEstadoDeBloqueo`, `SpacesPage.test.tsx::testConfirmaReversionDeBloqueoGeneral`; recorrido manual con ADMIN_LOCAL/SUPERADMIN en ambas sedes. | `[ ]` |
 
 ### Fase 4 — C-N02: notificaciones de reserva
 
@@ -75,8 +78,10 @@ Estos bloques describen trabajo que ya existe en `origin/develop`; las casillas 
 ## Orden y bloqueos
 
 1. T1.1 → T1.2 puede avanzar independientemente de K10, usando la interfaz pública de `users`.
-2. T2.1 bloquea T2.2 y T2.3; depende de que la Fase A de SPEC-09 esté en Backend `develop`.
-3. T3.1 precede cualquier cambio de persistencia/API para GLO-04.
-4. T4.1 bloquea T4.2 y T4.3; coordinación C-N02 con Perfil 5.
-5. T5.1 requiere decisión del equipo; no se agrupa automáticamente con GLO-04.
-6. La validación Backend/Frontend de T5.3 pasó en su repetición; la primera ejecución Backend con errores de conexión queda documentada como antecedente. No se hicieron reparaciones de código.
+2. T1.3 y T1.4 son cambios del Frontend #20, incluidos sin crear una fase adicional; se deben ajustar a RES-02/RN-S02.
+3. T2.1 bloquea T2.2 y T2.3; depende de que la Fase A de SPEC-09 esté en Backend `develop`.
+4. T3.1 precede cualquier cambio de persistencia/API para GLO-04; D-S01…D-S03 se aprobaron el 2026-11-11: T3.2 y T3.3 pueden implementarse.
+5. Backend #32 debe integrarse antes de Frontend #20, que consume sus rutas/contratos. La recomendación del spec implica ajustar los dos PRs después de la aprobación; no se trataron como integrados.
+6. T4.1 bloquea T4.2 y T4.3; coordinación C-N02 con Perfil 5.
+7. T5.1 requiere decisión del equipo; no se agrupa automáticamente con GLO-04.
+8. La validación Backend/Frontend de T5.3 pasó en su repetición; la primera ejecución Backend con errores de conexión queda documentada como antecedente. No se hicieron reparaciones de código.
