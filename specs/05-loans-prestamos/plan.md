@@ -1,7 +1,7 @@
 # PLAN-05 — Préstamos (`loans`): Fases 1 y 2
 
-> **Estado:** `BORRADOR` · **Versión:** 0.4.4 · **Fecha:** 2026-11-11 · **Perfil:** 3
-> **Spec:** `specs/05-loans-prestamos/spec.md` v1.0.2 (`APROBADO` v1.0.0; la v1.0.1 corrige EC-L10 y la v1.0.2 agrega el aval) (§14, Fases 1 y 2) · **Tareas:** `specs/05-loans-prestamos/tasks.md`
+> **Estado:** `BORRADOR` · **Versión:** 0.4.5 · **Fecha:** 2026-11-11 · **Perfil:** 3
+> **Spec:** `specs/05-loans-prestamos/spec.md` v1.0.2 (`APROBADO`) (§14, Fases 1 y 2) · **Tareas:** `specs/05-loans-prestamos/tasks.md`
 > Este plan define el **cómo** de la Fase 1, Solicitar (§1…§7, implementada en el backend PR #21), y de la Fase 2, Validar (§8, implementada en el backend PR #23 y #28, salvo las notificaciones). Las Fases 3 a 5 se planifican cuando se cierre cada fase anterior.
 
 ---
@@ -26,7 +26,7 @@ Mientras se aprueba la v0.3.0 y llega `files` (SPEC-03), `POST /ordenes` se entr
 | Tema | En este corte | Cuándo se completa |
 | :---- | :---- | :---- |
 | **Renovación** (RN-L24, `renueva_detalle_id`) | **Fuera de alcance.** El esquema ya acepta el campo, pero el servicio responde `501 NO_IMPLEMENTADO` | Tarea propia (T1.14), con su propio diseño de disponibilidad: la notebook a renovar está `prestado`, no figura en `unidades_asignables` y debe contar como libre para esa orden |
-| **Aval** (RN-L09, `pdf_aval_id`) | **En curso** (T1.12, en `feat/loans-aval`, sin PR hasta el OK de la v1.0.2): se vincula con `files.vincular_archivo` en la misma transacción, la orden guarda `aval_archivo_id` (migración `0016`) y `GET /ordenes/{id}/aval` lo sirve al dueño y a los administradores con jurisdicción | — |
+| **Aval** (RN-L09, `pdf_aval_id`) | **En curso** (T1.12, en `feat/loans-aval`; la v1.0.2 se aprobó el 2026-11-11 y el PR del backend está por abrirse): se vincula con `files.vincular_archivo` en la misma transacción, la orden guarda `aval_archivo_id` (migración `0016`) y `GET /ordenes/{id}/aval` lo sirve al dueño y a los administradores con jurisdicción | — |
 | **Lectura de equipamiento** (C8) | **Resuelto** (2026-11-06): `crear_orden` usa `inventory.datos_equipamiento_por_ids` (PR #19 del backend) | — |
 | **Horario por sede** (K10, AC-L63) | Se leen `horario.apertura` y `horario.cierre` globales | Cuando `config` publique las claves por sede (T1.13): cambia la lectura, no la regla |
 
@@ -312,6 +312,7 @@ Se planifica en `tasks.md` (tareas F2.x): bandeja del administrador, detalle con
 
 | Versión | Fecha | Cambio |
 | :---- | :---- | :---- |
+| 0.4.5 | 2026-11-11 | La spec v1.0.2 queda aprobada (merge del PR #26 de Docs): el PR del backend de T1.12 se puede abrir |
 | 0.4.4 | 2026-11-11 | Revisión del Perfil 1 al PR #26 de Docs: T1.12 queda en curso (no mergeada) en lugar de hecha |
 | 0.4.3 | 2026-11-10 | T1.12 (aval) programada en `feat/loans-aval`, según la spec v1.0.2. Sin PR hasta que el Perfil 1 apruebe esa versión |
 | 0.4.2 | 2026-11-10 | La Fase 2 queda implementada en `develop` (backend PR #23 y #28), salvo T2.13 (espera `crear_notificacion`). `files` ya está en `develop`, así que T1.12 (aval) se desbloquea |
