@@ -4,21 +4,22 @@
 | --- | --- |
 | **ID** | SPEC-09 |
 | **Perfil responsable** | Perfil 1 — Identidad, Usuarios, Permisos, Configuración Global y Despliegue |
-| **Estado** | `BORRADOR` — 2026-11-10, pendiente de la revisión y aprobación del Perfil 1 (decisiones de §10) |
-| **Versión** | 0.1.0 |
+| **Estado** | `APROBADO` — 2026-11-11, por el Perfil 1, con las recomendaciones de §10 (D-01…D-12) |
+| **Versión** | 1.0.0 |
 | **Requisitos cubiertos** | Fase A: GLO-03 (horario de cada sede y correo de contacto del laboratorio) y el dato que necesita GLO-02 ("según el horario de atención de esa sede"); ADR-022 (a) y (c) · Fase B: USR-05 (teléfono obligatorio), ADR-022 (b), D-16 de SPEC-03 |
 | **Responde a** | K10 de SPEC-03; C19 (la parte del horario) y C1 de SPEC-05; C-N05 de SPEC-06; pedido (b) al Perfil 4 del 2026-11-02 (`MEMORY.md` §5) |
 | **Depende de** | SPEC-01 v1.0.0 (`config`, `users`) y SPEC-03 v1.1.0 (D-16), `IMPLEMENTADO`, en `develop` |
 | **Módulos afectados** | Backend: `config`, `users` · Frontend: `config`, `auth`, `users`, `layout` |
 | **Módulos ajenos** | Ninguno se modifica. `spaces`, `loans` y `notifications` cambian la lectura del horario y muestran el correo de contacto: va como coordinación (§11) |
-| **Relación con SPEC-08** | SPEC-08 es el spec de `spaces` del Perfil 4, en redacción en paralelo. Si incluye el horario por sede o el aviso de anticipación, consume el contrato de §4.4 y §4.5 de este spec (H1) |
+| **Relación con SPEC-08** | SPEC-08 es el spec de `spaces` del Perfil 4 (v1.0.0, línea base aprobada en el Docs PR #28). Su Fase 2 (K10, tareas T2.1…T2.3) ya adopta el contrato de §4.4 y §4.5 de este spec (H1) y espera a que la Fase A esté en `develop` |
+| **Relación con SPEC-05** | La tarea T1.13 de SPEC-05 (AC-L63, RN-L04) consume `datos_de_sede` y ya define `sede` en `ReglasResponse` y `?sede=` para el `SUPERADMIN` (H2, EC-57) |
 | **Constitución** | v1.1.0, con la enmienda 1.1.1 propuesta (ADR-019), sin ratificar. Las funciones públicas de §4.4 son compatibles con el texto vigente de P3.3 |
 | **Fuente de verdad funcional** | `docs/ERS.md` (GLO-02, GLO-03, USR-05 y el flujo alternativo 02 del CU de reserva de espacios, actualizados por el Docs PR #25) |
-| **Plan y tareas** | Después de la aprobación: `specs/09-config-sedes-telefono/plan.md` y `tasks.md` |
+| **Plan y tareas** | `specs/09-config-sedes-telefono/plan.md` y `tasks.md` |
 
-> **Regla SDD:** documento en `BORRADOR`. No se escribe código de aplicación hasta que esté `APROBADO`.
+> **Regla SDD:** spec `APROBADO`. Un cambio de alcance o de contrato se propone como versión nueva y vuelve a aprobarse.
 
-> **Numeración:** el 07 está reservado para `assistant` (Perfil 5, `MEMORY.md` §1) y el 08 para el spec de `spaces` del Perfil 4, en redacción, así que este spec es el 09. Los criterios, reglas, casos de borde y requisitos no funcionales siguen la numeración de SPEC-01…SPEC-03: `AC-102…`, `RN-78…`, `EC-51…`, `NFR-23…`. Las decisiones empiezan en `D-01`, como en cada spec.
+> **Numeración:** el 07 está reservado para `assistant` (Perfil 5, `MEMORY.md` §1) y el 08 es el spec de `spaces` del Perfil 4, así que este spec es el 09. Los criterios, reglas, casos de borde y requisitos no funcionales siguen la numeración de SPEC-01…SPEC-03: `AC-102…`, `RN-78…`, `EC-51…`, `NFR-23…`. Las decisiones empiezan en `D-01`, como en cada spec.
 
 ---
 
@@ -41,7 +42,7 @@ La **delegación temporal del rol de Superadministrador** (ADR-022 g) queda para
 | --- | --- | --- | --- |
 | A1 | Seis parámetros nuevos de `config`: apertura y cierre del horario, y correo de contacto, para cada sede (§4.1) | GLO-03, ADR-022 a y c | A |
 | A2 | Migración `0017_config_sedes`: crea las claves por sede con el horario vigente y deja las globales como obsoletas (§4.2) | P7.4, P8 | A |
-| A3 | Validaciones: apertura anterior al cierre en cada sede; correo con formato válido (§4.3) | GLO-03, RN-19 y RN-20 de SPEC-01 | A |
+| A3 | Validaciones: apertura anterior al cierre en cada sede, con las ediciones simultáneas de un par serializadas (G-5); correo con formato válido (§4.3) | GLO-03, RN-19 y RN-20 de SPEC-01 | A |
 | A4 | Lectura para otros módulos: `datos_de_sede(db, sede)` y `datos_de_sedes(db)` en `config/service.py` (§4.4) | P3.3, P8 | A |
 | A5 | `GET /api/v1/config/sedes` para el frontend (portal, aviso de anticipación, calendarios) (§4.5) | GLO-02, GLO-03, NOV-01 | A |
 | A6 | Panel de parámetros: las claves nuevas se editan; las obsoletas se ven como no editables; el correo se carga en un campo de email (§4.7) | GLO-03 | A |
@@ -66,12 +67,14 @@ La **delegación temporal del rol de Superadministrador** (ADR-022 g) queda para
 
 ## 2. Estado actual
 
-### 2.1 Verificado en `develop` (backend `e54ad16`, frontend `e1ae84e`, 2026-11-10)
+### 2.1 Verificado en `develop` (backend `e54ad16`, frontend `8cbc76a`, 2026-11-11)
+
+> Revisado de nuevo el 2026-11-11: el backend no cambió; el frontend sólo sumó el PR #21 (nombre e ícono de la página), que no toca nada de esta tabla.
 
 | Elemento | Estado |
 | --- | --- |
 | `config/seed.py` | Ocho claves semilla, entre ellas `horario.apertura` (`09:00`) y `horario.cierre` (`16:00`), de tipo `HORA`, únicas para las dos sedes. Las siembra la migración `0005` con una copia congelada que `tests/config/test_semilla.py` compara con `PARAMETROS_SEMILLA`. `tests/conftest.py` siembra la base de tests con esa misma lista |
-| `config/service.py` | `obtener_parametro(db, clave)` es la lectura pública. La regla cruzada `horario.apertura < horario.cierre` está en `_REGLAS_CRUZADAS`. Tipos admitidos: `ENTERO`, `DECIMAL`, `BOOLEANO`, `TEXTO` (1 a 300 caracteres) y `HORA` |
+| `config/service.py` | `obtener_parametro(db, clave)` es la lectura pública. La regla cruzada `horario.apertura < horario.cierre` está en `_REGLAS_CRUZADAS`. Tipos admitidos: `ENTERO`, `DECIMAL`, `BOOLEANO`, `TEXTO` (1 a 300 caracteres) y `HORA`. `actualizar` bloquea con `FOR UPDATE` sólo la fila que se edita; `validar_reglas_cruzadas` lee la otra clave del par sin bloquearla |
 | Quién lee el horario global | `spaces/service.py:99` (`horario(db)`, que usa la validación de franjas y la respuesta de disponibilidad); `loans/service.py:67` (`GET /loans/reglas`), `:279` (ajuste horario al aprobar) y `:850` (alta de orden, con el comentario "Horario global hasta que config publique el de cada sede (K10)"); el portal del frontend (`notifications/services/notificationsApi.ts:51`, que lee las dos claves y muestra "en ambas sedes") |
 | Correo de contacto | No existe. `spaces` responde `422 ANTICIPACION_INSUFICIENTE` sin datos de contacto; `loans` usa el mismo código |
 | `usuarios.telefono` | `String(20)` que admite nulos (`users/models.py:71`). En `_DatosCuentaBase` (registro y alta administrativa), `PerfilUpdate` y `UsuarioAdminUpdate` es `Telefono \| None = None`, con el formato `^\+?[0-9 \-]{6,20}$`. Mandar `null` lo borra. La CLI `crear-superadmin` lo toma como opcional (`users/cli.py:107`) |
@@ -85,6 +88,7 @@ La **delegación temporal del rol de Superadministrador** (ADR-022 g) queda para
 | G-2 | El aviso de anticipación mínima no tiene un correo para canalizar la urgencia | CU de reserva de espacios, FA-02; ADR-022 c |
 | G-3 | Los Perfiles 3, 4 y 5 esperan que `config` publique el horario por sede para cambiar su lectura (K10, C19, C-N05) | P8 |
 | G-4 | Se pueden crear cuentas sin teléfono y borrarlo después | USR-05, ADR-022 b |
+| G-5 | Dos ediciones simultáneas de las dos claves de una regla cruzada (por ejemplo, apertura y cierre) se validan cada una contra el valor viejo de la otra y pueden dejar el par inconsistente. Ya pasa hoy con los tres pares globales; con seis claves de horario más, pasa a ser más probable | RN-20 de SPEC-01 |
 
 ---
 
@@ -134,8 +138,8 @@ Ninguna lleva `unidad`, `valor_min` ni `valor_max`. Todas son `editable = true`.
 | ID | Regla |
 | --- | --- |
 | RN-78 | **Claves por sede.** El horario y el correo de una sede se leen de `horario.<segmento>.apertura`, `horario.<segmento>.cierre` y `contacto.<segmento>.email`, con el segmento de §4.1. El mapa `SedeEnum → segmento` vive en `config/service.py` y cubre todos los valores de `SedeEnum` (AC-109) |
-| RN-79 | **Apertura antes del cierre, en cada sede.** `_REGLAS_CRUZADAS` suma un par por sede (`horario.<segmento>.apertura < horario.<segmento>.cierre` → `422 PARAMETROS_INCONSISTENTES`). Cambiar el horario de una sede no valida ni toca el de la otra. Para que dos ediciones simultáneas de la apertura y el cierre de la misma sede no dejen un horario invertido, la validación cruzada bloquea con `FOR UPDATE` las filas de las dos claves del par, en orden alfabético de clave, antes de evaluarla (EC-53) |
-| RN-80 | **Correo de contacto.** Es un `TEXTO` que, además, tiene que ser una dirección de correo válida (misma validación que `EmailStr`, hasta 254 caracteres); si no, `422 VALOR_PARAMETRO_INVALIDO`. Se guarda sin espacios y en minúsculas. El valor `""` sólo existe como valor inicial ("sin configurar"): una vez cargado un correo, no se puede volver a dejar vacío (D-05, D-06). La validación se asocia a las claves `contacto.*.email`, sin un tipo nuevo de parámetro |
+| RN-79 | **Apertura antes del cierre, en cada sede.** `_REGLAS_CRUZADAS` suma un par por sede (`horario.<segmento>.apertura < horario.<segmento>.cierre` → `422 PARAMETROS_INCONSISTENTES`). Cambiar el horario de una sede no valida ni toca el de la otra. **Serialización (G-5):** `actualizar` deja de bloquear sólo la fila editada y bloquea, en **una** consulta `SELECT … WHERE clave IN (…) ORDER BY clave FOR UPDATE`, la clave editada junto con todas las claves de sus reglas cruzadas, antes de cualquier otra lectura. Así dos ediciones del mismo par se esperan, y la segunda se valida contra el valor que confirmó la primera. El orden por clave evita el *deadlock* que aparecería si cada sesión bloqueara primero su propia fila y después la del par. Vale para todos los pares de `_REGLAS_CRUZADAS`, no sólo para los nuevos (EC-53) |
+| RN-80 | **Correo de contacto.** Es un `TEXTO` que, además, tiene que ser una dirección de correo válida (misma validación que `EmailStr`, hasta 254 caracteres); si no, `422 VALOR_PARAMETRO_INVALIDO`. Se guarda sin espacios y en minúsculas. El valor `""` sólo existe como valor inicial ("sin configurar") y sólo lo escribe la migración: por la API no se puede volver a dejar vacío, porque la validación vigente de `TEXTO` ya exige de 1 a 300 caracteres (D-05, D-06). La validación se asocia a las claves `contacto.*.email`, sin un tipo nuevo de parámetro |
 | RN-81 | **Claves globales obsoletas.** `horario.apertura` y `horario.cierre` quedan con `editable = false` (un `PUT` responde `409 PARAMETRO_NO_EDITABLE`) y `obtener_parametro` las sigue devolviendo, para que `spaces`, `loans` y el portal funcionen igual hasta que cambien su lectura (H1…H3). Se borran en una migración posterior del Perfil 1, cuando `grep` sobre `develop` no encuentre lectores (D-02) |
 | RN-82 | **Lectura pública** (§4.4): `datos_de_sede` y `datos_de_sedes` hacen una sola consulta, no hacen `commit` ni `flush`, devuelven `correo_contacto = None` si el valor es `""`, y responden `500 PARAMETRO_NO_CONFIGURADO` si falta alguna clave (como `obtener_parametro`: indica una migración faltante) |
 | RN-83 | **Lectura por la API** (§4.5): cualquier usuario autenticado lee el horario y el correo de las dos sedes. No son datos personales (P6.4) y el estudiante necesita el correo de su sede para el aviso de anticipación |
@@ -161,7 +165,7 @@ async def datos_de_sedes(db: AsyncSession) -> dict[SedeEnum, DatosSede]: ...
 Uso esperado (informativo; lo implementa cada perfil dueño, §11):
 
 - `spaces`: `horario(db)` pasa a `datos_de_sede(db, espacio.sede)` en la validación de franja y en la disponibilidad, que ya informa `horario_apertura` y `horario_cierre` (sin cambio de contrato para su frontend).
-- `loans`: el alta de orden usa la sede del solicitante (RN-L04 ya lo pide), el ajuste horario usa la sede de la orden y `GET /loans/reglas` la sede del actor.
+- `loans`: el alta de orden usa la sede del solicitante (RN-L04 ya lo pide), el ajuste horario usa la sede de la orden y `GET /loans/reglas` la sede del actor, o la de `?sede=` para el `SUPERADMIN` (T1.13 de SPEC-05).
 - El aviso de anticipación mínima puede sumar `correo_contacto` al cuerpo del `422 ANTICIPACION_INSUFICIENTE` (`AppError` admite campos extra) o tomarlo el frontend de `GET /config/sedes`. Lo decide cada perfil.
 
 ### 4.5 Endpoint
@@ -243,7 +247,7 @@ Cada criterio de backend tiene al menos un test anotado `# AC-NN`, con `pytestma
 | AC-103 | `horario.apertura` y `horario.cierre` quedan con `editable = false`: un `PUT` del `SUPERADMIN` → `409 PARAMETRO_NO_EDITABLE`, y `obtener_parametro` sigue devolviendo su valor | RN-81 |
 | AC-104 | El `SUPERADMIN` pone Río Grande en `10:00`–`17:00` → `200`, una entrada de historial por clave, y Ushuaia sigue en su horario | RN-78, RN-85 |
 | AC-105 | Apertura igual o posterior al cierre en una sede → `422 PARAMETROS_INCONSISTENTES`; el mismo valor es válido en la otra sede si su cierre es posterior | RN-79 |
-| AC-106 | Dos sesiones cambian a la vez la apertura y el cierre de la misma sede de forma que cada cambio solo es válido pero juntos invierten el horario: una responde `200` y la otra `422 PARAMETROS_INCONSISTENTES` (sesiones independientes, ADR-013) | RN-79, EC-53 |
+| AC-106 | Dos sesiones cambian a la vez la apertura y el cierre de la misma sede de forma que cada cambio solo es válido pero juntos invierten el horario (por ejemplo, con `09:00`–`16:00`, una pone la apertura en `15:00` y la otra el cierre en `14:00`): una responde `200` y la otra `422 PARAMETROS_INCONSISTENTES`, sin `500` ni *deadlock*, y el par queda válido (sesiones independientes, ADR-013) | RN-79, EC-53 |
 | AC-107 | `contacto.rio_grande.email`: `"no-es-un-correo"` → `422 VALOR_PARAMETRO_INVALIDO`; `" Lab.RG@Example.com "` → `200` y se guarda `lab.rg@example.com`; después, `""` → `422` | RN-80 |
 | AC-108 | `datos_de_sede` y `datos_de_sedes` devuelven `time` y `str \| None` (`None` con `""`), ejecutan **una** consulta (contada con `before_cursor_execute`), no confirman la transacción del llamador, y sin una de las claves → `500 PARAMETRO_NO_CONFIGURADO` | RN-82 |
 | AC-109 | Todo valor de `SedeEnum` tiene segmento y sus tres claves existen en `PARAMETROS_SEMILLA` | RN-78 |
@@ -279,11 +283,11 @@ Cada criterio de backend tiene al menos un test anotado `# AC-NN`, con `pytestma
 | --- | --- | --- |
 | EC-51 | El `SUPERADMIN` cambia el horario de Río Grande antes de que `spaces` y `loans` lean el de la sede | No tiene efecto en reservas ni préstamos hasta H1 y H2: siguen con el global (RN-81, §4.6) |
 | EC-52 | Se acorta el horario de una sede con reservas o préstamos aprobados fuera del nuevo horario | Siguen como están; el horario nuevo rige para lo nuevo (RN-84). Mover o cancelar lo afectado es una decisión del administrador en cada módulo |
-| EC-53 | Dos `SUPERADMIN` editan a la vez la apertura y el cierre de la misma sede | El bloqueo de las dos filas del par serializa la validación (RN-79, AC-106) |
+| EC-53 | Dos `SUPERADMIN` editan a la vez la apertura y el cierre de la misma sede | El bloqueo de las dos filas del par, en orden de clave y en una sola consulta, serializa la validación sin *deadlock* (RN-79, AC-106) |
 | EC-54 | Se agrega una sede a `SedeEnum` | AC-109 falla hasta que una migración agregue su segmento y sus claves |
 | EC-55 | Aviso de anticipación con el correo de la sede todavía sin configurar | `correo_contacto` es `None`; el módulo que avisa muestra el mensaje sin correo |
 | EC-56 | El usuario de una sede pregunta por el correo de la otra | `GET /config/sedes` devuelve las dos: no es un dato de una sede ajena que haya que aislar (RN-83) |
-| EC-57 | Un `SUPERADMIN` (sin sede) pide `GET /loans/reglas` | Lo resuelve el Perfil 3 al adoptar `datos_de_sede` (H2): por ejemplo, con un parámetro `sede` o devolviendo las dos |
+| EC-57 | Un `SUPERADMIN` (sin sede) pide `GET /loans/reglas` | Ya lo define SPEC-05 (T1.13, AC-L63): `?sede=` para el `SUPERADMIN` y `sede` en `ReglasResponse`. `config` sólo provee `datos_de_sede` (H2) |
 | EC-58 | Una cuenta sin teléfono es rechazada y se vuelve a registrar | El re-registro exige el teléfono (AC-114) |
 | EC-59 | Un administrador edita el nombre de una cuenta vieja sin teléfono | `200`: sólo se valida el teléfono si viene en el cuerpo (RN-87) |
 
@@ -299,15 +303,15 @@ Cada criterio de backend tiene al menos un test anotado `# AC-NN`, con `pytestma
 
 ---
 
-## 10. Decisiones abiertas
+## 10. Decisiones
 
-> Para aprobar: el Perfil 1 elige una opción en cada fila (o adopta todas las recomendaciones).
+> **Resueltas el 2026-11-11:** el Perfil 1 adoptó todas las recomendaciones (columna "Decisión").
 
-| ID | Pregunta | Opciones | Recomendación |
+| ID | Pregunta | Opciones | Decisión |
 | --- | --- | --- | --- |
 | D-01 | ¿Cómo se guarda un parámetro por sede? | (a) Una clave por sede con el segmento de §4.1, sin cambiar el esquema de `parametros_globales` · (b) Columna `sede` en `parametros_globales`, con clave primaria compuesta · (c) Un tipo nuevo `HORARIO` con un JSON que tenga las dos sedes | **(a)**. Mantiene el catálogo cerrado, el bloqueo optimista, el historial y el panel tal como están, y `obtener_parametro` no cambia de firma. (b) toca la clave primaria y la FK del historial, y obliga a cambiar `obtener_parametro` en todos los módulos. (c) mezcla dos sedes en una versión: editar una pisa la otra |
 | D-02 | ¿Qué pasa con `horario.apertura` y `horario.cierre`? | (a) Quedan no editables y marcadas obsoletas; se borran cuando nadie las lea · (b) Se borran ya, y el Perfil 1 cambia la lectura en `spaces`, `loans` y el portal · (c) Quedan editables como horario "por defecto" | **(a)**. (b) modifica módulos de otros perfiles (Constitución §8.3). (c) deja dos horarios editables sin saber cuál rige. Con (a), nada se rompe al mergear y cada perfil cambia una línea cuando puede |
-| D-03 | ¿Con qué valores arranca el horario de cada sede? | (a) El vigente de las claves globales, para las dos · (b) El ejemplo del ERS (Ushuaia 09:00–16:00, Río Grande 10:00–17:00) | **(a)**. El ERS lo da "por ejemplo" y la referente no lo fijó como valor; (a) no cambia nada hasta que el `SUPERADMIN` lo edite. Se le pregunta a la referente (§10.1) |
+| D-03 | ¿Con qué valores arranca el horario de cada sede? | (a) El vigente de las claves globales, para las dos · (b) El ejemplo del ERS (Ushuaia 09:00–16:00, Río Grande 10:00–17:00) | **(a)**. El ERS lo da "por ejemplo" y la referente no lo fijó como valor; (a) no cambia nada hasta que el `SUPERADMIN` lo edite. Se le pregunta a la referente (§10.1). Dato del 2026-11-11: Ushuaia va a extender su horario y Río Grande lo mantiene, así que los horarios van a ser distintos; los valores se cargan en el panel cuando rijan, sin migración nueva |
 | D-04 | ¿Un correo de contacto o uno por sede? | (a) Uno por sede · (b) Uno solo para el laboratorio | **(a)**. El aviso se muestra a un usuario de una sede, y la urgencia la resuelve el administrador de esa sede. Si el laboratorio tiene una sola dirección, se carga la misma en las dos. El ERS dice "el correo de contacto del laboratorio" sin aclarar, y cada sede tiene su laboratorio |
 | D-05 | ¿Con qué valor arranca el correo? | (a) `""`, que se lee como "sin configurar", y el aviso sale sin correo hasta que el `SUPERADMIN` lo cargue · (b) La dirección real, que se le pide antes a la referente y se siembra en la migración · (c) Una dirección de ejemplo | **(a)**. No bloquea la Fase A esperando la respuesta y no muestra datos inventados. (c) podría quedar a la vista de los estudiantes. La dirección se le pide igual a la referente (§10.1) |
 | D-06 | ¿Cómo se valida el correo? | (a) `TEXTO` con una validación extra para las claves `contacto.*.email` · (b) Un tipo nuevo `EMAIL` en `parametro_tipo_enum` | **(a)**. (b) necesita `ALTER TYPE … ADD VALUE` en PostgreSQL (no se revierte con un downgrade simple) y un caso más en el frontend, para dos claves |
@@ -320,7 +324,7 @@ Cada criterio de backend tiene al menos un test anotado `# AC-NN`, con `pytestma
 
 ### 10.1 Preguntas para la referente
 
-1. ¿Cuál es el horario de atención real de cada laboratorio (Ushuaia y Río Grande)? (D-03)
+1. ¿Cuál es el horario de atención real de cada laboratorio (Ushuaia y Río Grande)? (D-03). **Respuesta parcial (2026-11-11):** Ushuaia va a extender su horario y Río Grande lo mantiene; faltan las horas exactas y desde cuándo rige el de Ushuaia
 2. ¿Qué dirección de correo se muestra para cada sede cuando una solicitud no cumple la anticipación mínima? ¿Es una sola para el laboratorio? (D-04, D-05)
 3. ¿Hay días de la semana en que algún laboratorio no abre (por ejemplo, sábados)? (D-09)
 4. ¿Los Administradores Locales tienen que poder cambiar el horario de su sede, o sólo la Superadministradora? (D-08)
@@ -331,8 +335,8 @@ Cada criterio de backend tiene al menos un test anotado `# AC-NN`, con `pytestma
 
 | ID | Para | Pedido | Origen |
 | --- | --- | --- | --- |
-| H1 | Perfil 4 (puede entrar en su SPEC-08) | Cambiar `spaces/service.horario(db)` por `datos_de_sede(db, espacio.sede)` en la validación de franja y en la disponibilidad. En el aviso de anticipación mínima (CU de reserva, FA-02), mostrar el correo de la sede: sumándolo al `422 ANTICIPACION_INSUFICIENTE` o desde `GET /config/sedes` en el frontend. Avisar cuando esté en `develop`, para borrar las claves globales | K10 de SPEC-03, pedido (b) del 2026-11-02 |
-| H2 | Perfil 3 | Cambiar las tres lecturas de `horario.apertura` y `horario.cierre` de `loans/service.py` (alta de orden con la sede del solicitante, ajuste horario con la sede de la orden y `GET /loans/reglas`) por `datos_de_sede`, y definir qué devuelve `/reglas` a un `SUPERADMIN` (EC-57). Opcional: el correo en el `422 ANTICIPACION_INSUFICIENTE`. **C1:** las demás claves de `config` alcanzan, no hacen falta claves nuevas. **C19:** la parte del horario se resuelve con este spec | C1 y C19 de SPEC-05, RN-L04 |
+| H1 | Perfil 4 (ya adoptado en la Fase 2 de SPEC-08, T2.1…T2.3) | Cambiar `spaces/service.horario(db)` por `datos_de_sede(db, espacio.sede)` en la validación de franja y en la disponibilidad. En el aviso de anticipación mínima (CU de reserva, FA-02), mostrar el correo de la sede: sumándolo al `422 ANTICIPACION_INSUFICIENTE` o desde `GET /config/sedes` en el frontend. Avisar cuando esté en `develop`, para borrar las claves globales | K10 de SPEC-03, pedido (b) del 2026-11-02 |
+| H2 | Perfil 3 | Cambiar las tres lecturas de `horario.apertura` y `horario.cierre` de `loans/service.py` (alta de orden con la sede del solicitante, ajuste horario con la sede de la orden y `GET /loans/reglas`) por `datos_de_sede`; es la T1.13 de SPEC-05, que ya define `?sede=` para el `SUPERADMIN` (EC-57). Opcional: el correo en el `422 ANTICIPACION_INSUFICIENTE`. **C1:** las demás claves de `config` alcanzan, no hacen falta claves nuevas. **C19:** la parte del horario se resuelve con este spec | C1 y C19 de SPEC-05, RN-L04 |
 | H3 | Perfil 5 | El portal pasa de leer `horario.apertura` y `horario.cierre` a `GET /config/sedes` (con `obtenerDatosSedes()` de `features/config`), y muestra el horario de cada sede en lugar de "en ambas sedes" | C-N05 de SPEC-06, RN-N1 |
 | H4 | Equipo | Hacer las preguntas de §10.1 a la referente | D-03, D-04, D-05, D-08, D-09 |
 
@@ -356,4 +360,6 @@ Se responde también la pregunta (a) que el Perfil 2 hizo al Perfil 1 el 2026-10
 
 | Versión | Fecha | Autor | Cambio |
 | --- | --- | --- | --- |
+| 1.0.0 | 2026-11-11 | Perfil 1 | **Aprobado**, con las recomendaciones de §10 (D-01…D-12). Suma la respuesta parcial a la pregunta 1 de §10.1: Ushuaia extiende su horario y Río Grande lo mantiene, lo que confirma la necesidad de horarios distintos por sede (G-1). Plan y tareas en `plan.md` y `tasks.md` |
+| 0.2.0 | 2026-11-11 | Perfil 1 (con asistencia de IA) | Revisión antes de aprobar, sin cambiar las decisiones. **RN-79 corregida:** bloquear "las dos filas en orden alfabético" después de que `actualizar` ya bloqueó la editada podía terminar en *deadlock*; ahora se bloquean la editada y su par en una sola consulta ordenada por clave, para todos los pares de `_REGLAS_CRUZADAS` (G-5 nueva; AC-106 y EC-53 más precisos). RN-80 aclara que el `""` sólo lo escribe la migración. Alineado con SPEC-08 v1.0.0 (H1 ya adoptado en su Fase 2) y con la T1.13 de SPEC-05 (EC-57, H2). §2.1 verificado de nuevo sobre `develop` |
 | 0.1.0 | 2026-11-11 | Perfil 1 (con asistencia de IA) | Borrador inicial. Se redactó como SPEC-08 y pasó a ser el 09 porque el 08 es del Perfil 4 (`spaces`); la migración pasa a `0017_config_sedes` porque `0016` la usa `loans`. Fase A (horario y correo de contacto por sede, ADR-022 a y c) y Fase B (teléfono obligatorio, ADR-022 b, D-16 de SPEC-03). Decisiones D-01…D-12 con recomendación, preguntas para la referente (§10.1) y coordinación H1…H4 |

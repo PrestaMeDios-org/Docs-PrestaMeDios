@@ -137,9 +137,9 @@ y no escribas código hasta que yo lo apruebe.
 
 | Estado | Detalle |
 | :---- | :---- |
-| Implementado (backend, en `develop`) | SPEC-05 v1.0.0 `APROBADO` (2026-11-07). **Fase 1** (PR \#21): reglas, crear orden con validaciones de franja, anticipación, plazo y unidades libres, y consulta de las propias. **Fase 2** (PR \#23 y \#28): bandeja, detalle para administradores, unidades libres por línea, aprobar con asignación de unidades y ajuste horario, rechazar y cancelar, con concurrencia probada y migración `0011`. Funciones públicas para `inventory`: `unidades_libres`, `ocupacion_de_unidades`, `historial_de_unidad` y `reservas_futuras_de_unidad` |
+| Implementado (backend, en `develop`) | SPEC-05 `APROBADO` (v1.0.0 el 2026-11-07; v1.0.2 el 2026-11-11). **Fase 1** (PR \#21): reglas, crear orden con validaciones de franja, anticipación, plazo y unidades libres, y consulta de las propias. **Fase 2** (PR \#23 y \#28): bandeja, detalle para administradores, unidades libres por línea, aprobar con asignación de unidades y ajuste horario, rechazar y cancelar, con concurrencia probada y migración `0011`. Funciones públicas para `inventory`: `unidades_libres`, `ocupacion_de_unidades`, `historial_de_unidad` y `reservas_futuras_de_unidad` |
 | Implementado (frontend, en `develop`) | Tipos, `loansApi` y carrito conectado al catálogo (PR \#18) |
-| En curso | Aval de alta gama (PRE-05, T1.12) en `feat/loans-aval`, según la spec v1.0.2, que espera el OK del Perfil 1 |
+| En curso | Aval de alta gama (PRE-05, T1.12) en `feat/loans-aval`, según la spec v1.0.2 (aprobada el 2026-11-11); PR del backend por abrir |
 | Pendiente | Frontend: formulario de solicitud, "Mis solicitudes" y las pantallas de la Fase 2. Backend: notificaciones de cada transición (espera `crear_notificacion`, SPEC-06 Fase B), horario por sede (K10), renovación (PRE-11), entrega y devolución y cancelación forzada (Fase 3: PRE-13, PRE-17), no retiro automático, calendario maestro y panel docente (Fase 4: PRE-08, PRE-16, PRE-20) |
 | Deuda registrada | En `MEMORY.md` §4: DT-20 (estado de la unidad duplicado con `inventory`): ya se respeta al aprobar; se termina de cerrar en la Fase 3, cuando la entrega y la devolución usen `marcar_unidad_prestada` y `liberar_unidad`. DT-16 se cerró con la aprobación de SPEC-05 y DT-17 y DT-18 en el PR \#16 |
 
