@@ -1,7 +1,7 @@
 # TASKS-08 — Espacios y reservas (`spaces`)
 
-> **Estado:** `BORRADOR` (v1.1.0; pendiente de decisión de Facundo) · línea base v1.0.0 aprobada retroactivamente · **Versión:** 1.1.0 · **Fecha:** 2026-11-11 · **Perfil:** 4
-> **Spec:** `specs/08-spaces-espacios-reservas/spec.md` v1.1.0 (`BORRADOR`) · **Plan:** `specs/08-spaces-espacios-reservas/plan.md` v1.1.0 (`BORRADOR`)
+> **Estado:** `APROBADO` (v1.1.0, aprobada por el Perfil 1 el 2026-11-11) · línea base v1.0.0 aprobada retroactivamente · **Versión:** 1.1.0 · **Fecha:** 2026-11-11 · **Perfil:** 4
+> **Spec:** `specs/08-spaces-espacios-reservas/spec.md` v1.1.0 (`APROBADO`) · **Plan:** `specs/08-spaces-espacios-reservas/plan.md` v1.1.0 (`APROBADO`)
 > Las tareas de las Fases 1–5 quedan pendientes de aprobación; ninguna casilla significa que los cambios abiertos en Backend #32 o Frontend #20 ya estén integrados. Esta revisión sólo modifica documentación.
 
 Leyenda: `[ ]` pendiente · `[~]` bloqueada/en curso · `[x]` completada.
@@ -45,7 +45,7 @@ Estos bloques describen trabajo que ya existe en `origin/develop`; las casillas 
 
 | ID | Tarea | Criterios | Dependencia | Estado |
 | --- | --- | --- | --- | --- |
-| **T2.1** | Cuando la Fase A de SPEC-09 esté en Backend `develop`, integrar el contrato definido: `config.service.datos_de_sede(db, sede)` para otros módulos y `GET /api/v1/config/sedes` para frontend. | AC-S03 | SPEC-09 está en `BORRADOR`; cuando su Fase A esté en Backend `develop`, seguir §4.4-§4.5 y H1. No requiere acordar claves nuevas con Perfil 1. | `[ ]` |
+| **T2.1** | Cuando la Fase A de SPEC-09 esté en Backend `develop`, integrar el contrato definido: `config.service.datos_de_sede(db, sede)` para otros módulos y `GET /api/v1/config/sedes` para frontend. | AC-S03 | SPEC-09 está aprobado (Docs PR #31); cuando su Fase A esté en Backend `develop`, seguir §4.4-§4.5 y H1. No requiere acordar claves nuevas con Perfil 1. | `[ ]` |
 | **T2.2** | Leer `datos_de_sede(db, espacio.sede)` en la validación del horario y el cálculo de disponibilidad; conservar la zona del laboratorio. | AC-S01, AC-S03, AC-S07 | T2.1 | `[ ]` |
 | **T2.3** | Obtener horario/correo por sede desde `GET /api/v1/config/sedes` y mostrar el correo ante `ANTICIPACION_INSUFICIENTE`; no confirmar solicitudes rechazadas. | AC-S03 | T2.1, T2.2; SPEC-09 §4.5/H1 | `[ ]` |
 | **T2.4** | Resolver el límite de ventana entre calendario por meses y máximo de 120 días configurado por servidor. | AC-S11 | Contrato actual `CalendarGrid` y `config`. | `[ ]` |
@@ -80,7 +80,7 @@ Estos bloques describen trabajo que ya existe en `origin/develop`; las casillas 
 1. T1.1 → T1.2 puede avanzar independientemente de K10, usando la interfaz pública de `users`.
 2. T1.3 y T1.4 son cambios del Frontend #20, incluidos sin crear una fase adicional; se deben ajustar a RES-02/RN-S02.
 3. T2.1 bloquea T2.2 y T2.3; depende de que la Fase A de SPEC-09 esté en Backend `develop`.
-4. T3.1 precede cualquier cambio de persistencia/API para GLO-04; T3.2/T3.3 requieren decisión explícita de Facundo.
+4. T3.1 precede cualquier cambio de persistencia/API para GLO-04; D-S01…D-S03 se aprobaron el 2026-11-11: T3.2 y T3.3 pueden implementarse.
 5. Backend #32 debe integrarse antes de Frontend #20, que consume sus rutas/contratos. La recomendación del spec implica ajustar los dos PRs después de la aprobación; no se trataron como integrados.
 6. T4.1 bloquea T4.2 y T4.3; coordinación C-N02 con Perfil 5.
 7. T5.1 requiere decisión del equipo; no se agrupa automáticamente con GLO-04.
