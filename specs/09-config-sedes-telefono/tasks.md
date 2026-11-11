@@ -1,6 +1,6 @@
 # TASKS-09 — Horario y correo de contacto por sede, y teléfono obligatorio
 
-> **Spec:** `specs/09-config-sedes-telefono/spec.md` v1.0.0 (`APROBADO` el 2026-11-11) · **Plan:** `specs/09-config-sedes-telefono/plan.md` v1.0.0 (`APROBADO` el 2026-11-11) · **Estado:** `EN CURSO` (backend de la Fase A en revisión, PR #35)
+> **Spec:** `specs/09-config-sedes-telefono/spec.md` v1.0.0 (`APROBADO` el 2026-11-11) · **Plan:** `specs/09-config-sedes-telefono/plan.md` v1.0.0 (`APROBADO` el 2026-11-11) · **Estado:** `EN CURSO` (Fase A en revisión: backend PR #35, frontend PR #26)
 > Marcar `[x]` al cerrar. Cada tarea tiene su verificación; no se pasa a la siguiente con tests en rojo. Cada bloque es un PR (plan §2). **Orden de merge: A antes que B (D-12).**
 > Comandos de backend desde `Backend-PrestaMeDios/` (venv activo, `TEST_DATABASE_URL` definida); de frontend desde `Frontend-PrestaMeDios/`.
 
@@ -13,7 +13,7 @@
   ✔ 2026-11-11: ADR-025, DT-33, DT-34, H1…H3 en §5 y las preguntas en §6 de `MEMORY.md`, en el Docs PR #31 (rama `docs/spec-09-revision`, con `main` integrado).
 - [x] **T-01 · Línea base.** `develop` actualizado en backend y frontend; `pytest -q`, `alembic heads` (una sola cabeza); `npm run typecheck`, `npm run build` y `npm test`.
   *Verificación:* resultados anotados en el PR del bloque A; si algo falla de entrada, se informa antes de seguir.
-  ✔ 2026-11-11 (backend): `develop` `e54ad16`, 895 pasados (Python 3.12.3, PostgreSQL), una sola cabeza (`0015_users_recuperacion`). La línea base del frontend se toma al abrir el bloque A-F.
+  ✔ 2026-11-11 (backend): `develop` `e54ad16`, 895 pasados (Python 3.12.3, PostgreSQL), una sola cabeza (`0015_users_recuperacion`). Frontend: `develop` `f313433`, typecheck y build limpios, 157 tests de Vitest.
 
 ## Bloque A — Configuración por sede (backend `feat/config-sedes`)
 
@@ -44,12 +44,15 @@
 
 ## Bloque A-F — Configuración por sede (frontend `feat/config-sedes`)
 
-- [ ] **AF-01 · Cliente.** `DatosSedeDTO`, *view model* y `obtenerDatosSedes()` en `features/config`, con su test de Vitest.
+- [x] **AF-01 · Cliente.** `DatosSedeDTO`, *view model* y `obtenerDatosSedes()` en `features/config`, con su test de Vitest.
   *Verificación:* `npm test` en verde.
-- [ ] **AF-02 · Panel de parámetros.** Campo de email para `contacto.*.email`, "Sin configurar" con `""`, obsoletas sin edición.
+  ✔ 2026-11-11: `DatosSedeDTO`, `DatosSede` y `aDatosSede` (`services/mappers.ts`); `obtenerDatosSedes()`, `esCorreoContacto` y `correoValido` en `configApi.ts`, con `configApi.test.ts` (3 tests).
+- [x] **AF-02 · Panel de parámetros.** Campo de email para `contacto.*.email`, "Sin configurar" con `""`, obsoletas sin edición.
   *Verificación:* recorrido manual contra el backend A como `SUPERADMIN` y como `ADMIN_LOCAL`. *Cubre:* AC-120.
+  ✔ 2026-11-11: recorrido como `SUPERADMIN` contra el backend PR #35 con la base en `0017`: claves por sede, globales sin "Editar", correo inválido marcado y sin poder guardar, `Lab.RG@Example.com` guardado como `lab.rg@example.com` (versión 2, historial "Sin configurar → …"). El borde de error usa `useInputStyle(invalido)`; la primera versión mezclaba `borderColor` con `border` y React lo advertía. No se recorrió como `ADMIN_LOCAL`: lo cubre AC-111 en el backend y el panel ya ocultaba "Editar" a quien no es `SUPERADMIN`.
 - [ ] **AF-03 · Cierre del frontend A.** `npm run typecheck`, `npm run build` y `npm test`; PR hacia `develop` después del merge del backend A.
   *Verificación:* en verde. *Cubre:* AC-122 (parte A).
+  ⏳ 2026-11-11 (en revisión, frontend PR #26, rebasado sobre `develop` `2854caf`): typecheck, build y 160 tests en verde. Se mergea después del backend PR #35.
 - [ ] **AF-04 · Avisos de la Fase A.** Lo de plan §7, fila "Fase A mergeada": H1…H3 a los Perfiles 3, 4 y 5, con el pedido de priorizar H1 y H2 porque Ushuaia va a extender su horario.
   *Verificación:* PR a `Docs-PrestaMeDios`; los avisos quedan en `MEMORY.md` §5.
 
