@@ -1,8 +1,8 @@
 # TASKS-08 — Espacios y reservas (`spaces`)
 
-> **Estado:** `BORRADOR (retroactivo)` · **Versión:** 1.0.0 · **Fecha:** 2026-11-11 · **Perfil:** 4
-> **Spec:** `specs/08-spaces-espacios-reservas/spec.md` v1.0.0 (`BORRADOR (retroactivo)`) · **Plan:** `specs/08-spaces-espacios-reservas/plan.md` v1.0.0 (`BORRADOR (retroactivo)`)
-> Las tareas nuevas de brechas quedan pendientes de aprobación explícita del spec. Los bloques de código ya implementados se registran por separado abajo; esta revisión sólo modifica documentación.
+> **Estado:** Línea base IMPLEMENTADO (retroactivo, aprobado por el Perfil 1 el 2026-11-11) · Fases 1–5 BORRADOR · **Versión:** 1.0.0 · **Fecha:** 2026-11-11 · **Perfil:** 4
+> **Spec:** `specs/08-spaces-espacios-reservas/spec.md` v1.0.0 (línea base IMPLEMENTADO; Fases 1–5 BORRADOR) · **Plan:** `specs/08-spaces-espacios-reservas/plan.md` v1.0.0 (línea base IMPLEMENTADO; Fases 1–5 BORRADOR)
+> Las tareas de las Fases 1–5 quedan pendientes de aprobación de esas fases. Los bloques de código ya implementados se registran por separado abajo; esta revisión sólo modifica documentación.
 
 Leyenda: `[ ]` pendiente · `[~]` bloqueada/en curso · `[x]` completada.
 
@@ -13,7 +13,7 @@ Leyenda: `[ ]` pendiente · `[~]` bloqueada/en curso · `[x]` completada.
 | **T0.1** | Leer Constitución, `AGENTS.md`, perfiles, ERS y specs que ya cubren `spaces`. | Identificadores estables de Docs en `spec.md` §12. | `[x]` |
 | **T0.2** | Contrastar API, modelos, validaciones y tests de Backend. | Auditoría de `origin/develop` (`3e85feb`); evidencia citada en `spec.md` §1.3 y §12. | `[x]` |
 | **T0.3** | Contrastar montaje, calendario, servicios, tipos y UI de Frontend. | Auditoría de `origin/develop` (`03ce339`); refs citadas en `spec.md` §1.3 y §12. | `[x]` |
-| **T0.4** | Registrar resultado real de pruebas Backend. | Repetición en Backend `develop` `e54ad16c9dea04eb91473c21e8ceb07e7339c41a`, comando `pytest -q tests/spaces tests/test_spaces_migrations.py`: **58 passed, 0 failed, 0 errors, 0 skipped** en 22.39 s. La primera ejecución había dado 22 passed y 36 errores de setup por conexiones cerradas; la repetición pasó sin cambios de código. | `[x]` |
+| **T0.4** | Registrar resultado real de pruebas Backend. | Backend `develop` `e54ad16c9dea04eb91473c21e8ceb07e7339c41a`, `pytest -q tests/spaces tests/test_spaces_migrations.py`: **58 passed** en 22.39 s. La primera corrida falló por permisos del rol local de PostgreSQL para crear la base de tests y la extensión `btree_gist`; se corrigió el entorno, sin cambios de código. | `[x]` |
 
 ## Bloques de implementación ya entregados
 
@@ -43,7 +43,7 @@ Estos bloques describen trabajo que ya existe en `origin/develop`; las casillas 
 
 | ID | Tarea | Criterios | Dependencia | Estado |
 | --- | --- | --- | --- | --- |
-| **T2.1** | Integrar el contrato ya publicado: `config.service.datos_de_sede(db, sede)` para otros módulos y `GET /api/v1/config/sedes` para frontend. | AC-S03 | SPEC-09 Fase A disponible en Backend `develop`; §4.4-§4.5, H1. No requiere acordar claves nuevas con Perfil 1. | `[ ]` |
+| **T2.1** | Cuando la Fase A de SPEC-09 esté en Backend `develop`, integrar el contrato definido: `config.service.datos_de_sede(db, sede)` para otros módulos y `GET /api/v1/config/sedes` para frontend. | AC-S03 | SPEC-09 está en `BORRADOR`; cuando su Fase A esté en Backend `develop`, seguir §4.4-§4.5 y H1. No requiere acordar claves nuevas con Perfil 1. | `[ ]` |
 | **T2.2** | Leer `datos_de_sede(db, espacio.sede)` en la validación del horario y el cálculo de disponibilidad; conservar la zona del laboratorio. | AC-S01, AC-S03, AC-S07 | T2.1 | `[ ]` |
 | **T2.3** | Obtener horario/correo por sede desde `GET /api/v1/config/sedes` y mostrar el correo ante `ANTICIPACION_INSUFICIENTE`; no confirmar solicitudes rechazadas. | AC-S03 | T2.1, T2.2; SPEC-09 §4.5/H1 | `[ ]` |
 | **T2.4** | Resolver el límite de ventana entre calendario por meses y máximo de 120 días configurado por servidor. | AC-S11 | Contrato actual `CalendarGrid` y `config`. | `[ ]` |
@@ -70,12 +70,12 @@ Estos bloques describen trabajo que ya existe en `origin/develop`; las casillas 
 | --- | --- | --- | --- | --- |
 | **T5.1** | Decidir si se resuelve DT-09 y, en tal caso, redactar migración de enum compatible y reversible antes de cambiar modelos. | P7, DT-09 | Aprobación del equipo; upgrade/downgrade/upgrade. | `[ ]` |
 | **T5.2** | Revisar y cerrar brechas de integridad temporal identificadas, incluidos límites de rango a nivel PostgreSQL. | AC-S02, AC-S03, AC-S13 | Casos válidos/inválidos y concurrencia contra PostgreSQL. | `[ ]` |
-| **T5.3** | Cerrar validación de suites backend/frontend. | AC-S01…AC-S13 | Backend `develop` `e54ad16c9dea04eb91473c21e8ceb07e7339c41a`: rerun de `pytest -q tests/spaces tests/test_spaces_migrations.py`, 58 passed, 0 failed, 0 errors, 0 skipped en 22.39 s. Frontend `develop` `8cbc76a5ccee77211abb1ca9dacfd1d5e551beb6`: `npm run build` exitoso; `npm test`: 16 archivos, 126 passed, 0 failed, 0 skipped. Resultados separados del `npm audit`, en `spec.md` §1.3 y §12. | `[x]` |
+| **T5.3** | Cerrar validación de suites backend/frontend. | AC-S01…AC-S13 | Backend `develop` `e54ad16c9dea04eb91473c21e8ceb07e7339c41a`: `pytest -q tests/spaces tests/test_spaces_migrations.py`, 58 passed en 22.39 s. La primera corrida falló por permisos del rol local de PostgreSQL para crear la base de tests y `btree_gist`; se corrigió el entorno sin cambios de código. Frontend `develop` `8cbc76a5ccee77211abb1ca9dacfd1d5e551beb6`: `npm run build` exitoso; `npm test`: 16 archivos, 126 passed. Resultados separados del `npm audit`, en `spec.md` §1.3 y §12. | `[x]` |
 
 ## Orden y bloqueos
 
 1. T1.1 → T1.2 puede avanzar independientemente de K10, usando la interfaz pública de `users`.
-2. T2.1 bloquea T2.2 y T2.3; depende de la Fase A de SPEC-09 ya disponible en Backend `develop`.
+2. T2.1 bloquea T2.2 y T2.3; depende de que la Fase A de SPEC-09 esté en Backend `develop`.
 3. T3.1 precede cualquier cambio de persistencia/API para GLO-04.
 4. T4.1 bloquea T4.2 y T4.3; coordinación C-N02 con Perfil 5.
 5. T5.1 requiere decisión del equipo; no se agrupa automáticamente con GLO-04.
