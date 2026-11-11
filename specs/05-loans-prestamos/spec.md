@@ -135,7 +135,7 @@ Base: `/api/v1/loans` · tag "Préstamos y Solicitudes" · todos exigen `Authori
 | `GET /ordenes/docente` | DOCENTE | Panel de observación docente | 200 | 401, 403 |
 | `GET /ordenes` | ADMIN_LOCAL, SUPERADMIN | Bandeja (`estado`=`pendiente` por defecto, `sede` solo SUPERADMIN, `limit`, `offset`) | 200 | 401, 403 |
 | `GET /ordenes/{orden_id}` | dueño, admin con alcance, docente de la asignatura | Detalle | 200 | 401, 404 |
-| `GET /ordenes/{orden_id}/aval` | dueño, admin con alcance | El PDF de aval de la orden (PRE-05), servido con `files.abrir_archivo` y `respuesta_descarga` (RN-61 de SPEC-03). El docente de la asignatura no lo descarga (RN-60 de SPEC-03). Una orden sin aval responde `404 ARCHIVO_NO_ENCONTRADO` | 200 | 401, 404 |
+| `GET /ordenes/{orden_id}/aval` | dueño, admin con alcance | El PDF de aval de la orden (PRE-05), servido con `files.abrir_archivo` y `respuesta_descarga` (RN-61 de SPEC-03). Cualquier otro usuario, incluido el docente de la asignatura, recibe `404` (RN-60 de SPEC-03). Una orden sin aval responde `404 ARCHIVO_NO_ENCONTRADO` | 200 | 401, 404 |
 | `PATCH /ordenes/{orden_id}/estado` | ver §4 | Aprobar, rechazar o cancelar | 200 | 401, 403, 404, 409, 422 |
 | `GET /ordenes/{orden_id}/unidades-libres` | ADMIN_LOCAL, SUPERADMIN | Por cada línea de la orden, las unidades del modelo en la sede que están `disponible` y sin otra línea `reservado` o `entregado` que se solape con su período, para asignar al aprobar (RN-L10, RN-L12) | 200 | 401, 403, 404 |
 | `PATCH /ordenes/{orden_id}/detalles/{detalle_id}/estado` | ADMIN_LOCAL, SUPERADMIN | Entregar, devolver o cancelación forzada | 200 | 401, 403, 404, 409, 422 |
