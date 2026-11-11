@@ -8,8 +8,9 @@
 
 ## Bloque 0 — Preparación
 
-- [ ] **T-00 · Documentación de la aprobación.** Registrar (el Docs PR #29 ya está mergeado) en `MEMORY.md` lo de plan §7, fila "Al aprobar el spec": ADR, las dos DT nuevas, H1…H4 en §5 y las preguntas de spec §10.1 en §6.
+- [x] **T-00 · Documentación de la aprobación.** Registrar (el Docs PR #29 ya está mergeado) en `MEMORY.md` lo de plan §7, fila "Al aprobar el spec": ADR, las dos DT nuevas, H1…H4 en §5 y las preguntas de spec §10.1 en §6.
   *Verificación:* PR a `Docs-PrestaMeDios` sin conflictos con `main`.
+  ✔ 2026-11-11: ADR-025, DT-33, DT-34, H1…H3 en §5 y las preguntas en §6 de `MEMORY.md`, en el Docs PR #31 (rama `docs/spec-09-revision`, con `main` integrado).
 - [ ] **T-01 · Línea base.** `develop` actualizado en backend y frontend; `pytest -q`, `alembic heads` (una sola cabeza); `npm run typecheck`, `npm run build` y `npm test`.
   *Verificación:* resultados anotados en el PR del bloque A; si algo falla de entrada, se informa antes de seguir.
 
