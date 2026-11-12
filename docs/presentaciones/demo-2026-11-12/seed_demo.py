@@ -10,7 +10,8 @@ Uso (desde Backend-PrestaMeDios con el .venv activo):
 
 import asyncio
 import sys
-from datetime import date, timedelta
+from datetime import date, datetime, time, timedelta
+from zoneinfo import ZoneInfo
 
 import httpx
 from sqlalchemy import select, update
@@ -127,6 +128,26 @@ ESPACIOS = [
 ]
 
 
+# Fechas de los ejemplos: días hábiles a partir de pasado mañana, en hora del laboratorio.
+# Los préstamos usan equipos distintos de los que pide Lucía en vivo (Canon y trípode)
+# para no quitarle unidades a la escena 2.
+ZONA_LAB = ZoneInfo("America/Argentina/Ushuaia")
+
+
+def habil(d: date) -> date:
+    while d.weekday() >= 5:
+        d += timedelta(days=1)
+    return d
+
+
+DIA_1 = habil(date.today() + timedelta(days=2))
+DIA_2 = habil(DIA_1 + timedelta(days=1))
+
+
+def a_las(dia: date, hora: int) -> str:
+    return datetime.combine(dia, time(hora), ZONA_LAB).isoformat()
+
+
 def ok(r: httpx.Response, que: str) -> dict | None:
     if r.status_code in (200, 201):
         print(f"  ✓ {que}")
@@ -221,19 +242,68 @@ async def main() -> None:
         else:
             print("  · ya hay comunicados")
 
-        print("Reserva pendiente del docente")
+        async def sesion(email: str) -> dict:
+            r = await c.post(f"{API}/auth/login", json={"email": email, "password": PASSWORD})
+            if r.status_code != 200:
+                raise SystemExit(f"  ✗ login {email}: {r.status_code} {r.text}")
+            return {"Authorization": f"Bearer {r.json()['access_token']}"}
+
+        print("Reservas de espacios de ejemplo")
         if "Aula-Estudio" in espacio_ids:
-            r = await c.post(f"{API}/auth/login", json={"email": "docente.demo@example.com", "password": PASSWORD})
-            tok = r.json()["access_token"]
-            dia = date.today() + timedelta(days=2)
-            while dia.weekday() >= 5:
-                dia += timedelta(days=1)
-            ok(await c.post(f"{API}/spaces/reservas", headers={"Authorization": f"Bearer {tok}"}, json={
-                "id_espacio": espacio_ids["Aula-Estudio"], "fecha_reserva": dia.isoformat(),
+            martin = await sesion("docente.demo@example.com")
+            joaquin = await sesion("estudiante.rg.demo@example.com")
+            carla = await sesion("admin.ushuaia.demo@example.com")
+            ok(await c.post(f"{API}/spaces/reservas", headers=martin, json={
+                "id_espacio": espacio_ids["Aula-Estudio"], "fecha_reserva": DIA_1.isoformat(),
                 "hora_inicio": "10:00:00", "hora_fin": "12:00:00", "motivo": "Clase práctica de iluminación (prueba)",
-            }), f"Aula-Estudio {dia.isoformat()} 10–12")
+            }), f"pendiente: Martín, Aula-Estudio {DIA_1.isoformat()} 10–12")
+            r = ok(await c.post(f"{API}/spaces/reservas", headers=martin, json={
+                "id_espacio": espacio_ids["Isla de Edición 1"], "fecha_reserva": DIA_2.isoformat(),
+                "hora_inicio": "09:00:00", "hora_fin": "11:00:00", "motivo": "Edición del corto de la cátedra (prueba)",
+            }), f"Martín, Isla de Edición 1 {DIA_2.isoformat()} 9–11")
+            ok(await c.patch(f"{API}/spaces/reservas/{r['id_reserva']}/estado", headers=carla,
+                             json={"nuevo_estado": "Aprobada"}), "  aprobada por Carla")
+            ok(await c.post(f"{API}/spaces/reservas", headers=joaquin, json={
+                "id_espacio": espacio_ids["Aula-Estudio Río Grande"], "fecha_reserva": DIA_2.isoformat(),
+                "hora_inicio": "10:00:00", "hora_fin": "12:00:00", "motivo": "Grabación de entrevistas (prueba)",
+            }), f"pendiente: Joaquín, Aula-Estudio Río Grande {DIA_2.isoformat()} 10–12")
         else:
             print("  · se saltea (los espacios ya existían)")
+
+        print("Préstamos de ejemplo")
+        martin = await sesion("docente.demo@example.com")
+        r = await c.get(f"{API}/loans/ordenes/mias", headers=martin)
+        if r.json():
+            print("  · se saltea (Martín ya tiene órdenes)")
+            return
+        lucia = await sesion("estudiante.demo@example.com")
+        joaquin = await sesion("estudiante.rg.demo@example.com")
+        carla = await sesion("admin.ushuaia.demo@example.com")
+        eq = {codigo: e["id"] for codigo, e in por_codigo.items()}
+
+        def orden(items: list[str], retiro: str, devolucion: str, asignatura: int | None = None) -> dict:
+            o = {"retiro": retiro, "devolucion": devolucion, "acepta_normativa": True,
+                 "items": [{"equipamiento_id": eq[x]} for x in items]}
+            if asignatura is not None:
+                o["asignatura_id"] = asignatura
+            return o
+
+        ok(await c.post(f"{API}/loans/ordenes", headers=martin, json=orden(
+            ["ILU-001", "AUD-002"], a_las(DIA_1, 10), a_las(DIA_2, 15),
+        )), f"pendiente: Martín, panel LED + Rode, {DIA_1.isoformat()} → {DIA_2.isoformat()}")
+
+        o = ok(await c.post(f"{API}/loans/ordenes", headers=lucia, json=orden(
+            ["AUD-001"], a_las(DIA_2, 10), a_las(DIA_2, 15), asignatura=101,
+        )), f"Lucía, Zoom H5, {DIA_2.isoformat()} 10–15")
+        libres = (await c.get(f"{API}/loans/ordenes/{o['id']}/unidades-libres", headers=carla)).json()
+        ok(await c.patch(f"{API}/loans/ordenes/{o['id']}/estado", headers=carla, json={
+            "estado": "aprobada",
+            "asignaciones": [{"detalle_id": x["detalle_id"], "unidad_fisica_id": x["unidades"][0]} for x in libres],
+        }), "  aprobada por Carla, con unidad asignada")
+
+        ok(await c.post(f"{API}/loans/ordenes", headers=joaquin, json=orden(
+            ["CAM-002"], a_las(DIA_1, 10), a_las(DIA_2, 12), asignatura=201,
+        )), f"pendiente: Joaquín (Río Grande), Canon, {DIA_1.isoformat()} → {DIA_2.isoformat()}")
 
 
 asyncio.run(main())
