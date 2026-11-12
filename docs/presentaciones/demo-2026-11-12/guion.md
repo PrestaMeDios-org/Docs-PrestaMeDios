@@ -20,7 +20,7 @@ El 11/11 entraron 14 PR (backend #32…#37, frontend #19…#26). Para la demo im
 | # | Tarea | Responsable | Hecho |
 | :-- | :-- | :-- | :-- |
 | 1 | Poner backend y frontend en `develop` actualizado (`git pull`) y correr `alembic upgrade head` (llega hasta la `0019`) | [nombre] | |
-| 2 | Cargar la base con el script de datos ([`seed_demo.py`](seed_demo.py), en esta carpeta; ver "Levantar la demo en otra compu"). Las categorías ya las crea la `0019`: el script marca "ya existía" y sigue. Desde el 12/11 también carga una foto por equipo (Wikimedia Commons, licencias CC) | [nombre] | |
+| 2 | Cargar la base con el script de datos ([`seed_demo.py`](seed_demo.py), en esta carpeta; ver "Levantar la demo en otra compu"). Las categorías ya las crea la `0019`: el script marca "ya existía" y sigue. Desde el 12/11 también carga una foto por equipo (Wikimedia Commons, licencias CC) y préstamos y reservas de ejemplo (ver abajo) | [nombre] | |
 | 2b | **Abrir el catálogo una vez con internet** antes de presentar: las fotos se cargan desde Wikimedia y quedan en la caché del navegador. Sin internet las tarjetas se ven sin foto, pero todo lo demás funciona | [nombre] | |
 | 3 | **Ensayar el préstamo de punta a punta** (escenas 2 y 3) en la máquina de la demo, con las fechas de hoy | Perfil 3 | |
 | 4 | En Parámetros, cargar el correo de contacto de cada sede (arranca vacío) | Superadmin | |
@@ -50,8 +50,22 @@ uvicorn app.main:app
 ```
 
 - `crear-superadmin` pide la contraseña del superadmin por consola.
-- El script de datos crea los usuarios de este guion (Lucía, Martín, Carla, Joaquín y Sofía, todos `@example.com`), con **la contraseña que se le pase como argumento**. Inventen una para la demo y no la versionen. También crea el catálogo con fotos, los espacios, un comunicado y la reserva pendiente del docente.
+- El script de datos crea los usuarios de este guion (Lucía, Martín, Carla, Joaquín y Sofía, todos `@example.com`), con **la contraseña que se le pase como argumento**. Inventen una para la demo y no la versionen. También crea el catálogo con fotos, los espacios, un comunicado y los préstamos y reservas de ejemplo de la tabla de abajo.
 - Los correos de los usuarios están en `USUARIOS` y `ASPIRANTE`, al principio del script.
+- Correrlo dos veces no duplica nada: lo que ya existe se saltea.
+
+**Qué queda cargado para que ninguna pantalla arranque vacía.** Las fechas se calculan al correr el script: *día 1* es el primer día hábil desde pasado mañana y *día 2*, el hábil siguiente. Los préstamos usan otros equipos que los de la escena 2 (Canon y trípode), para no quitarle unidades a Lucía.
+
+| Qué | De quién | Estado | Dónde se ve |
+| :-- | :-- | :-- | :-- |
+| Préstamo: panel LED Godox + Rode Wireless GO II, del día 1 a las 10:00 al día 2 a las 15:00 | Martín (Ushuaia) | Pendiente | Bandeja de Carla (escena 3) |
+| Préstamo: grabador Zoom H5, día 2 de 10:00 a 15:00, asignatura 101 | Lucía | Aprobado por Carla, con unidad asignada | Mis solicitudes de Lucía (escena 2) |
+| Préstamo: Canon EOS M50, del día 1 al día 2, asignatura 201 | Joaquín (Río Grande) | Pendiente | Sólo el superadmin; Carla no lo ve (escena 5) |
+| Reserva: Aula-Estudio, día 1 de 10:00 a 12:00 | Martín | Pendiente | Solicitudes pendientes de Carla (escena 4) |
+| Reserva: Isla de Edición 1, día 2 de 9:00 a 11:00 | Martín | Aprobada | Calendario de la Isla (escena 4) |
+| Reserva: Aula-Estudio Río Grande, día 2 de 10:00 a 12:00 | Joaquín | Pendiente | Sólo Río Grande (escena 5) |
+
+> Las reservas de ejemplo se crean sólo en una base nueva (cuando el script crea los espacios). Los préstamos, si Martín todavía no tiene órdenes.
 
 **Frontend**
 
@@ -108,25 +122,25 @@ Cada escena dice qué hacer y qué decir. Los números entre paréntesis son los
    - **Devolución:** lunes 16/11 a las 10:00 (el plazo general es de 4 días; elegir más muestra el error de PRE-07).
    - **Código de asignatura:** cualquiera, por ejemplo `[código]`.
    - Tildar **Acepto la normativa de préstamos del laboratorio** y enviar.
-5. **Ver mis solicitudes:** la orden figura **Pendiente**.
+5. **Ver mis solicitudes:** la orden nueva figura **Pendiente**, junto al préstamo del Zoom H5 que ya tenía **Aprobado**.
 > *Decir:* "El estudiante ve la disponibilidad real antes de pedir; el sistema aplica los plazos y la anticipación del reglamento, y esos valores se cambian desde Parámetros".
 > Opcional: agregar la **Sony A7 III** (alta gama) para mostrar que el formulario exige el PDF del aval.
 
 ### Escena 3 — La admin valida (2 min 30) · PRE-10, PRE-15, PRE-18
-1. Ventana normal (Carla): **Bandeja de Validaciones** → aparece la orden de Lucía, con su nombre.
+1. Ventana normal (Carla): **Bandeja de Validaciones** → aparece la orden de Lucía, con su nombre, debajo de la de Martín (la bandeja ordena de la más vieja a la más nueva). La de Joaquín no aparece: es de Río Grande.
 2. **Revisar y aprobar:** elegir la unidad física de cada equipo entre las libres para ese período; mostrar que se puede **ajustar el horario** de retiro antes de aprobar. Aprobar.
 3. Ventana privada (Lucía): recargar Mis solicitudes → **Aprobada**, con las fechas finales.
 > *Decir:* "La aprobación asigna unidades concretas. Si dos admins intentan dar la misma cámara al mismo tiempo, la base de datos lo impide: lo probamos con tests de concurrencia".
 > Si sobra tiempo: crear otra orden y **Rechazarla** con motivo.
 
 ### Escena 4 — Espacios (1 min 30) · RES-01…05, GLO-04
-1. Lucía: Reservas de Espacios → Isla de Edición 1 → elegir dos franjas seguidas de un día válido → confirmar → queda **Pendiente** como una sola reserva.
-2. Carla: Solicitudes pendientes → se ve **el nombre de quien reservó** → **Aprobar**.
+1. Lucía: Reservas de Espacios → Isla de Edición 1 → elegir dos franjas seguidas **libres** de un día válido (el día 2 de 9:00 a 11:00 ya está aprobado para Martín) → confirmar → queda **Pendiente** como una sola reserva.
+2. Carla: Solicitudes pendientes → se ven la de Lucía y la de Martín en el Aula-Estudio, con **el nombre de quien reservó** → **Aprobar** la de Lucía.
 3. Carla: **Bloquear** el Aula-Estudio un día con motivo "Mantenimiento" → pasar el mouse sobre el día para ver el motivo → **deshacer** el bloqueo.
 > *Decir:* "Dos aprobaciones de la misma franja no pueden convivir: lo impide la base de datos".
 
 ### Escena 5 — Superadmin y sedes (1 min 30) · GLO-01, GLO-03
-1. Entrar como **Superadmin**: selector de sede, Río Grande con 3 equipos (5.1, 5.2).
+1. Entrar como **Superadmin**: selector de sede, Río Grande con 3 equipos (5.1, 5.2). En la Bandeja de Validaciones ve también la orden de Joaquín, que Carla no veía.
 2. **Parámetros:** horario y correo de contacto **por sede**. Cambiar el cierre de Ushuaia con un motivo y abrir el **Historial**; después volverlo a su valor.
 3. Entrar como **Joaquín** (Río Grande): no ve los equipos, espacios ni comunicados de Ushuaia (6.1–6.3).
 > No prometer que el cambio de horario mueve las franjas de espacios: todavía leen el horario global.
