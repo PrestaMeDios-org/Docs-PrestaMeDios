@@ -1,6 +1,6 @@
 # Análisis de estado: fuentes, validación, pendientes y salida a producción
 
-> **Fecha:** 10/11/2026 · **Base:** `develop` de Backend (`e54ad16`) y Frontend (`e1ae84e`), `docs/ERS.md` (con el Docs PR #25), `MEMORY.md` (última actualización 10/11) y `docs/pruebas/recorrido-funcional.md`.
+> **Fecha:** 10/11/2026; estado por requisito (§1 y §4) actualizado el 12/11 sobre `develop` de Backend (`1c89c53`) y Frontend (`6ae5db4`) · **Base original:** `develop` de Backend (`e54ad16`) y Frontend (`e1ae84e`), `docs/ERS.md` (con el Docs PR #25), `MEMORY.md` (última actualización 10/11) y `docs/pruebas/recorrido-funcional.md`.
 > **Para qué sirve:** preparar la demo del 12/11 y la presentación final, y acordar en el equipo qué falta para que la aplicación la use el Laboratorio de verdad.
 > **Cómo se armó:** lectura del ERS, la memoria, los specs, el código y la historia de PR de los dos repos, con asistencia de IA. El estado por requisito es una estimación del equipo: cada perfil debería revisar su fila antes de citar los números afuera.
 
@@ -9,7 +9,7 @@
 ## 1. Resumen
 
 - **De dónde sale lo que sabemos:** el Reglamento del LMA (Res. CICSE 056/2023), tres entrevistas con la referente (27/08, 04/09 y 16/10), un pedido puntual de permisos (18–21/09) y el recorrido funcional del 10/11. Todo lo demás son decisiones del equipo (ADR), y varias no se validaron con la referente.
-- **Estado:** de los 47 requisitos del ERS, **22 funcionan de punta a punta (47 %)**, **10 tienen backend pero no pantalla** (sobre todo el circuito de préstamo) y **15 no empezaron**. Con backend, 32 de 47 (68 %). La cátedra pide al menos un 80 % para el final.
+- **Estado:** de los 47 requisitos del ERS, **34 funcionan desde la pantalla (72 %)** al 12/11 (eran 22 el 10/11: el 11/11 entraron el formulario de solicitud, la bandeja de validaciones, el aval, el horario por sede y las mejoras de espacios) y **13 no empezaron**. La cátedra pide al menos un 80 % para el final.
 - **Lo que más riesgo tiene sin corroborar:** cómo sabe el sistema qué docente está a cargo de qué asignatura (PRE-03, PRE-20), las cantidades de las sanciones (USR-09) y si la regla de 24 h aplica a docentes.
 - **Documentación desactualizada:** el snapshot de `MEMORY.md` §1 decía que `notifications`, la Fase 2 de `loans` y la disponibilidad de `inventory` estaban en PR abiertos (corregido el 10/11), y `tasks.md` de SPEC-05 no marca T2.9 ni T2.10 aunque ya están en `develop`. Y el ERS tiene vacías secciones que la cátedra exige para aprobar el final (§6).
 - **Para "salir a la calle"** falta, además del circuito de préstamo en pantalla: un servidor con HTTPS, copias de seguridad, correo institucional, el inventario real cargado, términos y condiciones con aval del Laboratorio, y un responsable del sistema después de la materia (§5).
@@ -91,60 +91,60 @@ Leyenda: **✔** funciona desde la pantalla · **◐** funciona con salvedades �
 | USR-02 Recuperación de contraseña | ◐ | Falta probar con correo real |
 | USR-03 Datos de contacto y foto | ✔ | |
 | USR-04 Gestión de usuarios | ✔ | |
-| USR-05 Registro con validación manual | ◐ | Teléfono todavía opcional (SPEC-08 Fase B) |
-| USR-06 Panel de solicitudes | B | `GET /loans/ordenes/mias`; falta la pantalla y las reservas de espacios del usuario |
-| USR-07 Historial de actividad | ✘ | |
+| USR-05 Registro con validación manual | ◐ | Teléfono obligatorio en revisión (SPEC-09 Fase B, rama `feat/users-telefono`) |
+| USR-06 Panel de solicitudes | ✔ | Mis solicitudes (préstamos, frontend PR #24) y Mis reservas (espacios) |
+| USR-07 Historial de actividad | ◐ | Historial de espacios confirmados y usados (frontend PR #20) y órdenes pasadas en Mis solicitudes; falta una vista unificada |
 | USR-08 Logs de auditoría global | ✘ | Hay historiales parciales (parámetros, cuentas, órdenes) |
 | USR-09 Llamados de atención y suspensiones | ✘ | Depende de N2 |
-| PRE-01 Catálogo con disponibilidad | ◐ | Mini-calendario sin estilos (DT-31) e ilegible en modo oscuro (DT-32) |
+| PRE-01 Catálogo con disponibilidad | ✔ | DT-31 y DT-32 resueltas (frontend PR #23) |
 | PRE-02 Búsqueda y filtros | ✔ | |
-| PRE-03 Carrito y orden de pedido | B | Carrito en pantalla; el envío está deshabilitado |
-| PRE-04 Validación del formulario | ✘ | Va con la pantalla de la solicitud |
-| PRE-05 Alta gama con aval PDF | B | `files` listo; `loans` sigue respondiendo `422 AVAL_REQUERIDO` (K3) |
-| PRE-06 Fechas y franjas horarias | B | |
-| PRE-07 Límite de 4 días | B | |
+| PRE-03 Carrito y orden de pedido | ✔ | Formulario de solicitud desde el carrito (frontend PR #24) |
+| PRE-04 Validación del formulario | ✔ | Errores por campo en el formulario de solicitud |
+| PRE-05 Alta gama con aval PDF | ✔ | Aval con `files` (backend PR #34); la admin lo descarga desde la bandeja |
+| PRE-06 Fechas y franjas horarias | ✔ | Con el horario global: falta leer el horario por sede (T1.13) |
+| PRE-07 Límite de 4 días | ✔ |
 | PRE-08 Cancelación automática | ✘ | Necesita una tarea programada |
-| PRE-09 Solicitudes de docentes | B | |
-| PRE-10 Aprobación o rechazo | B | Asigna unidades con control de concurrencia |
+| PRE-09 Solicitudes de docentes | ✔ |
+| PRE-10 Aprobación o rechazo | ✔ | Bandeja: aprobar eligiendo unidades libres, rechazar con motivo |
 | PRE-11 Renovación de notebooks | ✘ | Responde `501` |
 | PRE-12 Gestión de stock | ◐ | Falta el historial por unidad en pantalla |
 | PRE-13 Entrega y devolución | ✘ | Fase 3 de SPEC-05 |
 | PRE-14 Bloqueo por mantenimiento | ✔ | |
-| PRE-15 Bandeja centralizada | B | |
+| PRE-15 Bandeja centralizada | ✔ | Bandeja de Validaciones por jurisdicción |
 | PRE-16 Calendario maestro | ✘ | |
-| PRE-17 Cancelación forzada | B | El admin cancela una orden aprobada con motivo (PR #28); falta la alerta al usuario (NOV-04) y `reservas_afectadas` en `inventory` |
-| PRE-18 Modificar horario al aprobar | B | |
+| PRE-17 Cancelación forzada | ◐ | La admin cancela una orden aprobada con motivo; falta la alerta al usuario (NOV-04) y `reservas_afectadas` en `inventory` |
+| PRE-18 Modificar horario al aprobar | ✔ | Ajuste de horario en el modal de aprobación |
 | PRE-19 Alta de equipamiento | ✔ | |
 | PRE-20 Panel docente | ✘ | Bloqueado por N1 |
 | RES-01 Calendario de espacios | ✔ | |
-| RES-02 Solicitud de turno | ◐ | Se crea con un clic, sin confirmación |
-| RES-03 Cancelación | ◐ | La franja sigue marcada hasta recargar |
+| RES-02 Solicitud de turno | ✔ | Confirmación previa y franjas contiguas en una sola reserva (frontend PR #20) |
+| RES-03 Cancelación | ✔ | También cancela una reserva aprobada (backend PR #32) |
 | RES-04 Bloqueo administrativo | ✔ | |
-| RES-05 Aprobación o rechazo | ◐ | Muestra "Usuario #N" en lugar del nombre (K1) |
+| RES-05 Aprobación o rechazo | ✔ | Muestra el nombre del solicitante sólo a la admin (K1, backend PR #32) |
 | NOV-01 Portal estático | ✔ | |
 | NOV-02 Comunicados por sede | ✔ | |
 | NOV-03 Alertas de devolución | ✘ | Fase C de SPEC-06 |
 | NOV-04 Campanita | ✘ | Hoy muestra datos fijos |
 | GLO-01 Sedes y jerarquía | ◐ | Falta la delegación temporal |
-| GLO-02 Horarios operativos | ◐ | Un horario para las dos sedes (SPEC-08) |
-| GLO-03 Panel de parámetros | ◐ | 8 claves; faltan horario por sede, correo y sanciones |
-| GLO-04 Calendario dinámico | ◐ | No se puede revertir un bloqueo ni ver el motivo al pasar el mouse |
+| GLO-02 Horarios operativos | ◐ | El horario por sede ya existe en `config`, pero `spaces` y `loans` todavía leen el global |
+| GLO-03 Panel de parámetros | ◐ | Horario y correo de contacto por sede (SPEC-09 Fase A, PR #35 y #26); faltan las claves de sanciones (USR-09) |
+| GLO-04 Calendario dinámico | ✔ | Bloqueos reversibles, con motivo al pasar el mouse (SPEC-08, PR #32 y #20) |
 | GLO-05 Anotaciones privadas | ✘ | |
 | GLO-06 Tema y menú | ✔ | |
 | IA-01…IA-03 Asistente | ✘ | SPEC-07 sin redactar |
 
-**Totales:** ✔ 11 · ◐ 11 · B 10 · ✘ 15. "De punta a punta" (✔ + ◐) = 22 de 47.
+**Totales al 12/11:** ✔ 26 · ◐ 8 · B 0 · ✘ 13. "De punta a punta" (✔ + ◐) = 34 de 47 (72 %). Al 10/11 eran ✔ 11 · ◐ 11 · B 10 · ✘ 15 (22 de 47).
 
 ### 4.2 Deuda y observaciones que se ven en una demo
 
-- DT-31 y DT-32 (detalle de equipo), Perfil 2.
-- Reserva de espacio con un clic, franja marcada después de cancelar y "Usuario #N" (K1), Perfil 4.
+- ~~DT-31 y DT-32 (detalle de equipo)~~ y ~~reserva con un clic, franja marcada después de cancelar y "Usuario #N" (K1)~~: resueltas el 11/11 (frontend PR #20 y #23, backend PR #32).
 - La campanita de la barra superior muestra datos fijos (`Navbar.tsx`) hasta la Fase B de SPEC-06.
-- Pantallas "pendiente de implementación": Mis Solicitudes, Bandeja de Validaciones, Gestión de Entregas, Historial, Calendario de Operaciones, Anotaciones y Validaciones Pendientes del docente.
+- Cambiar el horario de una sede en Parámetros todavía no mueve las franjas de espacios ni de préstamos (leen el horario global).
+- Pantallas "pendiente de implementación": Gestión de Entregas, Historial, Calendario de Operaciones, Anotaciones y Validaciones Pendientes del docente.
 
 ### 4.3 Para llegar al 80 %
 
-Con los 10 requisitos **B** en pantalla (circuito de préstamo) más los ◐ corregidos, quedan 32 de 47 (68 %). Para pasar el 80 % (38) hacen falta al menos 6 de: PRE-04 (sale con la pantalla de la solicitud), PRE-13, PRE-11, PRE-08, NOV-03, NOV-04, USR-07, PRE-16. **IA-01…03, GLO-05 y USR-08 pueden quedar como trabajo futuro** si la cátedra lo acepta: conviene preguntarlo el jueves.
+Al 12/11 hay 34 de 47 (72 %). Para pasar el 80 % (38) hacen falta al menos 4 de: PRE-13, PRE-20, PRE-11, PRE-08, NOV-03, NOV-04, PRE-16. **IA-01…03, GLO-05 y USR-08 pueden quedar como trabajo futuro** si la cátedra lo acepta: conviene preguntarlo en la demo del 12/11.
 
 ---
 
