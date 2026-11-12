@@ -20,18 +20,56 @@ El 11/11 entraron 14 PR (backend #32…#37, frontend #19…#26). Para la demo im
 | # | Tarea | Responsable | Hecho |
 | :-- | :-- | :-- | :-- |
 | 1 | Poner backend y frontend en `develop` actualizado (`git pull`) y correr `alembic upgrade head` (llega hasta la `0019`) | [nombre] | |
-| 2 | Cargar la base con `demo/seed_demo.py`. Las categorías ya las crea la `0019`: el script marca "ya existía" y sigue. Desde el 12/11 también carga una foto por equipo (Wikimedia Commons, licencias CC) | [nombre] | |
+| 2 | Cargar la base con el script de datos ([`seed_demo.py`](seed_demo.py), en esta carpeta; ver "Levantar la demo en otra compu"). Las categorías ya las crea la `0019`: el script marca "ya existía" y sigue. Desde el 12/11 también carga una foto por equipo (Wikimedia Commons, licencias CC) | [nombre] | |
 | 2b | **Abrir el catálogo una vez con internet** antes de presentar: las fotos se cargan desde Wikimedia y quedan en la caché del navegador. Sin internet las tarjetas se ven sin foto, pero todo lo demás funciona | [nombre] | |
 | 3 | **Ensayar el préstamo de punta a punta** (escenas 2 y 3) en la máquina de la demo, con las fechas de hoy | Perfil 3 | |
 | 4 | En Parámetros, cargar el correo de contacto de cada sede (arranca vacío) | Superadmin | |
 | 5 | Grabar un video del recorrido como plan B | [nombre] | |
 | 6 | Completar el "Registro de la reunión" del recorrido del 10/11 | Perfil 1 | |
 
+## Levantar la demo en otra compu
+
+Para que la presente alguien desde su propia máquina. Lleva unos 30–40 minutos la primera vez: **hacerlo antes, no en el aula**. Si no sale, usar el video del plan B.
+
+**Requisitos:** Python 3.11 o superior, Node.js con npm, PostgreSQL 15 o superior con `postgresql-contrib` (por la extensión `btree_gist`) y los tres repos clonados uno al lado del otro.
+
+**Backend**
+
+```sh
+cd Backend-PrestaMeDios
+git switch develop && git pull
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env          # completar DATABASE_URL y JWT_SECRET_KEY (ver los comentarios del archivo)
+createdb prestamedios_demo    # una base nueva, sólo para la demo
+alembic upgrade head          # llega hasta la 0019
+python -m app.modules.users.cli crear-superadmin --email superadmin.demo@example.com \
+  --nombre Super --apellido Demo --dni 90000000 --telefono "+54 2901 400000"
+PYTHONPATH=. python ../Docs-PrestaMeDios/docs/presentaciones/demo-2026-11-12/seed_demo.py '<contraseña-de-la-demo>'
+uvicorn app.main:app
+```
+
+- `crear-superadmin` pide la contraseña del superadmin por consola.
+- El script de datos crea los usuarios de este guion (Lucía, Martín, Carla, Joaquín y Sofía, todos `@example.com`), con **la contraseña que se le pase como argumento**. Inventen una para la demo y no la versionen. También crea el catálogo con fotos, los espacios, un comunicado y la reserva pendiente del docente.
+- Los correos de los usuarios están en `USUARIOS` y `ASPIRANTE`, al principio del script.
+
+**Frontend**
+
+```sh
+cd Frontend-PrestaMeDios
+git switch develop && git pull
+npm install
+echo "VITE_API_URL=http://localhost:8000" > .env.local
+npm run dev                   # http://localhost:8443
+```
+
+Después: abrir el catálogo con internet (fotos), cargar el correo de contacto de cada sede en Parámetros y ensayar las escenas 2 y 3.
+
 ## El día
 
 - Backend: `uvicorn app.main:app` (sin `--reload`, para que no se reinicie si alguien guarda un archivo). Frontend: `npm run dev`.
 - Dos ventanas del navegador (normal y privada), zoom al 125 % para que se lea desde el fondo, notificaciones del sistema silenciadas.
-- Credenciales a mano en `demo/credenciales.md` (no se versiona, no se proyecta).
+- Contraseña de las cuentas de prueba a mano (la que se usó al correr el script; no se versiona, no se proyecta).
 - Un PDF cualquiera a mano en el escritorio, por si se muestra el aval de alta gama.
 
 ## Láminas (5 min)
