@@ -63,7 +63,7 @@ Ramas de Backend y Frontend: `main` (entregas), `staging`, `develop` (integraci�
 
 | Perfil | Dominio | Módulo backend | Requisitos | Estado |
 | :---- | :---- | :---- | :---- | :---- |
-| **Perfil 1** | Identidad, Usuarios e Historiales, Permisos, Configuración Global y Despliegue | `core`, `users`, `config`, `files` | USR-01…09, GLO-01, GLO-03, GLO-05, GLO-06, despliegue (Docker, CI) | SPEC-01 (v1.0.0), SPEC-02 (v1.0.1) y SPEC-03 (v1.1.0: datos públicos, recuperación de contraseña y correo, archivos y foto, renovación de sesión) implementados en `develop`. Pendientes: USR-06…09, GLO-05, lo nuevo de ADR-022 (horario por sede, teléfono obligatorio, delegación temporal) y despliegue |
+| **Perfil 1** | Identidad, Usuarios e Historiales, Permisos, Configuración Global y Despliegue | `core`, `users`, `config`, `files` | USR-01…09, GLO-01, GLO-03, GLO-05, GLO-06, despliegue (Docker, CI) | SPEC-01 (v1.0.0), SPEC-02 (v1.0.1) y SPEC-03 (v1.1.0: datos públicos, recuperación de contraseña y correo, archivos y foto, renovación de sesión) implementados en `develop`. SPEC-09 v1.0.0: Fase A (horario y correo de contacto por sede) en `develop` (backend PR \#35, frontend PR \#26); Fase B (teléfono obligatorio) en revisión (backend PR \#38, frontend PR \#27). Pendientes: USR-06…09, GLO-05, la delegación temporal (ADR-022 g) y despliegue |
 | **Perfil 2** | Catálogo y Existencias | `inventory` | PRE-01, PRE-02, PRE-12, PRE-14, PRE-19 | Implementado (SPEC-04, Fase A) en backend y frontend. Fase B en `develop` (backend PR \#24). Pendiente la Fase C (historial por unidad y `reservas_afectadas`), que ya no depende de `loans`: sus funciones de lectura están en `develop` (PR \#23) |
 | **Perfil 3** | Préstamos y Concurrencia | `loans` | PRE-03…11, PRE-13, PRE-15…18, PRE-20 | SPEC-05 v1.0.2 `APROBADO`. Backend: Fases 1 y 2 en `develop` (PR \#21, \#23 y \#28), salvo notificaciones. Frontend: Fase 1 en curso (PR \#18). Siguen el aval (T1.12, en `feat/loans-aval`, PR por abrir), la Fase 3 (mostrador) y las pantallas (DT-20) |
 | **Perfil 4** | Espacios (infraestructura física) | `spaces` | RES-01…05, GLO-02, GLO-04 | Implementado con auth y alcance de sede (SPEC-02) |
@@ -97,7 +97,7 @@ python -m venv .venv && source .venv/bin/activate      # Python ≥ 3.11 (valida
 pip install -r requirements-dev.txt                    # incluye requirements.txt + pytest/httpx/cov
 cp .env.example .env                     # DATABASE_URL, JWT_SECRET_KEY (obligatoria, ≥ 32 car.), TEST_DATABASE_URL…
 alembic upgrade head                     # requiere extensión btree_gist en PostgreSQL
-python -m app.modules.users.cli crear-superadmin --email … --nombre … --apellido … --dni …
+python -m app.modules.users.cli crear-superadmin --email … --nombre … --apellido … --dni … --telefono …
 uvicorn app.main:app --reload            # http://localhost:8000 · Swagger en /docs
 pytest -q                                # integración contra TEST_DATABASE_URL (se omiten si no está)
 pytest --cov=app/core --cov=app/modules/users --cov=app/modules/config

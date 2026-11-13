@@ -1,10 +1,10 @@
 # Perfiles del equipo — Guía de trabajo con agentes de IA
 
-> **Versión:** 1.2.0 · **Fecha:** 2026-11-10 · **Mantiene:** Perfil 1
+> **Versión:** 1.3.0 · **Fecha:** 2026-11-12 · **Mantiene:** Perfil 1
 
 > **Subordinado a:** `docs/constitution.md` → `AGENTS.md`. Ante cualquier diferencia, prevalecen esos documentos. Este archivo **no** agrega reglas: indica qué le toca a cada perfil y cómo arrancar a trabajar con un agente de IA.
 
-> Estado del código verificado contra `develop` de ambos repositorios al 2026-11-02; el del Perfil 1 y las interfaces de §5 que publica, al 2026-11-10.
+> Estado del código verificado contra `develop` de ambos repositorios al 2026-11-02; el del Perfil 1 y las interfaces de §5 que publica, al 2026-11-12.
 
 ---
 
@@ -45,6 +45,7 @@
 | Sesión y sede (front) | `useAuth()` / `useSede()` de `src/features/auth/AuthContext.tsx` | Selectores de rol o de usuario simulados |
 | Nombre y apellido de otros usuarios | `datos_publicos_por_ids(db, ids)` de `app/modules/users/service.py` (SPEC-03) | Importar el modelo `Usuario` para leer datos de terceros |
 | Guardar o servir archivos | `vincular_archivo`, `abrir_archivo` y `respuesta_descarga` de `app/modules/files/service.py` (SPEC-03 §6.5) | Guardar archivos por cuenta propia |
+| Horario y correo de contacto de una sede | `datos_de_sede(db, sede)` / `datos_de_sedes(db)` de `app/modules/config/service.py`; en el frontend, `obtenerDatosSedes()` de `features/config` (SPEC-09) | Leer `horario.apertura` y `horario.cierre`, que quedan obsoletas (DT-33), o codificar el horario |
 | Mandar un correo | `notifications` (SPEC-06), que usa `enviar_correo(TipoCorreo.NOTIFICACION, …)` de `app/core/email.py` | Llamar a SMTP directamente |
 
 ### Precisiones sobre reglas que suelen malinterpretarse
@@ -88,8 +89,8 @@
 
 | Estado | Detalle |
 | :---- | :---- |
-| Implementado | SPEC-01 y SPEC-02: registro, login JWT, cuatro roles, aislamiento de sede, directorio y aprobación de cuentas, edición de perfil, cambio obligatorio de contraseña, parámetros con historial. SPEC-03: `datos_publicos_por_ids` para otros módulos; recuperación de contraseña por email (USR-02) con el transporte de correo `app/core/email.py`; módulo `files` (foto de perfil USR-03 y PDF de aval PRE-05); renovación deslizante de la sesión con tope de 8 h y "Cerrar todas mis sesiones". Frontend de login, registro, recuperación de contraseña, perfil con foto, gestión de usuarios y parámetros. Tema claro/oscuro (GLO-06, parcial) |
-| Pendiente | USR-06 (panel de solicitudes propias) · USR-07 (historial de actividad) · USR-08 (auditoría global) · USR-09 (llamados de atención, faltas y suspensión automática, ADR-022) · GLO-05 (notas privadas) · lo nuevo de la entrevista del 16/10 (ADR-022): horario por sede, teléfono obligatorio, correo de contacto del laboratorio y delegación temporal del rol de Superadministrador · Docker y CI (K8 de SPEC-03) |
+| Implementado | SPEC-01 y SPEC-02: registro, login JWT, cuatro roles, aislamiento de sede, directorio y aprobación de cuentas, edición de perfil, cambio obligatorio de contraseña, parámetros con historial. SPEC-03: `datos_publicos_por_ids` para otros módulos; recuperación de contraseña por email (USR-02) con el transporte de correo `app/core/email.py`; módulo `files` (foto de perfil USR-03 y PDF de aval PRE-05); renovación deslizante de la sesión con tope de 8 h y "Cerrar todas mis sesiones". SPEC-09 Fase A: horario y correo de contacto por sede (GLO-03, ADR-022 a y c), con `datos_de_sede` y `GET /config/sedes` (backend PR #35, frontend PR #26). Frontend de login, registro, recuperación de contraseña, perfil con foto, gestión de usuarios y parámetros. Tema claro/oscuro (GLO-06, parcial) |
+| Pendiente | USR-06 (panel de solicitudes propias) · USR-07 (historial de actividad) · USR-08 (auditoría global) · USR-09 (llamados de atención, faltas y suspensión automática, ADR-022) · GLO-05 (notas privadas) · teléfono obligatorio (SPEC-09 Fase B, en revisión: backend PR #38, frontend PR #27) · delegación temporal del rol de Superadministrador (ADR-022 g, spec propio) · Docker y CI (K8 de SPEC-03) |
 | Depende de otros perfiles | USR-06, USR-07 y USR-08 consumen datos de `loans` y `spaces`. Necesitan que esos módulos expongan funciones de lectura (ver §5) |
 
 **Prompt de arranque:**
@@ -219,6 +220,7 @@ estado BORRADOR, y no escribas código hasta que yo lo apruebe.
 | Estado de la unidad física | Perfil 2 ↔ Perfil 3 | Una única fuente de verdad. `loans` no presta unidades en `mantenimiento` o `baja`, y la entrega o devolución actualiza la unidad mediante una función pública de `inventory` (DT-20). **Lado de `inventory` publicado** (SPEC-04): `unidades_asignables`, `unidad_es_asignable`, `marcar_unidad_prestada`, `liberar_unidad` | Spec de `loans` (SPEC-05) |
 | Disponibilidad del catálogo (PRE-01) | Perfil 2 ← Perfil 3 | `loans` expone una función de lectura de ocupación por unidad y período | Spec de `loans` |
 | Historial y panel del usuario (USR-06, USR-07, USR-08) | Perfil 1 ← Perfiles 3 y 4 | `loans` y `spaces` exponen funciones de lectura de las solicitudes de un usuario (`loans`: `ordenes_de_usuario`, SPEC-05 §10.2) | Spec del Perfil 1 |
+| Horario y correo de contacto por sede (GLO-02, GLO-03) | Perfiles 3, 4 y 5 ← Perfil 1 | `config/service.py` expone `datos_de_sede(db, sede)` y `datos_de_sedes(db)` → `DatosSede(sede, horario_apertura, horario_cierre, correo_contacto)`, en una consulta y sin `commit`; `correo_contacto` es `None` mientras no se configure. El frontend usa `GET /api/v1/config/sedes` con `obtenerDatosSedes()`. **Publicada** (backend PR #35, frontend PR #26, 2026-11-11). Falta que `spaces` (H1), `loans` (H2, T1.13) y el portal (H3) dejen de leer `horario.apertura` y `horario.cierre`; hasta entonces el horario por sede no tiene efecto (EC-51) | SPEC-09 (Fase A) |
 | Datos públicos de usuarios | Perfiles 3 y 4 ← Perfil 1 | `users/service.py` expone `datos_publicos_por_ids(db, ids)` → `{id: DatosPublicosUsuario(id, nombre, apellido)}`, sin DNI, email ni teléfono (P6). No filtra por sede: quien llama sólo pasa ids que ya puede mostrar. **Publicada** (backend PR #18): la usan `loans` (K2) y `notifications`; falta `spaces` (K1) | SPEC-03 (Fase A) |
 | Archivos (aval PRE-05) | Perfil 3 ← Perfil 1 | `files/service.py` expone `vincular_archivo` (dentro de la transacción del llamador, sin `commit`), `abrir_archivo` y `respuesta_descarga`. **Publicada** (backend PR #26); falta que `loans` reemplace el `422 AVAL_REQUERIDO` (K3) | SPEC-03 (Fase B2) |
 | Transporte de correo | Perfil 5 ← Perfil 1 | `core/email.py` expone `enviar_correo(TipoCorreo.NOTIFICACION, destinatario, {"titulo", "mensaje"})` y `ErrorEnvioCorreo`. **Publicado** (backend PR #29); lo usa la Fase C de SPEC-06 (K6, C-N03) | SPEC-03 (Fase B1) |
@@ -240,6 +242,7 @@ estado BORRADOR, y no escribas código hasta que yo lo apruebe.
 
 | Versión | Fecha | Cambio |
 | :---- | :---- | :---- |
+| 1.3.0 | 2026-11-12 | SPEC-09 Fase A en `develop` (Perfil 1): interfaz "Horario y correo de contacto por sede" publicada (§5) y en "Lo que ya existe" (§2); estado del Perfil 1 al día (§4). La cabecera vuelve a coincidir con el historial (decía 1.2.0) |
 | 1.2.1 | 2026-11-11 | Perfil 3 al día (SPEC-05 aprobado, Fases 1 y 2 en `develop`, aval en curso); el Perfil 2 ya no depende de `loans` para su Fase C |
 | 1.2.0 | 2026-11-10 | Cierre de SPEC-03 (Perfil 1): estado del Perfil 1 al día (§4); `datos_publicos_por_ids`, `files` y el transporte de correo en "Lo que ya existe" (§2) y como interfaces publicadas (§5) |
 | 1.1.0 | 2026-11-02 | Estado al día con `develop`: Perfil 2 con SPEC-04 Fase A implementada; Perfil 3 con endpoints protegidos (`501`) y SPEC-05 en borrador; Perfil 1 con SPEC-03 por fases; nueva interfaz "Datos públicos de usuarios" (§5) |

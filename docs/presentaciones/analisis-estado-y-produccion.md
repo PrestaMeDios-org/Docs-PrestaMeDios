@@ -70,11 +70,11 @@
 | :-- | :-- | :-- |
 | Constitución | v1.1.0 sin ratificación del equipo; enmienda 1.1.1 propuesta (ADR-019, ADR-021) | Ratificarla en una reunión y dejarlo en la bitácora |
 | SPEC-04 v1.2.0 | `BORRADOR`, pero su addendum (backend PR #19) y la Fase B (backend PR #24, frontend PR #13) ya están en `develop` | Aprobar la versión o documentar la excepción (P1.1) |
-| SPEC-05 v1.0.1 | Corrige EC-L10 y espera el OK del Perfil 1 | Darlo o pedir cambios |
+| SPEC-05 v1.0.1 | Corregía EC-L10 y esperaba el OK del Perfil 1 | **Resuelto el 11/11:** v1.0.1 y v1.0.2 (aval) aprobadas con el merge del Docs PR #26 |
 | SPEC-06 | Spec aprobado, plan y tareas en `BORRADOR`, Fase A ya mergeada (backend #22, frontend #12) | Aprobar plan y tareas |
-| SPEC-08 | `BORRADOR` del 10/11 (horario por sede y teléfono) | Revisar y aprobar |
+| SPEC-09 | Horario y correo por sede y teléfono obligatorio. **Aprobado el 11/11** (Docs PR #31); Fase A en `develop` (backend #35, frontend #26), Fase B en revisión (backend #38, frontend #27) | Revisar y mergear la Fase B; que `spaces` y `loans` lean el horario por sede (H1, H2) |
 | `MEMORY.md` §1 | Decía que `notifications`, la Fase 2 de `loans` y la disponibilidad estaban en PR abiertos, y que había 320 tests | **Corregido el 10/11** (backend #22, #23, #24, #28; frontend #12, #13, #18; 895 tests) |
-| `tasks.md` de SPEC-05 | T2.9 (cancelar una orden aprobada) y T2.10 (ajuste horario) figuran `[ ]`, pero están en `develop` desde el backend PR #28 | Marcarlas (Perfil 3) |
+| `tasks.md` de SPEC-05 | T2.9 (cancelar una orden aprobada) y T2.10 (ajuste horario) figuraban `[ ]` aunque estaban en `develop` desde el backend PR #28 | **Corregido por el Perfil 3 el 11/11** |
 | Versión de Python | No está fija para producción (K8 de SPEC-03); se probó con 3.12 y 3.14 | Fijarla en el spec de despliegue |
 
 ---
@@ -156,9 +156,9 @@ Pensado como un **piloto**: una sede (Ushuaia), uno o dos cuatrimestres, convivi
 
 - [ ] Circuito de préstamo completo en pantalla: solicitud con asignatura y términos, mis solicitudes, bandeja, aprobación con ajuste de horario.
 - [ ] Entrega y devolución en el mostrador, con préstamos demorados en rojo (PRE-13).
-- [ ] Aval PDF de alta gama conectado (K3).
+- [x] Aval PDF de alta gama conectado (K3): backend PR #34 y formulario de solicitud del frontend PR #24.
 - [ ] Al menos un aviso por correo: aprobación/rechazo y vencimiento (NOV-03).
-- [ ] Horario por sede y teléfono obligatorio (SPEC-08).
+- [ ] Horario por sede y teléfono obligatorio (SPEC-09): Fase A en `develop`, Fase B en revisión; falta que `spaces` y `loans` lean el horario por sede.
 - [ ] Corregir lo de §4.2.
 
 ### 5.2 Infraestructura y operación
