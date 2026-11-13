@@ -1,6 +1,6 @@
 # TASKS-09 — Horario y correo de contacto por sede, y teléfono obligatorio
 
-> **Spec:** `specs/09-config-sedes-telefono/spec.md` v1.0.0 (`APROBADO` el 2026-11-11) · **Plan:** `specs/09-config-sedes-telefono/plan.md` v1.0.0 (`APROBADO` el 2026-11-11) · **Estado:** `EN CURSO` (Fase A mergeada: backend PR #35, frontend PR #26; Fase B en revisión: backend PR #38, frontend PR #27; falta AF-04)
+> **Spec:** `specs/09-config-sedes-telefono/spec.md` v1.0.0 (`APROBADO` el 2026-11-11) · **Plan:** `specs/09-config-sedes-telefono/plan.md` v1.0.0 (`APROBADO` el 2026-11-11) · **Estado:** `EN CURSO` (Fase A mergeada: backend PR #35, frontend PR #26; Fase B en revisión: backend PR #38, frontend PR #27; resta cerrar con C-01)
 > Marcar `[x]` al cerrar. Cada tarea tiene su verificación; no se pasa a la siguiente con tests en rojo. Cada bloque es un PR (plan §2). **Orden de merge: A antes que B (D-12).**
 > Comandos de backend desde `Backend-PrestaMeDios/` (venv activo, `TEST_DATABASE_URL` definida); de frontend desde `Frontend-PrestaMeDios/`.
 
@@ -55,8 +55,9 @@
   *Verificación:* en verde. *Cubre:* AC-122 (parte A).
   ⏳ 2026-11-11 (en revisión, frontend PR #26, rebasado sobre `develop` `2854caf`): typecheck, build y 160 tests en verde. Se mergea después del backend PR #35.
   ✔ 2026-11-11: **frontend PR #26 mergeado en `develop`** (`6ae5db4`).
-- [ ] **AF-04 · Avisos de la Fase A.** Lo de plan §7, fila "Fase A mergeada": H1…H3 a los Perfiles 3, 4 y 5, con el pedido de priorizar H1 y H2 porque Ushuaia va a extender su horario.
+- [x] **AF-04 · Avisos de la Fase A.** Lo de plan §7, fila "Fase A mergeada": H1…H3 a los Perfiles 3, 4 y 5, con el pedido de priorizar H1 y H2 porque Ushuaia va a extender su horario.
   *Verificación:* PR a `Docs-PrestaMeDios`; los avisos quedan en `MEMORY.md` §5.
+  ✔ 2026-11-12: aviso en `MEMORY.md` §5 con el contrato de `datos_de_sede` y `obtenerDatosSedes`; la fila de H1…H3 del 2026-11-11 pasa a "la Fase A ya está en `develop`"; interfaz en `docs/perfiles.md` §5 (v1.3.0) y estado en `AGENTS.md` §3.
 
 ## Bloque B — Teléfono obligatorio (backend `feat/users-telefono`)
 
