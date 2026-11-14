@@ -39,17 +39,20 @@ Para que la presente alguien desde su propia máquina. Lleva unos 30–40 minuto
 cd Backend-PrestaMeDios
 git switch develop && git pull
 python -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
+pip install -r requirements-dev.txt   # -dev: el script de datos usa httpx
 cp .env.example .env          # completar DATABASE_URL y JWT_SECRET_KEY (ver los comentarios del archivo)
 createdb prestamedios_demo    # una base nueva, sólo para la demo
 alembic upgrade head          # llega hasta la 0019
 python -m app.modules.users.cli crear-superadmin --email superadmin.demo@example.com \
   --nombre Super --apellido Demo --dni 90000000 --telefono "+54 2901 400000"
-PYTHONPATH=. python ../Docs-PrestaMeDios/docs/presentaciones/demo-2026-11-12/seed_demo.py '<contraseña-de-la-demo>'
+python ../Docs-PrestaMeDios/docs/presentaciones/demo-2026-11-12/seed_demo.py '<contraseña-de-la-demo>'
 uvicorn app.main:app
 ```
 
 - `crear-superadmin` pide la contraseña del superadmin por consola.
+- **Windows (PowerShell):** activar con `.venv\Scripts\Activate.ps1` en lugar de `source .venv/bin/activate`, copiar con `copy .env.example .env`, crear la base desde pgAdmin si `createdb` no está en el PATH y escribir el `crear-superadmin` en una sola línea (sin la `\` final). El script de datos ya no necesita `PYTHONPATH`.
+- La contraseña de las cuentas de prueba tiene que tener **8 o más caracteres, con letras y números** (por ejemplo `Demo2026x`); si no, el script avisa y no carga nada.
+- Si el script falla, dice por qué (falta un paquete, no se conecta a PostgreSQL, falta migrar, falta el superadmin, o la respuesta de la API). Corregir y volver a correrlo: saltea lo que ya se cargó.
 - El script de datos crea los usuarios de este guion (Lucía, Martín, Carla, Joaquín y Sofía, todos `@example.com`), con **la contraseña que se le pase como argumento**. Inventen una para la demo y no la versionen. También crea el catálogo con fotos, los espacios, un comunicado y los préstamos y reservas de ejemplo de la tabla de abajo.
 - Los correos de los usuarios están en `USUARIOS` y `ASPIRANTE`, al principio del script.
 - Correrlo dos veces no duplica nada: lo que ya existe se saltea.

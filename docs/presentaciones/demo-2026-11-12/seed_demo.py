@@ -1,28 +1,60 @@
-"""Carga datos de prueba para el recorrido funcional con la cliente.
+"""Carga datos de prueba para la demo y el recorrido funcional.
 
 Pasa por la API real (in-process, httpx + ASGITransport) para respetar las
 validaciones. Las altas administrativas se firman como el Superadministrador
 (id más bajo con rol SUPERADMIN). Es idempotente: lo que ya existe se saltea.
 
-Uso (desde Backend-PrestaMeDios con el .venv activo):
-    PYTHONPATH=. python <ruta>/seed_demo.py <password-demo>
+Uso, desde la carpeta Backend-PrestaMeDios con el .venv activo y después de
+``pip install -r requirements-dev.txt`` (el script usa httpx):
+    python <ruta>/seed_demo.py <contraseña-de-la-demo>
+La contraseña es la de todas las cuentas de prueba: 8 o más caracteres, con
+letras y números.
 """
 
 import asyncio
+import os
 import sys
 from datetime import date, datetime, time, timedelta
 from zoneinfo import ZoneInfo
 
-import httpx
-from sqlalchemy import select, update
+# Sin PYTHONPATH: el paquete `app` se toma de la carpeta desde la que se corre
+# (así funciona igual en Linux, macOS y Windows).
+sys.path.insert(0, os.getcwd())
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(errors="replace")
 
-from app.core.enums import RolUsuario
-from app.core.security import crear_access_token
-from app.database import AsyncSessionLocal
-from app.main import app
-from app.modules.users.models import Usuario
 
+def _salir(mensaje: str) -> None:
+    raise SystemExit(f"\n✗ {mensaje}\n")
+
+
+if len(sys.argv) != 2:
+    _salir("Falta la contraseña de las cuentas de prueba. Uso: python seed_demo.py <contraseña>")
 PASSWORD = sys.argv[1]
+if len(PASSWORD) < 8 or not any(c.isalpha() for c in PASSWORD) or not any(c.isdigit() for c in PASSWORD):
+    _salir("La contraseña tiene que tener 8 o más caracteres, con letras y números (por ejemplo Demo2026x).")
+
+try:
+    import httpx
+except ModuleNotFoundError:
+    _salir("Falta httpx. Con el .venv activo: pip install -r requirements-dev.txt")
+
+if not os.path.isdir(os.path.join(os.getcwd(), "app", "modules")):
+    _salir("Hay que correrlo desde la carpeta Backend-PrestaMeDios (cd Backend-PrestaMeDios).")
+
+from sqlalchemy import select, update  # noqa: E402
+
+try:
+    from app.core.enums import RolUsuario
+    from app.core.security import crear_access_token
+    from app.database import AsyncSessionLocal
+    from app.main import app
+    from app.modules.users.models import Usuario
+except ModuleNotFoundError as e:
+    _salir(f"Falta el paquete {e.name!r}. Con el .venv activo: pip install -r requirements-dev.txt")
+except Exception as e:  # p. ej. el .env sin JWT_SECRET_KEY o sin DATABASE_URL
+    _salir(f"El backend no arranca: {e}\n  Revisar el .env (DATABASE_URL y JWT_SECRET_KEY, ver .env.example).")
+
 API = "/api/v1"
 
 USUARIOS = [
@@ -155,7 +187,8 @@ def ok(r: httpx.Response, que: str) -> dict | None:
     if r.status_code == 409:
         print(f"  · {que} (ya existía)")
         return None
-    raise SystemExit(f"  ✗ {que}: {r.status_code} {r.text}")
+    _salir(f"{que}: la API respondió {r.status_code} {r.text}\n"
+           "  Lo que se cargó hasta acá queda; corregir y volver a correr el script (saltea lo que ya existe).")
 
 
 async def main() -> None:
@@ -306,4 +339,12 @@ async def main() -> None:
         )), f"pendiente: Joaquín (Río Grande), Canon, {DIA_1.isoformat()} → {DIA_2.isoformat()}")
 
 
-asyncio.run(main())
+try:
+    asyncio.run(main())
+except (OSError, ConnectionError) as e:
+    _salir(f"No se pudo conectar con PostgreSQL: {e}\n  Revisar que esté corriendo y el DATABASE_URL del .env.")
+except Exception as e:
+    if type(e).__module__.startswith(("asyncpg", "sqlalchemy")):
+        _salir(f"Error de base de datos: {str(e).splitlines()[0]}\n"
+               "  ¿Existe la base del DATABASE_URL? ¿Se corrió `alembic upgrade head`?")
+    raise
