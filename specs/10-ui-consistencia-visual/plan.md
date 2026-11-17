@@ -65,10 +65,10 @@ Tabla propia `comunicados_portada`, router propio montado antes que el de `notif
 
 ## 6. Verificación por PR
 
-| PR | Comandos | Resultado al 2026-11-14 |
+| PR | Comandos | Resultado al 2026-11-17 |
 | --- | --- | --- |
-| Frontend | `npm run typecheck`, `npm test`, `npm run build` | En verde: 35 archivos, 257 tests |
-| Backend | `pytest -q`, `alembic heads` | En verde: 969 tests; una sola cabeza (`0020`) |
+| Frontend | `npm run typecheck`, `npm test`, `npm run build` | En verde: 36 archivos, 266 tests (con `develop` y el PR #27 integrados) |
+| Backend | `pytest -q`, `alembic heads` | En verde: 987 tests (con `develop` y el PR #38 integrados); una sola cabeza (`0020`) |
 | Manual | Recorrido con estudiante, docente, admin local y superadmin, en claro y oscuro | Hecho a lo largo del relevamiento (spec §13) |
 
 ---
