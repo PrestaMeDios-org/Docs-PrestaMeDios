@@ -5,7 +5,7 @@
 | **ID** | SPEC-10 |
 | **Perfil responsable** | Perfil 1 — Identidad, Usuarios, Permisos, Configuración Global y Despliegue (transversal al frontend) |
 | **Estado** | `EN REVISIÓN` — 2026-11-14. Entrega 1 enviada por PR (plan §2); falta el aval de los Perfiles 2 a 5 (U1…U4) y la aprobación. Lo que queda sin hacer está en §1.5 (entrega 2) |
-| **Versión** | 0.22.0 |
+| **Versión** | 0.22.1 |
 | **Requisitos cubiertos** | GLO-06 (tema claro/oscuro, menú lateral colapsable y accesibilidad de la interfaz) y la parte de usabilidad del diagnóstico del ERS (§ problemática) |
 | **Responde a** | Recorrido funcional con la cliente del 2026-11-10 (DT-31 y DT-32, ya resueltas, mostraron que faltaba una base visual común) |
 | **Depende de** | Frontend `develop` (`6ae5db4`) y backend `develop` (`1c89c53`, cabeza `0019`). El backend sólo se toca por la portada MOMENTÁNEA M-02 (§4.7) |
@@ -256,13 +256,17 @@ Ninguna tarea agrega funcionalidad: todas describen requisitos que ya están en 
 
 | Método y ruta | Quién | Qué hace |
 | --- | --- | --- |
-| `GET /comunicados/portadas?ids=1,2,3` | Quien puede leer esos comunicados | `[{comunicado_id, tema, tiene_imagen, actualizado_en}]` de los que tienen portada (máx. 50 ids); los que no puede leer se omiten |
+| `GET /comunicados/portadas?ids=1,2,3` | Quien puede leer esos comunicados | `[{comunicado_id, tema, tiene_imagen, actualizado_en}]` de los que tienen portada (máx. 50 ids, entre 1 y 2³¹−1); los que no puede leer se omiten. Una sola consulta con las reglas de lectura de `notifications` |
 | `PUT /comunicados/{id}/portada` `{tema}` | Quien puede editar el comunicado (RN-N5) | Fija el tema y borra la foto |
 | `PUT /comunicados/{id}/portada/imagen` (multipart `archivo`) | Ídem | JPEG, PNG o WebP de hasta 5 MB (firma, no extensión); se vuelve a codificar como JPEG de hasta 1600 px, sin metadatos; borra el tema |
 | `DELETE /comunicados/{id}/portada` | Ídem | Vuelve a automático |
 | `GET /comunicados/{id}/portada/imagen` | Quien puede leer el comunicado | La foto, con los encabezados de `respuesta_descarga`; `404` si no hay |
 
-Fuera de alcance o inexistente → `404` (P4.5); un estudiante o docente que intenta editar → `403`. Errores de la foto con los mismos códigos que `files`, todos `422`: `TIPO_ARCHIVO_NO_PERMITIDO`, `ARCHIVO_DEMASIADO_GRANDE`, `IMAGEN_INVALIDA`. `ids` mal formados → `422 IDS_INVALIDOS`. El router se monta **antes** que el de `notifications`, para que `/comunicados/portadas` no lo tome `/comunicados/{comunicado_id}`.
+Fuera de alcance o inexistente → `404` (P4.5); un estudiante o docente que intenta editar → `403`. Errores de la foto con los mismos códigos que `files`, todos `422`: `TIPO_ARCHIVO_NO_PERMITIDO`, `ARCHIVO_DEMASIADO_GRANDE`, `IMAGEN_INVALIDA`. `ids` mal formados o fuera del rango de `integer` → `422 IDS_INVALIDOS`. El router se monta **antes** que el de `notifications`, para que `/comunicados/portadas` no lo tome `/comunicados/{comunicado_id}`.
+
+**Dependencia de funciones privadas del Perfil 5.** Para aplicar exactamente las mismas reglas que los comunicados, `portada.py` reusa `_filtro_lectura` (lectura, RN-N3) y `_bloquear_para_editar` (edición, RN-N5) de `notifications/service.py`. Están reunidas en un único bloque al principio del archivo: si el Perfil 5 las renombra o cambia su firma, se ajusta ahí. Se le pide que las exponga como públicas (U4/U5). Observación de la revisión del backend PR #39.
+
+**Tests:** `tests/notifications/test_portada.py` (permisos, alcance, foto, `ids`) y `tests/notifications/test_migracion_0020.py` (cadena con `0019`, el `downgrade` borra sólo `comunicados_portada` y el `upgrade` la recrea con sus restricciones).
 
 **Front** (`features/notifications/portada/`): en el formulario, "Portada" con cinco opciones — Automática, los cuatro colores y "Subir foto" (vista previa antes de publicar). Se aplica después de crear o editar el comunicado. La tarjeta muestra la foto, si no el tema elegido, si no el automático.
 
@@ -373,7 +377,7 @@ Se verifican con `npm run typecheck`, `npm run build`, Vitest y capturas antes/d
 | U1 | Perfil 2 | Aval para que `Modal` y `MiniCalendario` pasen a `components/ui` y para la Fase B en `inventory` |
 | U2 | Perfil 3 | Aval para la Fase B en `loans` (formularios de solicitud y bandeja) |
 | U3 | Perfil 4 | Aval para la Fase B en `spaces` (`SpacesPage`, `CalendarGrid`) |
-| U4 | Perfil 5 | Aval para la Fase B en `notifications` |
+| U4 | Perfil 5 | Aval para la Fase B en `notifications`. Además, exponer como públicas `_filtro_lectura` y `_bloquear_para_editar` de `notifications/service.py`, que usa la portada M-02 (§4.7) |
 | U5 | Perfil 5 | **Propuesta; implementada en local como MOMENTÁNEO (M-02, §4.7):** que quien publica un comunicado pueda elegir uno de los cuatro temas o subir una imagen propia. Necesita guardar la elección o la imagen (columna nueva en `comunicados` y un propósito nuevo en `files`) y no está en NOV-02, así que requiere sumarlo al ERS con el equipo o la referente y un spec del Perfil 5. Mientras tanto, el tema se asigna solo por alcance y vencimiento (V-10) |
 | U7 | Perfil 4 | **Propuesta, sin implementar:** paginar en el backend `GET /spaces/reservas?estado=Pendiente` (`limit`/`offset`, y opcionalmente `desde`/`hasta` e `id_espacio`), para que la lista de pendientes del admin (V-21) no traiga todas de una vez cuando sean cientos. Hoy el frontend pagina en memoria; el cambio no altera qué datos ve cada rol |
 | U6 | Perfil 2 | **Propuesta, sin implementar:** administrar los lockers desde la vista por locker (V-17): alta pidiendo sólo el nombre, edición y baja. Hoy PRE-12 fija el locker como un número del 1 al 7 dentro de cada unidad (`unidades_fisicas.locker`), así que esto necesita una tabla `lockers` por sede, una migración que convierta los números actuales, endpoints en `inventory` y decidir qué pasa al borrar un locker con unidades (impedirlo o pedir a dónde moverlas). No está en el ERS: requiere sumarlo con el equipo o la referente y un spec del Perfil 2. Mientras tanto la vista por locker sigue mostrando los lockers 1 a 7 |
@@ -401,6 +405,7 @@ Se verifican con `npm run typecheck`, `npm run build`, Vitest y capturas antes/d
 
 | Versión | Fecha | Autor | Cambio |
 | --- | --- | --- | --- |
+| 0.22.1 | 2026-11-17 | Perfil 1 (con asistencia de IA) | Revisión del backend PR #39 (M-02): `ids` fuera del rango de `integer` → `422`; `GET /comunicados/portadas` en una sola consulta; dependencia de funciones privadas del Perfil 5 documentada en §4.7 y pedida en U4; test de la migración `0020`; se saca un chequeo de `content-length` que no protegía nada |
 | 0.22.0 | 2026-11-14 | Perfil 1 (con asistencia de IA) | Preparado para enviar la entrega 1: estado `EN REVISIÓN`, M-03 y M-04 en §1.4, lo pendiente en §1.5 (marcado `PENDIENTE SPEC-10`), contratos de §4.2, Fase B por dominio (§5), criterios AC-U08…AC-U21, casos de borde, no funcionales y trazabilidad. Plan y tareas redactados. Historial ordenado |
 | 0.21.0 | 2026-11-14 | Perfil 1 (con asistencia de IA) | V-21: pendientes del admin preparadas para muchas solicitudes: número por día en el calendario, filtro por día, período y espacio, y paginación de a 10. Ítem de coordinación U7 (paginación en backend, Perfil 4). Placeholders de "Cargar nuevo espacio" con el acento escapado (`ó`) corregidos. 257 tests y `typecheck` en verde; verificado con el superadmin |
 | 0.20.1 | 2026-11-14 | Perfil 1 (con asistencia de IA) | V-21: se saca "Reservas del día" (repetía las pendientes) y se rediseñan las "Solicitudes pendientes" del admin, agrupadas por día y más legibles. 252 tests y `typecheck` en verde; verificado con el superadmin |
