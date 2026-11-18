@@ -252,7 +252,7 @@ Debido a que las operaciones del laboratorio requieren la intervención directa 
 * **RES-01 - Calendario interactivo:** El sistema proveerá un calendario visible para mostrar los bloques horarios y la disponibilidad operativa de los espacios físicos del laboratorio (Isla de Edición y Aula-Estudio).
 * **RES-02 - Asignación de turnos:** El sistema permitirá al estudiante o docente enviar una solicitud para reservar un bloque horario, registrando el trámite en estado "Pendiente". El sistema admitirá múltiples solicitudes concurrentes para una misma franja horaria, delegando el bloqueo definitivo del recurso y la actualización del estado a "Ocupado" a la posterior aprobación manual del Administrador.
 * **RES-03 - Cancelación de reserva:** El usuario podrá anular, a través de su panel, una reserva de espacio pendiente o aprobada cuyo turno todavía no haya comenzado. La franja se libera de inmediato para el resto de los usuarios.
-* **RES-04 - Bloqueo administrativo de espacios:** El administrador tendrá permisos para inhabilitar la disponibilidad de las Isla de Edición seleccionando días completos (por mantenimiento o feriados) o franjas horarias específicas, impidiendo que los usuarios generen nuevas reservas en esos periodos bloqueados.
+* **RES-04 - Bloqueo administrativo de espacios:** El administrador tendrá permisos para inhabilitar la disponibilidad de las Islas de Edición seleccionando días completos (por mantenimiento o feriados) o franjas horarias específicas, impidiendo que los usuarios generen nuevas reservas en esos periodos bloqueados.
 * **RES-05 - Aprobación o Rechazo de Solicitudes de Reservas de Espacios:** La confirmación de las reservas de espacios físicos no es automática. El Administrador Local o el Superadministrador evaluarán las peticiones y confirmarán la aprobación o rechazo de la solicitud de manera manual. En caso de registrarse solicitudes concurrentes para un mismo bloque horario, la aprobación de una de ellas adjudicará el espacio al usuario seleccionado y descartará las peticiones superpuestas.
 
 #### Subsistema 4: Novedades y Notificaciones
@@ -282,7 +282,7 @@ Debido a que las operaciones del laboratorio requieren la intervención directa 
 
 **Módulo 3: Preferencias de Interfaz**
 
-* **GLO-06 - Accesibilidad y preferencias de interfaz:** EL sistema integrará controles de navegación global que permitirán al usuario alternar entre un tema claro y oscuro, y colapsar el menú lateral.
+* **GLO-06 - Accesibilidad y preferencias de interfaz:** El sistema integrará controles de navegación global que permitirán al usuario alternar entre un tema claro y oscuro, y colapsar el menú lateral.
 
 #### Subsistema 6: Integración de IA (límite de alcance)
 
@@ -418,7 +418,7 @@ Dado que el equipo consta de 5 integrantes y un plazo limitado de 16 semanas, Sc
 1. El usuario selecciona la opción "Olvidé mi contraseña".
 
 
-* **Respuesta del sistema:** El sistema Inicia caso de uso USR-02 - Recuperación de contraseña.
+* **Respuesta del sistema:** El sistema inicia el caso de uso USR-02 - Recuperación de contraseña.
 
 
 
@@ -1203,11 +1203,11 @@ Un capítulo donde se reflexione sobre los cambios que haya sufrido el proyecto,
 
 ### Iteración 1
 
-Primera entrevista con Natalia Ader (cliente) 27/08/2026: conversamos para sacarnos dudas principales de los requerimientos. Conocimos el Laboratorio de Medios. Conversamos acerca de las falencias del procedimientos y le mostramos un diseño aproximado de lo que podríamos ofrecerle como solución, de ahí surgieron nuevas necesidades y ampliaciones del proyecto, como la gestión de inventario en los lockers, la restricción que nuestro sistema sólo funcionará para reservas en horarios habilitados (09hs -16hs), nos comentó sobre la implementación futura de la isla de Digitalización.
+Primera entrevista con Natalia Ader (cliente) 27/08/2026: conversamos para sacarnos dudas principales de los requerimientos. Conocimos el Laboratorio de Medios. Conversamos acerca de las falencias de los procedimientos y le mostramos un diseño aproximado de lo que podríamos ofrecerle como solución, de ahí surgieron nuevas necesidades y ampliaciones del proyecto, como la gestión de inventario en los lockers, la restricción que nuestro sistema sólo funcionará para reservas en horarios habilitados (09hs -16hs), nos comentó sobre la implementación futura de la isla de Digitalización.
 
 ### Iteración 2
 
-Segunda entrevista con Natalia Ader 04/09/2026: Entrevista con preguntas puntuales de cuestiones claves par el funcionamiento de la app, por ejemplo, pensábamos que en las aprobaciones participaban Docentes en primera instancia y luego los Admins, pero resultó que no es así, el proceso de aprobación fue reestructurado a que el estudiante solicita directamente al Admin (Natalia encargada de ambas sedes, Victoria en Ushuaia o Facundo en Rio Grande, que son los no-docentes encargados del Laboratorio de Medios Audiovisuales). Otra cosa que se modificó fue que se eliminó el usuario admin ICSE, y que no deberán ingresar a la plataforma, sino que ellos aprueban los préstamos mediante resoluciones del CICSE.
+Segunda entrevista con Natalia Ader 04/09/2026: Entrevista con preguntas puntuales de cuestiones claves para el funcionamiento de la app, por ejemplo, pensábamos que en las aprobaciones participaban Docentes en primera instancia y luego los Admins, pero resultó que no es así, el proceso de aprobación fue reestructurado a que el estudiante solicita directamente al Admin (Natalia encargada de ambas sedes, Victoria en Ushuaia o Facundo en Rio Grande, que son los no-docentes encargados del Laboratorio de Medios Audiovisuales). Otra cosa que se modificó fue que se eliminó el usuario admin ICSE, y que no deberán ingresar a la plataforma, sino que ellos aprueban los préstamos mediante resoluciones del CICSE.
 
 ### Iteración 3
 
