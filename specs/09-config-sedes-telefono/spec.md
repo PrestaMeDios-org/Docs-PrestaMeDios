@@ -4,7 +4,7 @@
 | --- | --- |
 | **ID** | SPEC-09 |
 | **Perfil responsable** | Perfil 1 — Identidad, Usuarios, Permisos, Configuración Global y Despliegue |
-| **Estado** | `APROBADO` — 2026-11-11, por el Perfil 1, con las recomendaciones de §10 (D-01…D-12) |
+| **Estado** | `IMPLEMENTADO` — 2026-11-18, todo en `develop`: Fase A (backend PR #35, frontend PR #26) y Fase B (backend PR #38, frontend PR #27). Trazabilidad en §12. Aprobado el 2026-11-11 por el Perfil 1, con las recomendaciones de §10 (D-01…D-12). La adopción del horario por sede en `spaces`, `loans` y el portal (H1…H3) sigue pendiente en esos módulos (DT-33) |
 | **Versión** | 1.0.0 |
 | **Requisitos cubiertos** | Fase A: GLO-03 (horario de cada sede y correo de contacto del laboratorio) y el dato que necesita GLO-02 ("según el horario de atención de esa sede"); ADR-022 (a) y (c) · Fase B: USR-05 (teléfono obligatorio), ADR-022 (b), D-16 de SPEC-03 |
 | **Responde a** | K10 de SPEC-03; C19 (la parte del horario) y C1 de SPEC-05; C-N05 de SPEC-06; pedido (b) al Perfil 4 del 2026-11-02 (`MEMORY.md` §5) |
@@ -346,13 +346,19 @@ Se responde también la pregunta (a) que el Perfil 2 hizo al Perfil 1 el 2026-10
 
 ## 12. Trazabilidad
 
-| Requisito | Función o endpoint | Criterios | Bordes | Fase |
-| --- | --- | --- | --- | --- |
-| GLO-03 (horario de cada sede), ADR-022 a | Claves `horario.<segmento>.*`, migración `0017`, `PUT /config/parametros/{clave}` | AC-102…AC-106, AC-111, AC-112, AC-120 | EC-51…EC-54 | A |
-| GLO-03 (correo de contacto), ADR-022 c | Claves `contacto.<segmento>.email` | AC-102, AC-107, AC-120 | EC-55 | A |
-| GLO-02 (dato del horario por sede; el bloqueo lo aplican `spaces` y `loans`) | `config.service.datos_de_sede`, `datos_de_sedes`, `GET /config/sedes` | AC-108…AC-110 | EC-56, EC-57 | A |
-| USR-05 (teléfono obligatorio), ADR-022 b, D-16 de SPEC-03 | `POST /auth/register`, `POST /users`, `PATCH /auth/me`, `PATCH /users/{id}`, CLI `crear-superadmin`; registro, Gestión de usuarios, Mi perfil y aviso | AC-113…AC-119, AC-121 | EC-58, EC-59 | B |
-| Frontend completo | `npm run typecheck`, `npm run build`, Vitest | AC-122 | — | A y B |
+Verificada el 2026-11-18 contra `develop` (backend `d5c38f7`, frontend `5d1278d`): cada criterio de backend tiene al menos un test anotado `# AC-NN`. Rutas de tests relativas a `Backend-PrestaMeDios/tests/` y a `Frontend-PrestaMeDios/src/`.
+
+| Requisito | Función o endpoint | Criterios | Bordes | Tests | Fase |
+| --- | --- | --- | --- | --- | --- |
+| GLO-03 (horario de cada sede), ADR-022 a | Claves `horario.<segmento>.*`, migración `0017`, `PUT /config/parametros/{clave}` | AC-102…AC-106, AC-111, AC-112, AC-120 | EC-51…EC-54 | `config/test_migracion_0017.py`, `config/test_sedes.py`, `config/test_semilla.py` | A |
+| GLO-03 (correo de contacto), ADR-022 c | Claves `contacto.<segmento>.email` | AC-102, AC-107, AC-120 | EC-55 | `config/test_sedes.py`; `features/config/services/configApi.test.ts` | A |
+| GLO-02 (dato del horario por sede; el bloqueo lo aplican `spaces` y `loans`) | `config.service.datos_de_sede`, `datos_de_sedes`, `GET /config/sedes` | AC-108…AC-110 | EC-56, EC-57 | `config/test_sedes.py`; `features/config/services/configApi.test.ts` | A |
+| USR-05 (teléfono obligatorio), ADR-022 b, D-16 de SPEC-03 | `POST /auth/register`, `POST /users`, `PATCH /auth/me`, `PATCH /users/{id}`, CLI `crear-superadmin`; registro, Gestión de usuarios, Mi perfil y aviso | AC-113…AC-119, AC-121 | EC-58, EC-59 | `users/test_telefono.py`, `users/test_perfil.py`; `features/users/services/telefono.test.ts`, `features/auth/roles.test.ts` | B |
+| Frontend completo | `npm run typecheck`, `npm run build`, Vitest | AC-122 | — | 36 archivos, 266 tests en `develop` | A y B |
+
+**Bordes sin test propio.** EC-51 y EC-52 describen lo que pasa en `spaces` y `loans` mientras no adopten el horario por sede (H1, H2): no hay código de este spec que probar. EC-57 lo define y lo prueba SPEC-05 (T1.13, AC-L63). **Criterios de frontend:** AC-120 y AC-121 se verificaron con los recorridos manuales registrados en las tareas AF-02, BF-01 y BF-02; los tests de Vitest cubren la lógica (`obtenerDatosSedes`, `validarTelefono`) y no llevan la anotación `AC-NN`.
+
+**Adopción por los otros perfiles (al 2026-11-18).** `loans/service.py` y `spaces/service.py` siguen leyendo `horario.apertura` y `horario.cierre`, y el portal de `notifications` muestra "en ambas sedes": H1, H2 y H3 siguen abiertos, y con ellos DT-33.
 
 ---
 
@@ -360,6 +366,7 @@ Se responde también la pregunta (a) que el Perfil 2 hizo al Perfil 1 el 2026-10
 
 | Versión | Fecha | Autor | Cambio |
 | --- | --- | --- | --- |
+| 1.0.0 | 2026-11-18 | Perfil 1 (con asistencia de IA) | **`IMPLEMENTADO`**, sin cambios de contrato. Cierre (C-01): §12 con los archivos de test de cada fila, los bordes sin test propio y el estado de H1…H3, verificada contra `develop` (backend `d5c38f7`, frontend `5d1278d`) |
 | 1.0.0 | 2026-11-11 | Perfil 1 | **Aprobado**, con las recomendaciones de §10 (D-01…D-12). Suma la respuesta parcial a la pregunta 1 de §10.1: Ushuaia extiende su horario y Río Grande lo mantiene, lo que confirma la necesidad de horarios distintos por sede (G-1). Plan y tareas en `plan.md` y `tasks.md` |
 | 0.2.0 | 2026-11-11 | Perfil 1 (con asistencia de IA) | Revisión antes de aprobar, sin cambiar las decisiones. **RN-79 corregida:** bloquear "las dos filas en orden alfabético" después de que `actualizar` ya bloqueó la editada podía terminar en *deadlock*; ahora se bloquean la editada y su par en una sola consulta ordenada por clave, para todos los pares de `_REGLAS_CRUZADAS` (G-5 nueva; AC-106 y EC-53 más precisos). RN-80 aclara que el `""` sólo lo escribe la migración. Alineado con SPEC-08 v1.0.0 (H1 ya adoptado en su Fase 2) y con la T1.13 de SPEC-05 (EC-57, H2). §2.1 verificado de nuevo sobre `develop` |
 | 0.1.0 | 2026-11-11 | Perfil 1 (con asistencia de IA) | Borrador inicial. Se redactó como SPEC-08 y pasó a ser el 09 porque el 08 es del Perfil 4 (`spaces`); la migración pasa a `0017_config_sedes` porque `0016` la usa `loans`. Fase A (horario y correo de contacto por sede, ADR-022 a y c) y Fase B (teléfono obligatorio, ADR-022 b, D-16 de SPEC-03). Decisiones D-01…D-12 con recomendación, preguntas para la referente (§10.1) y coordinación H1…H4 |
