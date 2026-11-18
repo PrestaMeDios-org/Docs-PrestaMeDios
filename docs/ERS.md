@@ -1,6 +1,7 @@
 > **Documento académico — Especificación de Requisitos de Software (IEEE 830)**
 >
 > Fuente de verdad funcional del proyecto PrestaMeDios: requisitos (USR, PRE, RES, NOV, GLO, IA), casos de uso, diseño e iteraciones.
+> **Versión viva:** integra en los requisitos y casos de uso los cambios acordados después de la aprobación de la cursada (Iteraciones 5 y 6). La versión entregada para la regularidad es el documento de Google Docs del equipo, que conserva los requisitos tal como se aprobaron (Iteraciones 1 a 4) y registra esos cambios en sus iteraciones y en un anexo.
 > Ubicaciones anteriores: `Backend-PrestaMeDios/README.md` (hasta el 2026-10-08) y `Backend-PrestaMeDios/docs/ERS.md` (hasta el 2026-10-27; el historial previo de cambios está en ese repo). Las guías técnicas de instalación y uso están en el `README.md` de [`Backend-PrestaMeDios`](https://github.com/PrestaMeDios-org/Backend-PrestaMeDios) y de [`Frontend-PrestaMeDios`](https://github.com/PrestaMeDios-org/Frontend-PrestaMeDios).
 
 # PrestaMeDios
@@ -143,6 +144,7 @@ PrestaMeDios se concibe como una aplicación web cuya arquitectura posibilitará
 * Ader, N.: Primera entrevista y relevamiento de requerimientos para el sistema PrestaMeDios. Ushuaia (27/08/2026).
 * Ader, N.: Segunda entrevista y relevamiento de requerimientos para el sistema PrestaMeDios. Ushuaia (04/09/2026).
 * Ader, N.: Tercera entrevista, demostración del Sprint 1 y validación de reglas de negocio del sistema PrestaMeDios. Ushuaia (16/10/2026).
+* Ader, N.: Cuarta entrevista y recorrido funcional del sistema PrestaMeDios. Ushuaia (10/11/2026).
 
 ### Descripción general
 
@@ -188,6 +190,7 @@ Debido a que las operaciones del laboratorio requieren la intervención directa 
 #### Requisitos futuros
 
 * **Reserva de Isla de Digitalización de Archivos Físicos:** El subsistema de reserva de espacios incorporará en su catálogo interactivo un nuevo espacio físico denominado "Isla de Digitalización de Archivos Físicos". Permitirá a los usuarios agendar bloques horarios específicos para utilizar el equipamiento de recuperación de material de archivo (reproductoras analógicas de formatos VHS, S-VHS, Beta y Hi8).
+* **Historial de reparaciones y estadísticas de fallas:** Cada unidad física registrará sus reparaciones (fecha, falla, arreglo realizado y si fue interno o externo; por ejemplo, el recambio de filamentos de un artefacto de iluminación o la costura de un difusor 5 en 1). Un módulo de estadísticas analizará el historial de fallas y roturas del inventario para detectar las unidades que vuelven a fallar por la misma causa y decidir si conviene enviarlas a mantenimiento externo o darlas de baja. Se diferencia de las observaciones que se registran en cada devolución (PRE-13): agrega el ciclo de reparación y el análisis agregado.
 
 ### Requisitos específicos
 
@@ -231,7 +234,7 @@ Debido a que las operaciones del laboratorio requieren la intervención directa 
 * **PRE-11 - Renovación de computadoras:** La renovación de préstamos de notebooks se realizará exclusivamente de manera presencial: el estudiante presenta la notebook en el mostrador para que el administrador constate su estado, y emite desde la aplicación una nueva solicitud de renovación. La renovación no extiende el préstamo vigente: se tramita como una solicitud nueva, para verificar la disponibilidad y dar oportunidad a otros solicitantes, y el administrador la aprueba o la rechaza.
 * **PRE-12 - Gestión de inventario (stock):** El Administrador contará con una vista tipo tabla interactiva filtrable por Sede. Las columnas incluirán flechas de ordenamiento (ascendente/descendente) y mostrarán: Nombre, Categoría, Locker (1-7), Tipo (Especial/Común) y unidades disponibles. Permitirá desplegar los ítems para visualizar las unidades físicas individuales (ej. CAM-S-01) y su historial de usuarios.
 * **PRE-13 - Registro de entrega y devolución:** El Administrador contará con una función en el mostrador para confirmar la entrega física del recurso (cambiando automáticamente su estado a "En Uso") y registrar su retorno (cambiando el estado a "Disponible"). El sistema alertará visualmente en rojo los préstamos demorados. Al momento de registrar esta devolución, el sistema habilitará un campo de texto para añadir observaciones sobre el estado físico del recurso, las cuales quedarán guardadas en el historial particular de esa unidad.
-* **PRE-14 - Bloqueo por mantenimiento:** El administrador podrá cambiar manualmente el estado de una unidad física a "En Mantenimiento" o "Fuera de Servicio", ajustando el stock lógico y bloqueando su reserva.
+* **PRE-14 - Bloqueo por mantenimiento:** El administrador podrá cambiar manualmente el estado de una unidad física a "En Mantenimiento" o "Fuera de Servicio", ajustando el stock lógico y bloqueando su reserva. "En Mantenimiento" es temporal. La baja ("Fuera de Servicio") es definitiva: pide una confirmación expresa, no se puede revertir y la unidad se conserva en el sistema para no perder su historial.
 * **PRE-15 - Historial de solicitudes y bandeja centralizada:** Panel operativo central para el administrador con el listado global de todas las órdenes. La bandeja filtrará automáticamente los trámites pendientes según la jurisdicción del usuario (limitado a su sede para administradores locales, o con vista consolidada para el Superadministrador).
 * **PRE-16 - Calendario maestro de operaciones:** Vista global de monitoreo para el Administrador que mostrará todos los recursos físicos agrupados por estado ("En Uso" y "En Reserva") para organizar la logística diaria.
 * **PRE-17 - Resolución de conflictos:** Si la reducción de stock físico (por rotura) genera un conflicto con reservas futuras aprobadas, el Administrador podrá ejecutar una "Cancelación Forzada". El sistema exigirá ingresar un motivo obligatorio y enviará una alerta al usuario.
@@ -1171,6 +1174,10 @@ Constituye el panel operativo central para el personal del laboratorio y superad
 
 > **Figura 7.** Bandeja centralizada de solicitudes operativas (Rol Administrador).
 
+#### Inicio de sesión: identidad institucional
+
+La pantalla de inicio de sesión es la misma para las dos sedes, por lo que no usa imágenes de una sola ciudad. Su fondo reúne las Islas Malvinas, que convocan a ambas sedes, con una cámara, un micrófono y los logos de la UNTDF, el ICSE y el IDEI. La presencia conjunta de los dos institutos refleja la organización de la UNTDF en institutos. La referente validó el diseño el 10/11/2026 y pidió más contraste en el fondo (Iteración 6).
+
 ### Arquitectura del Sistema
 
 Se implementará una Arquitectura Intermedia (Monolito Modular por Dominio / API-First). A diferencia de una arquitectura por capas tradicionales que genera cuellos de botella en equipos de 5 personas, la estructura Feature-First aislará el código verticalmente en dominios de negocio específicos: users, inventory, loans, spaces y assistant. Esto permitirá integración sin fricción para la futura incorporación del Agente MCP de Inteligencia Artificial podrá consumir los esquemas OpenAPI de manera nativa sin acoplarse a la interfaz visual.
@@ -1239,6 +1246,22 @@ Como el Reglamento no fija cantidades para las sanciones, después de la entrevi
 
 Estas definiciones impactan en USR-05 (teléfono obligatorio), USR-09 (llamados de atención, faltas y suspensión automática), GLO-01 (delegación temporal), GLO-03 (horario por sede y correo de contacto del laboratorio), GLO-04, RES-03, PRE-05 y PRE-11. El 10/11/2026 se actualizaron en este documento esos requisitos y sus casos de uso, junto con GLO-02 (horario por sede) y los casos de uso de reserva y de aprobación de espacios (aviso de anticipación con el correo del laboratorio y motivo obligatorio del rechazo). En la misma revisión, el caso de uso de recuperación de contraseña (USR-02) pasó a responder siempre con el mismo mensaje, exista o no la cuenta, para no revelar qué correos están registrados. Los specs de cada perfil incorporan estas reglas a medida que se implementan.
 
+### Iteración 6
+
+Cuarta entrevista con Natalia Ader 10/11/2026: recorrimos con ella el sistema en funcionamiento. La grabación cubre sólo la parte final de la reunión.
+
+* **Inventario:** validó que cada unidad física tenga un identificador propio (por ejemplo, Cámara 1 y Cámara 2), porque eso ya permitió aislar una cámara con un píxel quemado en el sensor. Las unidades en reparación se marcan "En mantenimiento" y dejan de estar disponibles: el estudiante ve en el catálogo cuántas quedan (por ejemplo, 2 de 3) y no puede pedir la que está en reparación. Cada sede tiene su propio catálogo, y el de Río Grande es más chico, de acuerdo con su dotación real.
+* **Baja definitiva:** dar de baja una unidad por rotura irreparable ("Fuera de servicio") pide una confirmación expresa y no se puede revertir. La unidad se conserva en el sistema para no perder su historial (PRE-14).
+* **Historial de reparaciones y estadísticas:** Natalia planteó registrar las reparaciones de cada equipo (por ejemplo, el recambio de filamentos de una luz o la costura de un difusor) para saber si vuelve a fallar por la misma causa o si conviene mandarlo a mantenimiento externo. Se acordó dejarlo, junto con un módulo de estadísticas de fallas, como requisito futuro.
+* **Recuperación de contraseña:** una sugerencia docente planteó qué pasa si un usuario olvida su contraseña un fin de semana, sin personal del laboratorio disponible. Le mostramos que el sistema ya la resuelve sin intervención del administrador: envía por correo un enlace de un solo uso para elegir una contraseña nueva (USR-02). Natalia lo valoró porque le quita trabajo administrativo.
+* **Suplencia del Superadministrador:** le mostramos cómo puede pasarle su rol a un administrador local durante una licencia, para que gestione las dos sedes, y cómo devolverlo a su sede al volver, sin cambiar contraseñas ni datos. Hoy se hace con un cambio de rol manual (USR-04). La delegación con vencimiento automático (GLO-01) sigue en desarrollo.
+* **Estado del desarrollo:** le mostramos la estructura del proyecto (interfaz y servidor por separado) y la bandeja de reservas de espacios. El circuito de confirmación del carrito de préstamos todavía estaba en desarrollo. El envío de correos funciona y ya se usa en la recuperación de contraseña. Falta configurar el servidor de correo de la universidad y conectar las notificaciones al envío por correo.
+* **Pantalla de inicio de sesión:** como el inicio de sesión es el mismo para las dos sedes, Natalia desaconsejó usar imágenes de una sola ciudad y propuso las Islas Malvinas, que convocan a las dos sedes. Validó el diseño de Joaquín, que reúne los logos de la UNTDF, el ICSE y el IDEI con las Islas Malvinas, una cámara y un micrófono. Destacó que estén juntos el ICSE y el IDEI, porque representa la organización de la UNTDF en institutos y no en facultades. Pidió más contraste en el fondo.
+* **Manual de uso:** nos comprometimos a preparar un manual para el personal del laboratorio y los estudiantes.
+* **Cierre y puesta en producción:** proyectamos completar el carrito de préstamos y los detalles pendientes para el cierre del cuatrimestre. Durante el verano, el personal del laboratorio va a probar la plataforma a fondo para encontrar errores y problemas de uso. La entrega final se prevé para febrero de 2027, con la instalación en el servidor de la universidad.
+
+Ninguno de estos puntos modifica los requisitos aprobados para la regularidad: el historial de reparaciones y las estadísticas se agregan a los requisitos futuros, y la baja definitiva precisa PRE-14.
+
 ---
 
 ## SOBRE LOS ENTREGABLES
@@ -1252,6 +1275,16 @@ Estas definiciones impactan en USR-05 (teléfono obligatorio), USR-09 (llamados 
 Descripción técnica de los requerimientos y pasos necesarios para la instalación del software desarrollado.
 
 Copia del software desarrollado al menos en un 80% de su funcionalidad, según los requerimientos definidos para dicho trabajo.
+
+### Manual de uso
+
+Manual para el personal del laboratorio y los estudiantes con el uso básico de la plataforma, comprometido en la cuarta entrevista (Iteración 6).
+
+### Plan de cierre y puesta en producción
+
+* **Cierre del cuatrimestre:** completar el circuito del carrito de préstamos y los detalles pendientes.
+* **Pruebas de usuario:** durante el verano y hasta febrero de 2027, el personal del laboratorio prueba la plataforma a fondo para detectar errores y problemas de uso.
+* **Entrega final:** febrero de 2027, con la instalación en el servidor de la universidad. Además de las variables de entorno del servidor institucional, requiere configurar el servidor de correo de producción.
 
 ---
 
