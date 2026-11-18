@@ -181,7 +181,7 @@ Las siguientes restricciones delimitan el alcance de PrestaMeDios, establecen lo
 * **Diferenciación entre sedes:** El sistema debe diferenciar de manera estricta el inventario y espacios entre la sede Ushuaia y la sede Río Grande. No permitirá solicitar, reservar ni retirar bienes físicos de una sede desde la otra.
 * **Ocultamiento del historial de préstamos:** Ningún usuario estudiante podrá visualizar el historial de préstamos, solicitudes activas ni la identidad de otros solicitantes. Cada usuario tendrá visibilidad únicamente sobre sus propios movimientos, excepto los usuarios administradores que tienen acceso total al historial de préstamos y los docentes que tienen acceso a los préstamos solicitados para su asignatura.
 * **Tiempos límites de préstamo:** Para cada tipo de solicitud, el sistema no permitirá registrar solicitudes que excedan los plazos máximos y mínimos fijados por el Laboratorio de Medios (24 horas).
-* **Horarios fijos:** El sistema no gestiona automáticamente reservas por fuera de los horarios 9:00 a 16:00 hs. Las reservas del Aula-Estudio y de la Isla de Edición en las sedes de Ushuaia y Río Grande estarán acotadas por defecto a un horario estático de 9:00 a 16:00 hs. Esta restricción garantiza la presencia obligatoria de un docente o no-docente a cargo de la supervisión física.
+* **Horarios fijos:** El sistema no gestiona automáticamente reservas por fuera del horario de atención de cada sede. Las reservas del Aula-Estudio y de la Isla de Edición en las sedes de Ushuaia y Río Grande estarán acotadas al horario de atención de su sede, que se configura desde el panel de parámetros (GLO-03) y por defecto es de 9:00 a 16:00 hs. Esta restricción garantiza la presencia obligatoria de un docente o no-docente a cargo de la supervisión física.
 
 #### Suposiciones y Dependencias
 
@@ -716,7 +716,7 @@ Dado que el equipo consta de 5 integrantes y un plazo limitado de 16 semanas, Sc
 1. El Administrador ubica el trámite y efectúa la entrega presencial del elemento.
 2. El sistema actualiza el estado a "En Uso".
 3. Cumplido el período, el usuario efectúa la restitución del bien y el Administrador asienta el reingreso, modificando el estado a "Disponible".
-4. El Administrador consigna las anotaciones del estado del material y asigna los chips contables de comportamiento al alumno.
+4. El Administrador consigna las anotaciones del estado del material y, si corresponde, registra un llamado de atención al estudiante (USR-09).
 
 
 * **Postcondiciones:** Se da por concluido el circuito del préstamo y el historial queda actualizado.
@@ -1189,7 +1189,7 @@ Se implementará una Arquitectura Intermedia (Monolito Modular por Dominio / API
 * **Capa de Persistencia (Base de Datos):** El motor relacional PostgreSQL se sitúa en una capa aislada. Su función es fundamental no solo para el almacenamiento persistente, sino para garantizar la integridad transaccional (ACID): se encarga de abortar las peticiones concurrentes y evitar los solapamientos temporales sobre un mismo recurso físico mediante restricciones de exclusión.
 * **Integración Externa (Agente MCP - Subsistema 6):** El chatbot con inteligencia artificial se despliega como un servicio o cliente independiente. Para preservar la seguridad del sistema y no eludir las validaciones de negocio (como el límite de préstamos de 4 o 15 días), el Agente MCP no se conecta a PostgreSQL de forma directa. En su lugar, lee los contratos OpenAPI expuestos por FastAPI y ejecuta las reservas mediante peticiones REST, exactamente de la misma manera que lo hace el cliente web de React.
 
-En el módulo `spaces`, las reservas pendientes no ocupan el espacio hasta ser aprobadas; las aprobadas y las que están en uso no pueden solaparse. Las transiciones válidas son `Pendiente` → `Aprobada`/`Rechazada`/`Cancelada`, `Aprobada` → `En_Uso`/`Cancelada` y `En_Uso` → `Finalizada`. Los bloqueos pueden cubrir días completos o una franja diaria con ambas horas entre las 09:00 y las 16:00. La consulta de disponibilidad devuelve los intervalos libres por espacio, calculados restando las reservas activas y los bloqueos al horario operativo; las escrituras incompatibles responden con HTTP 409.
+En el módulo `spaces`, las reservas pendientes no ocupan el espacio hasta ser aprobadas; las aprobadas y las que están en uso no pueden solaparse. Las transiciones válidas son `Pendiente` → `Aprobada`/`Rechazada`/`Cancelada`, `Aprobada` → `En_Uso`/`Cancelada` y `En_Uso` → `Finalizada`. Los bloqueos pueden cubrir días completos o una franja diaria con ambas horas dentro del horario operativo (hoy, de 09:00 a 16:00 en las dos sedes; pasa a ser el horario de atención de cada sede, GLO-03). La consulta de disponibilidad devuelve los intervalos libres por espacio, calculados restando las reservas activas y los bloqueos al horario operativo; las escrituras incompatibles responden con HTTP 409.
 
 > **Figura 8.** Borrador de Diagrama de Infraestructura de PrestaMeDios
 > **Link v1:** Diagrama de Infraestructura v1
