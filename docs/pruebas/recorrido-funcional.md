@@ -146,4 +146,4 @@ Se vieron al recorrer la aplicación en local el 10/11/2026. Cada una le corresp
 
 | Fecha | Participantes | Pasos recorridos | Pedidos de cambio |
 | :-- | :-- | :-- | :-- |
-| | | | |
+| 2026-11-10 | Natalia Ader y el equipo | Grabación parcial (últimos 17 min): inventario por unidad, mantenimiento y baja definitiva (§4), bandeja de reservas de espacios pendientes (§4), cambio de rol del Superadministrador a una administradora local y vuelta atrás (§5), recuperación de contraseña, estructura del código y diseño de la pantalla de inicio de sesión | Más contraste en el fondo del login. Historial de reparaciones por unidad y estadísticas de fallas, como requisito futuro. Detalle en el ERS, Iteración 6 |
