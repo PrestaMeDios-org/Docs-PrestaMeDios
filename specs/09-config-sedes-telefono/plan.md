@@ -3,7 +3,7 @@
 | Campo | Valor |
 | --- | --- |
 | **Spec** | `specs/09-config-sedes-telefono/spec.md` (v1.0.0, `APROBADO` el 2026-11-11) |
-| **Estado del plan** | `APROBADO` — v1.0.0, aprobado por el Perfil 1 el 2026-11-11 |
+| **Estado del plan** | `COMPLETADO` el 2026-11-18 — v1.0.0, aprobado por el Perfil 1 el 2026-11-11. Queda la fila "Cuando H1…H3 estén en `develop`" de §7, que depende de los otros perfiles (DT-33) |
 | **Perfil** | 1 |
 | **Entrega** | Dos PRs de backend y dos de frontend: primero la Fase A y después la B (D-12) |
 
@@ -203,5 +203,6 @@ Primera tarea de la fase, antes de cambiar los esquemas:
 
 | Versión | Fecha | Autor | Cambio |
 | --- | --- | --- | --- |
+| 1.0.0 | 2026-11-18 | Perfil 1 | **Completado.** Los dos PRs de backend y los dos de frontend están en `develop`; documentación de §7 al día en el PR de cierre a `Docs-PrestaMeDios` |
 | 1.0.0 | 2026-11-11 | Perfil 1 | **Aprobado**, sin cambios de contenido respecto de la v0.1.0 |
 | 0.1.0 | 2026-11-11 | Perfil 1 (con asistencia de IA) | Plan inicial sobre SPEC-09 v1.0.0 |
