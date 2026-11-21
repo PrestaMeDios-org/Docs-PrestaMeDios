@@ -1,6 +1,6 @@
 # TASKS-09 — Horario y correo de contacto por sede, y teléfono obligatorio
 
-> **Spec:** `specs/09-config-sedes-telefono/spec.md` v1.0.0 (`APROBADO` el 2026-11-11) · **Plan:** `specs/09-config-sedes-telefono/plan.md` v1.0.0 (`APROBADO` el 2026-11-11) · **Estado:** `EN CURSO` (Fase A mergeada: backend PR #35, frontend PR #26; Fase B en revisión: backend PR #38, frontend PR #27; resta cerrar con C-01)
+> **Spec:** `specs/09-config-sedes-telefono/spec.md` v1.0.0 (`APROBADO` el 2026-11-11) · **Plan:** `specs/09-config-sedes-telefono/plan.md` v1.0.0 (`APROBADO` el 2026-11-11) · **Estado:** `COMPLETADO` (2026-11-18): Fase A en `develop` (backend PR #35, frontend PR #26) y Fase B en `develop` (backend PR #38, frontend PR #27); cerrado con C-01
 > Marcar `[x]` al cerrar. Cada tarea tiene su verificación; no se pasa a la siguiente con tests en rojo. Cada bloque es un PR (plan §2). **Orden de merge: A antes que B (D-12).**
 > Comandos de backend desde `Backend-PrestaMeDios/` (venv activo, `TEST_DATABASE_URL` definida); de frontend desde `Frontend-PrestaMeDios/`.
 
@@ -70,9 +70,10 @@
 - [x] **B-03 · Esquemas y CLI.** `_DatosCuentaBase.telefono` obligatorio; `null` rechazado en `PerfilUpdate` y `UsuarioAdminUpdate`; `--telefono` obligatorio en `crear-superadmin`.
   *Verificación:* AC-113…AC-119 en verde. *Cubre:* RN-86…RN-88, D-11.
   ✔ 2026-11-11: el mensaje "El teléfono no puede quedar vacío." sale de `_TELEFONO_NO_VACIO`; `test_borrar_telefono` (SPEC-02) pasa a `test_no_se_puede_borrar_el_telefono`. 240 pasados en `tests/users/`.
-- [ ] **B-04 · Cierre del backend B.** `pytest -q` completo; cobertura de lo nuevo de `users` ≥ 85 %; README del backend y `AGENTS.md` §5 con `--telefono`; PR hacia `develop` después del merge del backend A.
+- [x] **B-04 · Cierre del backend B.** `pytest -q` completo; cobertura de lo nuevo de `users` ≥ 85 %; README del backend y `AGENTS.md` §5 con `--telefono`; PR hacia `develop` después del merge del backend A.
   *Verificación:* suite en verde; `crear-superadmin` probado sin y con `--telefono`.
   ⏳ 2026-11-11 (en revisión, backend PR #38, rebasado sobre `develop` `1c89c53`, que ya trae la Fase A y `0019`): 971 pasados; cobertura de `app/modules/users` 97 % (lo nuevo de `schemas.py`, entero). README con `--telefono`; `AGENTS.md` §5 actualizado en este PR de Docs. Durante la fase falló en `develop` un test de `spaces` (*deadlock* al revertir bloqueos del mismo grupo, PR #32 del Perfil 4); lo corrigió el PR #37 antes de abrir el #38.
+  ✔ 2026-11-14: **backend PR #38 mergeado en `develop`** (`76fe2da`).
 
 ## Bloque B-F — Teléfono obligatorio (frontend `feat/users-telefono`)
 
@@ -82,11 +83,13 @@
 - [x] **BF-02 · Aviso.** Aviso no bloqueante en `MainLayout` para las cuentas sin teléfono, con enlace a Mi perfil.
   *Verificación:* con una cuenta sin teléfono el aviso aparece y desaparece al guardarlo. *Cubre:* AC-121 (parte del aviso).
   ✔ 2026-11-11: `AvisoTelefono` en la ranura `aviso` de `MainLayout`. Recorrido con el Superadmin de desarrollo (sin teléfono): el aviso aparece, "Ir a Mi perfil" lleva a la pantalla y al guardar `+54 2901 555123` (`PATCH /auth/me` → 200) desaparece.
-- [ ] **BF-03 · Cierre del frontend B.** `npm run typecheck`, `npm run build` y `npm test`; PR hacia `develop` después del merge del backend B.
+- [x] **BF-03 · Cierre del frontend B.** `npm run typecheck`, `npm run build` y `npm test`; PR hacia `develop` después del merge del backend B.
   *Verificación:* en verde. *Cubre:* AC-122 (parte B).
   ⏳ 2026-11-11 (en revisión, frontend PR #27, rebasado sobre `develop` `6ae5db4`): typecheck, build y 220 tests en verde. Se mergea después del backend PR #38.
+  ✔ 2026-11-14: **frontend PR #27 mergeado en `develop`** (`b369451`), después del backend.
 
 ## Bloque C — Cierre
 
-- [ ] **C-01 · Cierre de SPEC-09.** Corrida final sobre `develop` con las dos fases; trazabilidad completa en spec §12; spec en `IMPLEMENTADO`; `MEMORY.md` §1, `docs/perfiles.md` y `AGENTS.md` §3 al día.
+- [x] **C-01 · Cierre de SPEC-09.** Corrida final sobre `develop` con las dos fases; trazabilidad completa en spec §12; spec en `IMPLEMENTADO`; `MEMORY.md` §1, `docs/perfiles.md` y `AGENTS.md` §3 al día.
   *Verificación:* PR a `Docs-PrestaMeDios`.
+  ✔ 2026-11-18 (rama `docs/spec-09-cierre`). Backend `develop` `d5c38f7` (Python 3.14.8, PostgreSQL 18): una sola cabeza de Alembic (`0020_notifications_portada`) y `pytest -q` con **987 pasados**; cobertura de `app/modules/config` y `app/modules/users` del 97 % (`config/service.py` 99 %, `users/service.py` 99 %, `users/schemas.py` 99 %). Frontend `develop` `5d1278d`, con `npm ci`: typecheck y build sin errores, Vitest con 36 archivos y **266 tests**. AC-102…AC-119 tienen al menos un test anotado en el backend; §12 suma los archivos de test y justifica los bordes sin test propio (EC-51, EC-52, EC-57). Spec en `IMPLEMENTADO`, plan y tareas en `COMPLETADO`, `docs/perfiles.md` v1.4.0, `AGENTS.md` §3 y `MEMORY.md` al día. **Queda abierto, fuera de este spec:** que `spaces`, `loans` y el portal adopten el horario por sede (H1…H3); después, la migración que borra las claves globales (DT-33).
