@@ -310,12 +310,34 @@ Debido a que las operaciones del laboratorio requieren la intervención directa 
 
 ### Cronograma por requerimientos
 
+Leyenda: ◉ = trabajo realizado en esa semana (especificación, diseño, código o validación); una fila sin marcas en las semanas recientes es trabajo pendiente (no empezado). Los requerimientos se agrupan por módulo y por spec para que la tabla se pueda leer; cada fila cita los requisitos que cubre. Estado al 19/11/2026 (semana 16).
+
 | Requerimiento / Semana | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Requerimiento 1 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
-| Requerimiento 2 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
-| ... |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
-| Requerimiento n |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| **Perfil 1** · USR-01, USR-04, USR-05, GLO-01 (registro, login, roles y alcance de sede; SPEC-01 y SPEC-02) |  |  |  |  |  |  |  | ◉ |  | ◉ | ◉ |  |  |  |  |  |
+| **Perfil 1** · USR-02, USR-03 (recuperación de contraseña, correo, foto y renovación de sesión; SPEC-03) |  |  |  |  |  |  |  |  |  |  |  |  |  | ◉ | ◉ |  |
+| **Perfil 1** · GLO-03 y USR-05 (horario y correo por sede, teléfono obligatorio; SPEC-09) |  |  |  |  |  |  |  |  |  |  |  |  |  |  | ◉ | ◉ |
+| **Perfil 1** · GLO-06 (consistencia visual, tema claro/oscuro; SPEC-10) |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | ◉ |
+| **Perfil 1** · USR-06…09, GLO-05 y delegación temporal (GLO-01) |  |  |  |  |  |  |  |  |  |  |  |  |  | ◉ |  |  |
+| **Perfil 2** · PRE-01, PRE-02, PRE-12, PRE-14, PRE-19 (catálogo, stock, estados; SPEC-04 Fases A y B) |  |  |  |  |  |  |  |  |  | ◉ | ◉ | ◉ |  | ◉ | ◉ |  |
+| **Perfil 2** · PRE-17, parte de `inventory`, y Fase C de SPEC-04 (historial por unidad, reservas afectadas) |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| **Perfil 3** · PRE-03…PRE-07, PRE-09, PRE-10, PRE-15, PRE-18 (solicitud, validación y bandeja; SPEC-05 Fases 1 y 2) |  |  |  |  |  |  |  |  |  |  | ◉ |  |  | ◉ | ◉ |  |
+| **Perfil 3** · PRE-08, PRE-11, PRE-13, PRE-16, PRE-17, PRE-20 (mostrador, cancelación forzada, renovación, calendario maestro, panel docente; SPEC-05 Fases 3 a 5) |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| **Perfil 4** · RES-01…RES-05, GLO-02, GLO-04 (calendario, turnos, bloqueos; SPEC-08) |  |  |  |  |  |  |  |  |  | ◉ | ◉ |  |  |  | ◉ |  |
+| **Perfil 5** · NOV-01, NOV-02 (portal y comunicados; SPEC-06 Fase A) |  |  |  |  |  |  |  |  |  |  |  |  |  | ◉ | ◉ | ◉ |
+| **Perfil 5** · NOV-03, NOV-04 (alertas y campanita; SPEC-06 Fases B y C) |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| **Perfil 5** · IA-01…IA-03 (asistente; SPEC-07 reservado) |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| **Transversal** · integración a `staging`, demos y entregas |  |  |  |  |  |  |  |  |  | ◉ | ◉ |  |  |  | ◉ |  |
+
+**Notas y supuestos del cronograma (reconstruido el 19/11/2026):**
+
+* **Semana 1 = lunes 03/08/2026 (confirmado por el equipo el 19/11/2026).** Con esa fecha, la primera entrevista con la referente (27/08) cae en la semana 4, la segunda (04/09) en la 5, las reuniones de roles (18 al 21/09) en la 8, la entrega parcial del 09/10 en la semana 10 (coincide con "Validación" y "Entrega" de la *Visión general*), la demo ante la cátedra del 12/11 en la semana 15 y la semana 16 es del 16 al 22/11. La semana 7 empieza el 14/09 y la 10, el 05/10 (primer commit del backend).
+* **Fuentes de las fechas:** historial de `git` de los tres repositorios (primer commit del backend y del frontend el 05/10/2026, del repo de documentación el 27/10/2026), fechas de merge de los PR de GitHub, fechas de aprobación e implementación de cada spec (`specs/NN-*/spec.md`) y bitácora de `MEMORY.md`. Las tareas de ClickUp se cargaron el 19/11/2026 a partir de esas mismas fuentes: no se llevaban al día durante el desarrollo.
+* **Las semanas 1 a 7 no tienen filas por requerimiento** porque en ese período sólo se hicieron la definición del tema, las entrevistas y el relevamiento (ver la tabla de *Visión general*); no hubo trabajo separable por requisito, salvo la definición de roles y de alcance por sede (semana 8).
+* **Las filas sin marcas en las semanas 14 a 16 son trabajo pendiente** (USR-06…09, GLO-05, delegación temporal, Fase C de `inventory`, Fases 3 a 5 de `loans`, Fases B y C de `notifications`, SPEC-07 del asistente; tomados de `MEMORY.md`). Quedan fuera de las 16 semanas previstas y no tienen fecha comprometida: la fecha del final no está confirmada. La fila de USR-06…09, GLO-05 y la delegación temporal tiene marca en la semana 14 sólo por el análisis: el 02/11/2026 se registraron en ADR-022 las reglas de la tercera entrevista (llamados de atención, faltas y suspensión, delegación temporal); no tiene spec ni código.
+* **PRE-17 (resolución de conflictos) se reparte entre dos perfiles:** el Perfil 2 detecta las reservas afectadas por una baja de stock (`reservas_afectadas`, Fase C de SPEC-04) y el Perfil 3 hace la cancelación forzada con motivo (CU-L06, Fase 3 de SPEC-05). `AGENTS.md` §3 lo asigna al Perfil 3. La lectura que usa el Perfil 2, `reservas_futuras_de_unidad` (T2.11), ya está en `develop` y cuenta dentro de la Fase 2 de `loans`.
+* Varios specs (SPEC-03, 05, 06, 08, 09 y 10) se redactaron entre las semanas 14 y 16, después de los primeros commits del módulo, así que "Análisis y diseño" y "Desarrollo" se solapan más de lo previsto en la *Visión general*.
+* Cobertura de **PRE-08, PRE-09 y PRE-20** sin verificar contra el código: se agruparon según lo que informa `MEMORY.md` al 18/11/2026 (Fases 1 y 2 de `loans` salvo notificaciones).
 
 ---
 
@@ -329,7 +351,19 @@ El desarrollo de PrestaMeDios se regirá bajo un marco de trabajo Ágil basado f
 
 Dado que el equipo consta de 5 integrantes y un plazo limitado de 16 semanas, Scrum resulta ideal. La gestión de los entregables se orquestará utilizando ClickUp, mediante flujos de trabajo personalizados con estados como Backlog, En Desarrollo, Code Review y QA. Las ceremonias de Scrum (Planning y Reviews) se alinearán con las entregas parciales exigidas por la cátedra, garantizando demos funcionales progresivas al 40% y 80% del avance del software.
 
-*(18/09/2026: Para futuras entregas escribir cómo nosotros nos adaptamos a la metodología)*
+**Cómo nos adaptamos (19/11/2026).** En la práctica, el flujo real fue más cercano a Spec-Driven Development con pull requests que a un Scrum con tablero: cada perfil escribió o aprobó un spec (`specs/NN-*`), lo implementó en una rama `feat/…` hacia `develop` y lo integró por PR con revisión del Perfil 1; las decisiones y la deuda técnica se registraron en `MEMORY.md`. Las ceremonias coincidieron con las entregas de la cátedra (demo parcial del 09/10 y demo del 12/11) y con las entrevistas con la referente, que hicieron de Sprint Review. ClickUp se usó poco durante el desarrollo: la lista "Cronograma y Entregables" sólo tenía las tareas de sprint y de perfil, y el detalle por requerimiento se cargó recién el 19/11/2026, reconstruido desde `git` y los PR. Ese desfase es la principal desviación respecto de lo prometido en esta sección y se corrige de aquí en adelante: ClickUp pasa a ser la fuente del cronograma.
+
+#### Error de estimaciones
+
+Comparación entre lo planificado en *Visión general* y lo observado (semana 1 = 03/08/2026, ver notas del cronograma):
+
+| Actividad | Planificado | Observado (al 19/11, semana 16) |
+| --- | --- | --- |
+| Desarrollo y codificación | semanas 8 a 15 | empezó en la semana 10 (05/10), dos semanas después de lo previsto, y sigue abierto en la semana 16; Perfiles 3, 4 y 5 con funciones pendientes |
+| Análisis y diseño | semanas 5 a 12 | specs de SPEC-03, 05, 06, 08, 09 y 10 escritos en las semanas 14 a 16, solapados con el código |
+| Cobertura funcional | 80 % para el final (exigencia de la cátedra) | 22 de 47 requisitos con pantalla y 10 más sólo con backend (estimación del 10/11, `MEMORY.md`) |
+
+No hay estimaciones de tiempo por tarea ni horas reales registradas en ClickUp, así que no se puede calcular un error de estimación por requerimiento. `[completar con datos de ClickUp]` cuando el equipo cargue estimados y tiempos desde ahora. Como aproximación de tiempo real, el cronograma por requerimientos usa las fechas de apertura y merge de los PR.
 
 ---
 
