@@ -5,7 +5,7 @@
 | **ID** | SPEC-10 |
 | **Perfil responsable** | Perfil 1 — Identidad, Usuarios, Permisos, Configuración Global y Despliegue (transversal al frontend) |
 | **Estado** | `EN REVISIÓN` — 2026-11-14. Entrega 1 enviada por PR (plan §2); falta el aval de los Perfiles 2 a 5 (U1…U4) y la aprobación. Lo que queda sin hacer está en §1.5 (entrega 2) |
-| **Versión** | 0.23.1 |
+| **Versión** | 0.23.2 |
 | **Requisitos cubiertos** | GLO-06 (tema claro/oscuro, menú lateral colapsable y accesibilidad de la interfaz) y la parte de usabilidad del diagnóstico del ERS (§ problemática) |
 | **Responde a** | Recorrido funcional con la cliente del 2026-11-10 (DT-31 y DT-32, ya resueltas, mostraron que faltaba una base visual común) |
 | **Depende de** | Frontend `develop` (`6ae5db4`) y backend `develop` (`1c89c53`, cabeza `0019`). El backend sólo se toca por la portada MOMENTÁNEA M-02 (§4.7) |
@@ -84,7 +84,7 @@ Este spec es **estético**: no agrega requisitos funcionales ni casos de uso al 
 | P-1 | Escala de espaciado, radios, sombras y tipografía en `theme.ts` (A1). Hoy cada pantalla los escribe a mano; sólo se agregaron `premium`/`premiumBg` | §4.1 | Conviene definirla mirando todas las pantallas ya pulidas, y aplicarla toca casi todos los archivos |
 | P-2 | Mensajes de validación uniformes (A3, V-03): dónde, color, ícono y momento | §4.3 | No se relevó todavía; necesita recorrer los formularios de cada perfil |
 | P-3 | Layout común (A4): contenedor de página con márgenes y ancho máximo, y pantallas chicas | §4.4 | Ídem |
-| P-4 | Componentes de A2 que no existen: `Card`, `Field`, `Alert`, `EmptyState`, `Spinner`; y `Modal` a `components/ui` | §4.2 | `Modal` se adelantó en el frontend PR #29 (en revisión), que espera el aval U1 del Perfil 2 (D-06); el resto depende de P-1 |
+| P-4 | Componentes de A2 que no existen: `Card`, `Field`, `Alert`, `EmptyState`, `Spinner` | §4.2 | Dependen de P-1. `Modal` ya está en `components/ui` (frontend PR #29, 2026-11-21, con el aval U1; D-06) |
 | P-5 | `body` de `index.css` con colores fijos del tema claro (G-3) | §2.2 | Va con P-1 |
 | P-6 | Paginación de pendientes de espacios en el backend (U7) | §11 | Es del Perfil 4; hoy el front pagina en memoria |
 | P-7 | Administración de lockers con nombre (U6) y portada elegible en el ERS (U5) | §11 | Necesitan sumarse al ERS y un spec del perfil dueño |
@@ -367,7 +367,7 @@ Se verifican con `npm run typecheck`, `npm run build`, Vitest y capturas antes/d
 | D-03 | Dirección visual | Pulir la identidad actual / cambio fuerte | Pulir la actual | Acordada con el Perfil 1 (2026-11-12) |
 | D-04 | Nota al pie del manual. La referencia dice "Para cambiar de rol usá el selector Vista:", pero ese selector era del prototipo y ya no existe: el rol sale de la sesión | (a) Quitarla · (b) Reemplazarla por "Lo que ves depende de tu rol. Si necesitás otro acceso, consultá con el laboratorio de tu sede." | (b) | Aceptada por el Perfil 1 (2026-11-12) |
 | D-05 | Tareas que todavía no existen (docente 6, admin 4; admin 1 parcial) | (a) Mostrarlas igual · (b) Ocultarlas hasta que existan · (c) Mostrarlas con la marca "Próximamente" | (c): el manual queda completo y no promete algo que hoy no funciona | Aceptada por el Perfil 1 (2026-11-12) |
-| D-06 | Modal del manual | (a) Reusar `features/inventory/components/Modal.tsx` (Perfil 2) · (b) Llevarlo antes a `components/ui/Modal.tsx` (A2) | (b), con el aval U1 del Perfil 2; mientras tanto, (a) | Aceptada por el Perfil 1 (2026-11-12). (b) está en el frontend PR #29 (2026-11-18, en revisión): `components/ui/Modal.tsx`, con los imports de `inventory` y `loans` actualizados; se mergea con el aval U1 |
+| D-06 | Modal del manual | (a) Reusar `features/inventory/components/Modal.tsx` (Perfil 2) · (b) Llevarlo antes a `components/ui/Modal.tsx` (A2) | (b), con el aval U1 del Perfil 2; mientras tanto, (a) | Aceptada por el Perfil 1 (2026-11-12). **Hecho (b)** en el frontend PR #29, mergeado en `develop` el 2026-11-21 con el aval U1: `components/ui/Modal.tsx`, con los imports de `inventory` y `loans` actualizados |
 | D-08 | Código de la entrega 1 antes de aprobar el spec | (a) Esperar la aprobación para escribir código · (b) Escribirlo durante el relevamiento y no mergear hasta aprobar | (b) sólo para la entrega 1, como desvío explícito de `AGENTS.md` §4 (nota de modo de trabajo); la entrega 2 vuelve a (a) | Decidida por el Perfil 1; observada en la revisión del Docs PR #40 y pendiente de que el equipo la acepte |
 | D-07 | El `SUPERADMIN` ve el manual de Admin | (a) Igual al de Admin · (b) Admin + tareas propias: gestión de usuarios de ambas sedes (USR-04) y parámetros (GLO-03) | (b), con un subtítulo "Vista activa: Superadministrador" | Aceptada por el Perfil 1 (2026-11-12) |
 
@@ -377,7 +377,7 @@ Se verifican con `npm run typecheck`, `npm run build`, Vitest y capturas antes/d
 
 | # | Perfil | Pedido |
 | --- | --- | --- |
-| U1 | Perfil 2 | Aval para los cambios de presentación en `inventory` de la entrega 1 (§5): props opcionales en `Modal` y `MiniCalendario` dibujado con `GrillaMes`, **sin moverlos de carpeta**. Pasarlos a `components/ui` queda para la entrega 2 (§1.5, P-4) y se pedirá entonces. **`Modal` se adelantó** en el frontend PR #29 (2026-11-18): se pide el aval para ese movimiento antes de mergearlo. `MiniCalendario` sigue en `inventory` |
+| U1 | Perfil 2 | Aval para los cambios de presentación en `inventory` de la entrega 1 (§5): props opcionales en `Modal` y `MiniCalendario` dibujado con `GrillaMes`, **sin moverlos de carpeta**. Pasarlos a `components/ui` queda para la entrega 2 (§1.5, P-4) y se pedirá entonces. **`Modal` se adelantó:** el Perfil 2 dio el aval para moverlo (2026-11-21) y está en `develop` (frontend PR #29). `MiniCalendario` sigue en `inventory` |
 | U2 | Perfil 3 | Aval para la Fase B en `loans` (formularios de solicitud y bandeja) |
 | U3 | Perfil 4 | Aval para la Fase B en `spaces` (`SpacesPage`, `CalendarGrid`) |
 | U4 | Perfil 5 | Aval para la Fase B en `notifications`. Además, exponer como públicas `_filtro_lectura` y `_bloquear_para_editar` de `notifications/service.py`, que usa la portada M-02 (§4.7) |
@@ -408,6 +408,7 @@ Se verifican con `npm run typecheck`, `npm run build`, Vitest y capturas antes/d
 
 | Versión | Fecha | Autor | Cambio |
 | --- | --- | --- | --- |
+| 0.23.2 | 2026-11-21 | Perfil 1 (con asistencia de IA) | Aval U1 del Perfil 2 para mover `Modal`; frontend PR #29 mergeado en `develop`. P-4 sin `Modal`, D-06 hecha y U1 con el aval registrado |
 | 0.23.1 | 2026-11-21 | Perfil 1 (con asistencia de IA) | `Modal` a `components/ui` adelantado de la entrega 2 en el frontend PR #29 (en revisión): P-4, D-06 y U1 lo registran; el merge espera el aval U1 del Perfil 2. Sin cambios de alcance |
 | 0.23.0 | 2026-11-17 | Perfil 1 (con asistencia de IA) | Revisión del Docs PR #40: U5 describe la portada tal como está implementada y pide al Perfil 5 confirmar la excepción M-02; U1 pide sólo lo de la entrega 1; AC-U20 distingue `403` y `404`; desvío del flujo SDD explícito (nota de modo de trabajo y D-08); el ciclo de la migración `0020` se probó a mano en 0.11.1 y tiene test desde 0.22.1. Ajustes del frontend PR #28 por su revisión: motivo con sólo descripción, `Dialogo` con dos pedidos, portada al editar, portadas en tandas de 50, "100+" en la Bandeja, conteo del directorio aparte y "Próximos N días" desde hoy |
 | 0.22.1 | 2026-11-17 | Perfil 1 (con asistencia de IA) | Revisión del backend PR #39 (M-02): `ids` fuera del rango de `integer` → `422`; `GET /comunicados/portadas` en una sola consulta; dependencia de funciones privadas del Perfil 5 documentada en §4.7 y pedida en U4; test de la migración `0020`; se saca un chequeo de `content-length` que no protegía nada |
