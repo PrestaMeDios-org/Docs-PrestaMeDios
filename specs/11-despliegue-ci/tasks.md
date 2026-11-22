@@ -1,6 +1,6 @@
 # TASKS-11 — Contenedores, integración continua y puesta en producción
 
-> **Spec:** `specs/11-despliegue-ci/spec.md` v1.0.0 (`APROBADO` el 2026-11-22) · **Plan:** `specs/11-despliegue-ci/plan.md` v1.0.0 (`APROBADO` el 2026-11-22) · **Estado:** `EN CURSO` desde el 2026-11-22. Bloques 0 y A hechos (backend PR #41, frontend PR #30, `feat/docker`); bloque B hecho salvo la propuesta de D-05 (backend PR #42, frontend PR #31, `feat/ci`, que dependen de los del bloque A). Todos en revisión.
+> **Spec:** `specs/11-despliegue-ci/spec.md` v1.0.0 (`APROBADO` el 2026-11-22) · **Plan:** `specs/11-despliegue-ci/plan.md` v1.0.0 (`APROBADO` el 2026-11-22) · **Estado:** `EN CURSO` desde el 2026-11-22. Bloques 0 y A hechos (backend PR #41, frontend PR #30, `feat/docker`); bloque B hecho salvo la propuesta de D-05 (backend PR #42, frontend PR #31, `feat/ci`, que dependen de los del bloque A). Bloques C y C-D: código de `core` hecho y probado; `deploy/` escrito y probado en local salvo lo que necesita cuentas externas, tags o una VM (backend PR #45, `feat/produccion`). Todos en revisión.
 > Marcar `[x]` al cerrar. Cada tarea tiene su verificación; no se pasa a la siguiente con tests en rojo. Cada bloque es un PR (plan §2). **Orden de merge: A antes que B; C (código) después de A.**
 > Comandos de backend desde `Backend-PrestaMeDios/` (venv activo, `TEST_DATABASE_URL` definida); de frontend desde `Frontend-PrestaMeDios/`.
 
@@ -55,33 +55,45 @@
 
 ## Bloque C — Código de `core` (backend `feat/produccion`)
 
-- [ ] **C-01 · Tests primero.** `tests/core/test_entorno.py`, `test_salud.py`, `test_proxy.py`, `test_email_limite.py` y `test_migracion_0021.py` (plan §5.5), anotados con `# AC-P..`.
+- [x] **C-01 · Tests primero.** `tests/core/test_entorno.py`, `test_salud.py`, `test_proxy.py`, `test_email_limite.py` y `test_migracion_0021.py` (plan §5.5), anotados con `# AC-P..`.
   *Verificación:* fallan por lo que falta (variables inexistentes, `404` de `/health/db`, IP del proxy contada como cliente, tabla inexistente), no por errores del test.
-- [ ] **C-02 · `ENTORNO`.** Plan §5.1: variable, validador de producción y documentación de la API apagada.
+  ✔ 2026-11-22 (`feat/produccion`): cinco archivos en `tests/core/`; fallaban por `ImportError` de `app.core.models`, variables inexistentes, `404` de `/health/db` y la IP del proxy contada como cliente.
+- [x] **C-02 · `ENTORNO`.** Plan §5.1: variable, validador de producción y documentación de la API apagada.
   *Verificación:* `pytest tests/core/test_entorno.py -q` en verde. *Cubre:* AC-P10, AC-P11.
-- [ ] **C-03 · `GET /health/db`.** Plan §5.2.
+  ✔ 2026-11-22: `ENTORNO`, validador de producción y documentación apagada. AC-P10 se prueba importando la app en un proceso aparte (la app se arma al importarse). En la pila de producción local, `api:8000/docs`, `/redoc` y `/openapi.json` → 404 (por el dominio, `/docs` devuelve la SPA, no la API).
+- [x] **C-03 · `GET /health/db`.** Plan §5.2.
   *Verificación:* `pytest tests/core/test_salud.py -q` en verde. *Cubre:* AC-P12.
-- [ ] **C-04 · IP real del cliente.** `ProxyHeadersMiddleware` en `main.py` con `FORWARDED_ALLOW_IPS`; `uvicorn[standard]>=0.30`.
+  ✔ 2026-11-22: `/health/db` con `asyncio.timeout(2)` y `database.AsyncSessionLocal`; 503 sin detalle y sin la URL en el log.
+- [x] **C-04 · IP real del cliente.** `ProxyHeadersMiddleware` en `main.py` con `FORWARDED_ALLOW_IPS`; `uvicorn[standard]>=0.30`.
   *Verificación:* `pytest tests/core/test_proxy.py tests/users -q` en verde (RN-54 sin cambios para clientes directos). *Cubre:* AC-P14 (parte automática).
-- [ ] **C-05 · Límite diario de correos.** Migración `0021_core_envios_correo` (cuelga de la cabeza vigente), `app/core/models.py`, registro en `alembic/env.py` y `tests/conftest.py`, reserva atómica y `ErrorEnvioCorreo.motivo` (plan §5.4).
+  ✔ 2026-11-22: `ProxyHeadersMiddleware` en la app; `uvicorn[standard]>=0.30`. En la pila local por nginx: con `CF-Connecting-IP` se guarda la IP del usuario; una `X-Forwarded-For` falsa sin Cloudflare se ignora (queda la del gateway).
+- [x] **C-05 · Límite diario de correos.** Migración `0021_core_envios_correo` (cuelga de la cabeza vigente), `app/core/models.py`, registro en `alembic/env.py` y `tests/conftest.py`, reserva atómica y `ErrorEnvioCorreo.motivo` (plan §5.4).
   *Verificación:* `pytest tests/core -q` en verde; `alembic heads` con una cabeza; ciclo `upgrade → downgrade -1 → upgrade`. *Cubre:* AC-P18.
-- [ ] **C-06 · Suite completa y variables.** `.env.example` con `ENTORNO`, `FORWARDED_ALLOW_IPS` y `EMAIL_LIMITE_DIARIO`; README con `/health/db` y `ENTORNO`.
+  ✔ 2026-11-22: `0021_core_envios_correo` cuelga de `0020`; ciclo `upgrade → downgrade -1 → upgrade` y `downgrade base → upgrade` limpios. Reserva con `INSERT … ON CONFLICT DO UPDATE … WHERE`. **Desvío menor del plan:** `ErrorEnvioCorreo.motivo` suma un tercer valor, `contador`, para cuando la base no responde al reservar el cupo (no se envía).
+- [x] **C-06 · Suite completa y variables.** `.env.example` con `ENTORNO`, `FORWARDED_ALLOW_IPS` y `EMAIL_LIMITE_DIARIO`; README con `/health/db` y `ENTORNO`.
   *Verificación:* `pytest -q` completo en verde y la CI del PR en verde.
+  ✔ 2026-11-22: `pytest -q` completo, **1010 pasados** (987 + 23 nuevos). `.env.example` y README con `ENTORNO`, `FORWARDED_ALLOW_IPS`, `EMAIL_LIMITE_DIARIO` y `/health/db`. La CI del PR queda por ver.
 
 ## Bloque C-D — `deploy/` (backend `feat/produccion`, mismo PR que el bloque C)
 
-- [ ] **CD-01 · Etapa `tareas` del `Dockerfile`.** Plan §6.3, con la suma SHA-256 de `supercronic` verificada.
+- [x] **CD-01 · Etapa `tareas` del `Dockerfile`.** Plan §6.3, con la suma SHA-256 de `supercronic` verificada.
   *Verificación:* `docker build --target tareas`; dentro, `pg_dump --version` (16), `age --version`, `rclone version`, `supercronic -test deploy/crontab`.
+  ✔ 2026-11-22: etapa `tareas` con `postgresql-client-16` de PGDG (16.16), `age` 1.2.1, `rclone` 1.60, `tzdata` y `supercronic` v0.2.51; corre como uid 10001; `supercronic -test` valida el crontab. **Desvío:** la suma de `supercronic` es SHA1, la única que publica el proyecto (el plan decía SHA-256).
 - [ ] **CD-02 · `compose.prod.yaml` y `.env.prod.example`.** Plan §6.1 y §6.2.
   *Verificación:* en la máquina de un integrante, con un túnel de prueba de Cloudflare y un dominio o subdominio de prueba, la app responde por `https://`; `docker compose ps` sin puertos publicados. *Cubre:* AC-P14 (prueba manual por el dominio), parte de AC-P20.
+  ✔ 2026-11-22 (parcial): `compose.prod.yaml` y `deploy/.env.prod.example`; con `deploy/compose.prueba-local.yaml` (publica `web` en 127.0.0.1, sin túnel) la pila levanta sana y sin otros puertos publicados. `env_file` configurable con `PMD_ENV_FILE`. **Falta:** probarlo con un túnel y un dominio de prueba (necesita la cuenta de Cloudflare, plan §8).
 - [ ] **CD-03 · `crontab` y `backup.sh`.** Plan §6.2, con un bucket de R2 y una cuenta de Healthchecks.io de prueba.
   *Verificación:* con el horario adelantado, la copia aparece cifrada en local y en R2, el latido llega y `docker compose logs tareas` muestra la salida; con el destino mal configurado, la tarea falla y el latido no llega. *Cubre:* AC-P16.
+  ✔ 2026-11-22 (parcial): copia cifrada (`age-encryption.org/v1`) en local y en un destino de `rclone` (ruta local); `supercronic` corrió la copia y `limpiar-huerfanos` a la hora, con `-03:00` y la salida en los logs; con un destino inexistente la copia termina con código 1 y el latido no sale. **Falta:** R2 y Healthchecks.io reales.
 - [ ] **CD-04 · `restaurar.sh`.** Plan §6.2.
   *Verificación:* restaurar en **otra** máquina una copia bajada de R2 con la clave privada; la app arranca con los mismos usuarios, órdenes y archivos (comparar conteos y descargar un aval). *Cubre:* AC-P13.
+  ✔ 2026-11-22 (parcial): la copia se borró de `/backups` y `restaurar.sh` la bajó del destino externo, la descifró con la clave privada (montada sólo para esa corrida), la cargó en `prestamedios_restaurada_…` y la app pasó a esa base (`/health/db` 200, migración `0021`, los mismos usuarios). **Falta:** hacerlo en otra máquina, como pide AC-P13.
 - [ ] **CD-05 · `actualizar.sh`.** Plan §6.2.
   *Verificación:* actualización de un tag a otro sin errores; con una migración rota en una rama de prueba, el script se detiene y la API anterior sigue respondiendo. *Cubre:* AC-P15.
+  ✔ 2026-11-22: escrito; vuelve los repos al tag anterior si algo falla y no reinicia. **Sin probar:** necesita tags reales en ambos repos (se prueba con el primer tag de diciembre en la máquina de pruebas).
 - [ ] **CD-06 · `instalar.sh`.** Plan §6.2.
   *Verificación:* corre de punta a punta en una VM con Ubuntu Server 24.04 limpia.
+  ✔ 2026-11-22: escrito (`bash -n` sin errores). **Sin probar:** necesita una VM con Ubuntu Server 24.04 limpia.
 
 ## Bloque D — Guías (Docs `docs/spec-11-guias`)
 
