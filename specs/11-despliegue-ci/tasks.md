@@ -1,6 +1,6 @@
 # TASKS-11 — Contenedores, integración continua y puesta en producción
 
-> **Spec:** `specs/11-despliegue-ci/spec.md` v1.0.0 (`APROBADO` el 2026-11-22) · **Plan:** `specs/11-despliegue-ci/plan.md` v1.0.0 (`APROBADO` el 2026-11-22) · **Estado:** `EN CURSO` desde el 2026-11-22. Bloques 0 y A hechos: backend PR #41 y frontend PR #30 (`feat/docker`), en revisión.
+> **Spec:** `specs/11-despliegue-ci/spec.md` v1.0.0 (`APROBADO` el 2026-11-22) · **Plan:** `specs/11-despliegue-ci/plan.md` v1.0.0 (`APROBADO` el 2026-11-22) · **Estado:** `EN CURSO` desde el 2026-11-22. Bloques 0 y A hechos (backend PR #41, frontend PR #30, `feat/docker`); bloque B hecho salvo la propuesta de D-05 (backend PR #42, frontend PR #31, `feat/ci`, que dependen de los del bloque A). Todos en revisión.
 > Marcar `[x]` al cerrar. Cada tarea tiene su verificación; no se pasa a la siguiente con tests en rojo. Cada bloque es un PR (plan §2). **Orden de merge: A antes que B; C (código) después de A.**
 > Comandos de backend desde `Backend-PrestaMeDios/` (venv activo, `TEST_DATABASE_URL` definida); de frontend desde `Frontend-PrestaMeDios/`.
 
@@ -39,15 +39,19 @@
 
 ## Bloque B — Integración continua (backend y frontend `feat/ci`)
 
-- [ ] **B-01 · Workflow del backend.** Plan §7.1.
+- [x] **B-01 · Workflow del backend.** Plan §7.1.
   *Verificación:* el PR del bloque corre la CI en verde y en menos de 10 minutos (NFR-P02; si no, plan §9). *Cubre:* AC-P06 (parte positiva), AC-P09.
+  ✔ 2026-11-22 (`feat/ci`, backend PR #42): en verde; migraciones y tests en 2 min 43 s (987 pasados en 2 min 05 s), `upgrade → downgrade base → upgrade` limpio, imagen `final` y `dev` en 32 s. El JWT de prueba se genera con `openssl` en el job; ningún `${{ secrets.* }}`.
   ✔ 2026-11-22: sección "Imagen de producción" en el README.
-- [ ] **B-02 · Workflow del frontend.** Plan §7.2.
+- [x] **B-02 · Workflow del frontend.** Plan §7.2.
   *Verificación:* CI en verde en el PR. *Cubre:* AC-P08 (parte positiva), AC-P09.
-- [ ] **B-03 · Pruebas de que la CI falla.** PRs en borrador descartables de plan §7.3 (test roto, dos cabezas de Alembic, error de tipos).
+  ✔ 2026-11-22 (`feat/ci`, frontend PR #31): en verde; tipos, Vitest (266) y build en 23 s; imagen en 12 s.
+- [x] **B-03 · Pruebas de que la CI falla.** PRs en borrador descartables de plan §7.3 (test roto, dos cabezas de Alembic, error de tipos).
   *Verificación:* las tres CI en rojo, con capturas en el PR del bloque; los PRs de prueba se cierran sin mergear y se borran sus ramas. *Cubre:* AC-P06, AC-P07, AC-P08.
+  ✔ 2026-11-22: backend PR #43 falla en **Tests** (`1 failed, 987 passed`); backend PR #44 falla en **Una sola cabeza de Alembic** con el mensaje de C19; frontend PR #32 falla en **Tipos** (`TS2322`). Los tres cerrados sin mergear, ramas borradas, resultado comentado en #42 y #31. Observación: el job de imagen del frontend pasa aunque haya errores de tipos (`vite build` no los revisa), por eso los tipos son un paso propio.
 - [ ] **B-04 · Aviso al equipo.** Comunicar X3 (CI obligatoria de hecho, `downgrade` funcional) y proponer al dueño de la organización la protección de ramas de D-05 después de una semana en verde.
   *Verificación:* fila de `MEMORY.md` §5 de X3 actualizada con la fecha del aviso.
+  ✔ 2026-11-22: X3 avisado en la descripción de #42, #31 y del Docs PR #46. Falta proponer D-05 (protección de ramas) al dueño de la organización después de una semana con la CI en verde en `develop`.
 
 ## Bloque C — Código de `core` (backend `feat/produccion`)
 
