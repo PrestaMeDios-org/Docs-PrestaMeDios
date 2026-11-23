@@ -90,7 +90,7 @@
 | Estado | Detalle |
 | :---- | :---- |
 | Implementado | SPEC-01 y SPEC-02: registro, login JWT, cuatro roles, aislamiento de sede, directorio y aprobación de cuentas, edición de perfil, cambio obligatorio de contraseña, parámetros con historial. SPEC-03: `datos_publicos_por_ids` para otros módulos; recuperación de contraseña por email (USR-02) con el transporte de correo `app/core/email.py`; módulo `files` (foto de perfil USR-03 y PDF de aval PRE-05); renovación deslizante de la sesión con tope de 8 h y "Cerrar todas mis sesiones". SPEC-09: horario y correo de contacto por sede (GLO-03, ADR-022 a y c), con `datos_de_sede` y `GET /config/sedes` (backend PR #35, frontend PR #26), y teléfono obligatorio (USR-05, ADR-022 b; backend PR #38, frontend PR #27). Frontend de login, registro, recuperación de contraseña, perfil con foto, gestión de usuarios y parámetros. Tema claro/oscuro (GLO-06, parcial) |
-| Pendiente | USR-06 (panel de solicitudes propias) · USR-07 (historial de actividad) · USR-08 (auditoría global) · USR-09 (llamados de atención, faltas y suspensión automática, ADR-022) · GLO-05 (notas privadas) · borrar las claves globales de horario cuando H1…H3 estén en `develop` (DT-33) y pasar `usuarios.telefono` a `NOT NULL` cuando no queden nulos (DT-34) · delegación temporal del rol de Superadministrador (ADR-022 g, spec propio) · Docker y CI (K8 de SPEC-03) |
+| Pendiente | USR-06 (panel de solicitudes propias) · USR-07 (historial de actividad) · USR-08 (auditoría global) · USR-09 (llamados de atención, faltas y suspensión automática, ADR-022) · GLO-05 (notas privadas) · borrar las claves globales de horario cuando H1…H3 estén en `develop` (DT-33) y pasar `usuarios.telefono` a `NOT NULL` cuando no queden nulos (DT-34) · delegación temporal del rol de Superadministrador (ADR-022 g, spec propio) · despliegue y CI: SPEC-11 v1.0.0 `APROBADO` el 2026-11-22 (ADR-027), en la computadora del laboratorio operada por el equipo; Fases A (contenedores), B (CI) y C (producción) por implementar |
 | Depende de otros perfiles | USR-06, USR-07 y USR-08 consumen datos de `loans` y `spaces`. Necesitan que esos módulos expongan funciones de lectura (ver §5) |
 
 **Prompt de arranque:**
@@ -242,6 +242,7 @@ estado BORRADOR, y no escribas código hasta que yo lo apruebe.
 
 | Versión | Fecha | Cambio |
 | :---- | :---- | :---- |
+| 1.5.0 | 2026-11-22 | SPEC-11 (despliegue y CI) aprobado (Perfil 1): pendiente del Perfil 1 al día (§4) |
 | 1.4.0 | 2026-11-18 | Cierre de SPEC-09 (Perfil 1): teléfono obligatorio implementado; DT-33 y DT-34 como pendientes del Perfil 1 (§4). La interfaz del horario por sede (§5) sigue esperando H1…H3 |
 | 1.3.0 | 2026-11-12 | SPEC-09 Fase A en `develop` (Perfil 1): interfaz "Horario y correo de contacto por sede" publicada (§5) y en "Lo que ya existe" (§2); estado del Perfil 1 al día (§4). La cabecera vuelve a coincidir con el historial (decía 1.2.0) |
 | 1.2.1 | 2026-11-11 | Perfil 3 al día (SPEC-05 aprobado, Fases 1 y 2 en `develop`, aval en curso); el Perfil 2 ya no depende de `loans` para su Fase C |

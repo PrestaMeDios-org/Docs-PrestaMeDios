@@ -1292,7 +1292,7 @@ Cuarta entrevista con Natalia Ader 10/11/2026: recorrimos con ella el sistema en
 * **Estado del desarrollo:** le mostramos la estructura del proyecto (interfaz y servidor por separado) y la bandeja de reservas de espacios. El circuito de confirmación del carrito de préstamos todavía estaba en desarrollo. El envío de correos funciona y ya se usa en la recuperación de contraseña. Falta configurar el servidor de correo de la universidad y conectar las notificaciones al envío por correo.
 * **Pantalla de inicio de sesión:** como el inicio de sesión es el mismo para las dos sedes, Natalia desaconsejó usar imágenes de una sola ciudad y propuso las Islas Malvinas, que convocan a las dos sedes. Validó el diseño de Joaquín, que reúne los logos de la UNTDF, el ICSE y el IDEI con las Islas Malvinas, una cámara y un micrófono. Destacó que estén juntos el ICSE y el IDEI, porque representa la organización de la UNTDF en institutos y no en facultades. Pidió más contraste en el fondo.
 * **Manual de uso:** nos comprometimos a preparar un manual para el personal del laboratorio y los estudiantes.
-* **Cierre y puesta en producción:** proyectamos completar el carrito de préstamos y los detalles pendientes para el cierre del cuatrimestre. Durante el verano, el personal del laboratorio va a probar la plataforma a fondo para encontrar errores y problemas de uso. La entrega final se prevé para febrero de 2027, con la instalación en el servidor de la universidad.
+* **Cierre y puesta en producción:** proyectamos completar el carrito de préstamos y los detalles pendientes para el cierre del cuatrimestre. Durante el verano, el personal del laboratorio va a probar la plataforma a fondo para encontrar errores y problemas de uso. La entrega final se prevé para febrero de 2027, con la instalación en el servidor de la universidad. *(Precisado el 22/11/2026: la universidad no opera sistemas ni cuenta con presupuesto para un servidor, así que la instalación se hace en una computadora prestada por el laboratorio y la opera el equipo; ver "Plan de cierre y puesta en producción".)*
 
 Ninguno de estos puntos modifica los requisitos aprobados para la regularidad: el historial de reparaciones y las estadísticas se agregan a los requisitos futuros, y la baja definitiva precisa PRE-14.
 
@@ -1308,6 +1308,8 @@ Ninguno de estos puntos modifica los requisitos aprobados para la regularidad: e
 
 Descripción técnica de los requerimientos y pasos necesarios para la instalación del software desarrollado.
 
+Se detallan en la guía de instalación del proyecto (`docs/instalacion.md`, a redactar con la Fase C de SPEC-11): computadora con Linux y Docker, dominio propio, túnel de publicación, proveedor de correo, almacenamiento externo de las copias y monitoreo.
+
 Copia del software desarrollado al menos en un 80% de su funcionalidad, según los requerimientos definidos para dicho trabajo.
 
 ### Manual de uso
@@ -1318,7 +1320,9 @@ Manual para el personal del laboratorio y los estudiantes con el uso básico de 
 
 * **Cierre del cuatrimestre:** completar el circuito del carrito de préstamos y los detalles pendientes.
 * **Pruebas de usuario:** durante el verano y hasta febrero de 2027, el personal del laboratorio prueba la plataforma a fondo para detectar errores y problemas de uso.
-* **Entrega final:** febrero de 2027, con la instalación en el servidor de la universidad. Además de las variables de entorno del servidor institucional, requiere configurar el servidor de correo de producción.
+* **Pruebas en el entorno real:** desde diciembre de 2026, la plataforma corre en la computadora que presta el laboratorio, publicada con el dominio propio del proyecto, con datos de prueba.
+* **Entrega final:** febrero de 2027, con una instalación limpia de producción en esa misma computadora (Linux y contenedores Docker), publicada a Internet por un túnel saliente con TLS, sin requerir infraestructura de la universidad.
+* **Operación del servicio:** la universidad no se hace cargo de la parte de sistemas. El equipo opera el sistema después de la entrega: actualizaciones, copias de seguridad diarias cifradas fuera del laboratorio, restauración, monitoreo y correo saliente por un proveedor externo con el dominio propio. El único costo recurrente es el dominio. Detalle técnico en SPEC-11 (`specs/11-despliegue-ci/spec.md`).
 
 ---
 
