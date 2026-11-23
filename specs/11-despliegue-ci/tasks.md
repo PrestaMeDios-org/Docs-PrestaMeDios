@@ -97,10 +97,12 @@
 
 ## Bloque D — Guías (Docs `docs/spec-11-guias`)
 
-- [ ] **D-01 · `docs/instalacion.md`.** Spec §6.13; enlazada desde el ERS ("Requerimientos técnicos para la instalación").
+- [x] **D-01 · `docs/instalacion.md`.** Spec §6.13; enlazada desde el ERS ("Requerimientos técnicos para la instalación").
   *Verificación:* revisión de otro integrante. *Cubre:* base de AC-P22.
-- [ ] **D-02 · `docs/operacion.md`.** Spec §6.10, §6.11; procedimiento de actualización; qué hacer ante cada aviso; registro de pruebas de restauración; nota para pegar en la máquina (EC-P08); lista de verificación de que la clave privada no está en la máquina.
+  ✔ 2026-11-22 (`docs/spec-11-guias`): `docs/instalacion.md`, enlazada desde el ERS: requisitos, cuentas externas, preparación de la máquina (con la advertencia de que el cifrado LUKS común impide volver solo tras un corte), `instalar.sh`, dominio, túnel, correo, variables, copias (R2 y la alternativa B2, porque R2 pide registrar un medio de pago), monitoreo, primer arranque, tabla de verificación y problemas frecuentes. Falta la revisión de otro integrante.
+- [x] **D-02 · `docs/operacion.md`.** Spec §6.10, §6.11; procedimiento de actualización; qué hacer ante cada aviso; registro de pruebas de restauración; nota para pegar en la máquina (EC-P08); lista de verificación de que la clave privada no está en la máquina.
   *Verificación:* revisión del equipo de operación. Llevar §6.11 a la referente (P-05).
+  ✔ 2026-11-22: `docs/operacion.md`: roles (P-04 pendiente), secretos y alta/baja de operadores, rutina, respuesta a cada aviso, actualización y vuelta atrás, restauración (producción y prueba mensual con un nombre de proyecto distinto del de producción), rotación de secretos, nota para la máquina, registros con la primera prueba de restauración y la lista de verificación, y el compromiso de servicio. Falta la revisión del equipo de operación y llevar §10 a la referente (P-05).
 
 ## Bloque E — Instalación en la máquina del laboratorio (sin PR)
 
