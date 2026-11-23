@@ -1,9 +1,9 @@
 # SPEC-04 — Catálogo y existencias (`inventory`)
 
-> **Estado:** Fase A `IMPLEMENTADO` (2026-10-23) · Fase B `APROBADO` (2026-11-07, OK del Perfil 1) · Fase C `BORRADOR` (bloqueada) · **Versión:** 1.2.0 · **Perfil:** 2 (Catálogo y existencias)
+> **Estado:** Fase A `IMPLEMENTADO` (2026-10-23) · Fase B `IMPLEMENTADO` (aprobada el 2026-11-07, en `develop` desde el 2026-11-08; cierre de los pendientes en B-22: backend PR #46 y frontend PR #33, en revisión) · Fase C **`BORRADOR`** (v1.3.0, desbloqueada) · **Versión:** 1.3.0 · **Perfil:** 2 (Catálogo y existencias)
 > **Requisitos:** PRE-01, PRE-02, PRE-12, PRE-14, PRE-19 · **Deuda que cierra:** DT-22, DT-23 (y la parte de `inventory` de DT-20)
 > **Precedencia:** `docs/constitution.md` → `AGENTS.md` → `docs/perfiles.md` → este spec → `MEMORY.md`.
-> **Depende de:** SPEC-01 y SPEC-02 (`core`, `config`), SPEC-05 v1.0.0 (`loans.ocupacion_de_unidades`, en `develop` desde el backend PR \#21; `historial_de_unidad` y `reservas_futuras_de_unidad`, todavía sin publicar).
+> **Depende de:** SPEC-01 y SPEC-02 (`core`, `config`), SPEC-05 v1.0.2 (`loans.ocupacion_de_unidades`, en `develop` desde el backend PR \#21; `historial_de_unidad` y `reservas_futuras_de_unidad`, en `develop` desde el backend PR \#23, 2026-11-08).
 > **Numeración:** 04 (D-01). SPEC-03 es del Perfil 1 y SPEC-05 del Perfil 3.
 
 ---
@@ -15,14 +15,15 @@ El trabajo se entrega en tres fases (D-10):
 | Fase | Contenido | Requisitos | Estado |
 | :---- | :---- | :---- | :---- |
 | **A** | Catálogo conectado a la API, stock, estados de unidades, altas, ediciones y bajas lógicas, `CHECK` de locker, `service.py` para `loans` | PRE-01 (parcial), PRE-02, PRE-12 (parcial), PRE-14, PRE-19, DT-20, DT-22, DT-23 | Implementada (2026-10-23) |
-| **B** | §6.1 (`datos_equipamiento_por_ids`, ya mergeado), §6.2 (C14, C17), RN-I13 (C18), aclaración de RN-I4 (C16), disponibilidad por fechas y mini-calendario en un detalle del equipo (§5.4), botón "Agregar al pedido" (C11) | PRE-01 completo, PRE-03 (lado del catálogo), PRE-14 | **`BORRADOR`**: todo depende sólo de funciones que ya están en `develop` |
-| **C** | Historial de usuarios por unidad (§5.5) y `reservas_afectadas` al pasar una unidad a mantenimiento o baja (§5.3) | PRE-12 completo, PRE-17 (aviso) | **`BORRADOR`, bloqueada** hasta que `loans` publique `historial_de_unidad` y `reservas_futuras_de_unidad` (SPEC-05 §10.2, Fases 2–3) |
+| **B** | §6.1 (`datos_equipamiento_por_ids`, ya mergeado), §6.2 (C14, C17), RN-I13 (C18), aclaración de RN-I4 (C16), disponibilidad por fechas y mini-calendario en un detalle del equipo (§5.4), botón "Agregar al pedido" (C11) | PRE-01 completo, PRE-03 (lado del catálogo), PRE-14 | Implementada (backend PR \#24, frontend PR \#13 y \#23). Pendientes de cierre (INV-28 completo, INV-31 y READMEs) hechos en B-22 (backend PR #46, frontend PR #33, en revisión) |
+| **C** | Historial de usuarios por unidad (§5.5) y `reservas_afectadas` al pasar una unidad a mantenimiento o baja (§5.3) | PRE-12 completo, PRE-17 (aviso) | **`BORRADOR` (v1.3.0)**, desbloqueada: las funciones de `loans` están en `develop` (backend PR \#23) y los contratos de §5.3 y §5.5 ya siguen sus firmas reales (tarea C-01) |
 
 **Fuera** (otros perfiles; ver §10):
 
 - Carrito, formulario de pedido y validaciones de la orden (PRE-03…PRE-10): Perfil 3. El catálogo sólo ofrece el botón y avisa con un *callback* (§8.2).
 - Cancelación forzada (PRE-17), entrega y devolución (PRE-13): Perfil 3.
 - Notificaciones al afectado: Perfil 5.
+- **Importación masiva del inventario desde CSV o Excel** (D-15): ningún requisito ni caso de uso del ERS la pide. La carga del inventario real se hace con el alta de PRE-19 (formulario con varias unidades por equipo). Si el piloto la necesita, la pide el Perfil 1 con un requisito y un spec propios.
 - Cualquier cambio en `core`, `users`, `config`, `loans`, `spaces` o en el layout del frontend (`App.tsx`, `Navbar.tsx`).
 
 ## 2. Actores y permisos
@@ -35,16 +36,16 @@ El trabajo se entrega en tres fases (D-10):
 
 Se reutiliza sin cambios: `get_current_user`, `require_roles(ADMIN_LOCAL, SUPERADMIN)`, `resolver_alcance_sede`, `sede_para_alta`, `puede_ver_sede`, `AppError`, `obtener_parametro`, `ahora_lab`, `ZONA_HORARIA_LAB`, `RolUsuario`, `SedeEnum`. No se definen roles, usuarios ni formatos de error propios. Un recurso de otra sede responde `404` (no `403`) para no filtrar su existencia (Constitución §4.2, P4.5).
 
-## 3. Estado actual (verificado en `origin/develop`, backend `3ffed99`, frontend `0a5ff37`)
+## 3. Estado actual (verificado en `origin/develop` el 2026-11-23, backend `5243337`, frontend `e0740bc`)
 
 | Elemento | Estado |
 | :---- | :---- |
-| Backend `inventory` | Fase A completa: `GET/POST /categorias`; `GET /equipamiento` y `/{id}` con vista por rol (RN-I7) e `incluir_inactivos`; `POST /equipamiento`, `POST /equipamiento/{id}/unidades`; `PATCH /equipamiento/{id}` y `/{id}/estado`; `GET /unidades`, `PATCH /unidades/{id}` y `/{id}/estado` con la matriz de §5.3. Migraciones `0006` y `0010` |
-| `inventory/service.py` | `TRANSICIONES_ADMIN`, `bloquear_unidad`, `validar_transicion_admin`, `unidades_asignables`, `unidad_es_asignable`, `marcar_unidad_prestada`, `liberar_unidad` y `datos_equipamiento_por_ids` (§6.1, backend PR \#19) |
-| `loans/service.py` (Perfil 3) | Publica `ocupacion_de_unidades(db, unidad_ids, desde, hasta)` y `unidades_libres(db, equipamiento_ids, sede, desde, hasta)` (backend PR \#21). **No** publica todavía `historial_de_unidad` ni `reservas_futuras_de_unidad` |
-| Frontend `inventory` | Catálogo conectado, tabla de stock en `admin-stock`, alta, edición, baja lógica, estados y "No disponible" (DT-27). `EquipmentCard` dibuja un botón "Agregar al carrito" que sólo llama a `onAddToCart` si alguien lo pasa; `App.tsx` no lo pasa. **No hay vista de detalle del equipo**: `CatalogPage` acepta `onSelect`, pero nadie la usa |
-| Frontend `loans` | Sólo `.gitkeep`. El carrito (provider) es la tarea F1.3 del Perfil 3 |
-| Tests | Backend: 320 en verde al 2026-10-23, más los de `loans` (PR \#16 y \#21) y los de `datos_equipamiento_por_ids` y concurrencia (PR \#19 y \#20). Frontend: 47 en verde al 2026-10-23 |
+| Backend `inventory` | Fases A y B: lo de la Fase A más `GET /equipamiento/{id}/disponibilidad` (§5.4, sobre `loans.ocupacion_de_unidades`, sólo desde `inventory/disponibilidad.py`) y RN-I13 en `PATCH /equipamiento/{id}` (backend PR \#24). `PATCH /unidades/{id}/estado` todavía responde `UnidadFisicaResponse`, sin `reservas_afectadas`; no existe `GET /unidades/{id}/historial`. Migraciones `0006`, `0010` y `0019_inventory_categorias_base` (§7) |
+| `inventory/service.py` | `TRANSICIONES_ADMIN`, `bloquear_unidad` (pública, C14), `validar_transicion_admin`, `unidades_asignables`, `unidad_es_asignable`, `marcar_unidad_prestada`, `liberar_unidad`, `marcar_unidad_mantenimiento` (C17, PR \#24) y `datos_equipamiento_por_ids` (§6.1, PR \#19) |
+| `loans/service.py` (Perfil 3) | Publica `ocupacion_de_unidades` y `unidades_libres` (PR \#21), y `reservas_futuras_de_unidad` e `historial_de_unidad` (PR \#23). Sus firmas reales están en §5.3 y §5.5. Las columnas `entregado_en`, `devuelto_en` y `observacion_devolucion` llegan con la migración `0012` de `loans` (Fase 3 de SPEC-05), que todavía no está en `develop` |
+| Frontend `inventory` | Fases A y B: catálogo, detalle del equipo con mini-calendario y "Agregar al pedido" (PR \#13; estilos y modo oscuro en el PR \#23, DT-31 y DT-32), tabla de stock con unidades desplegables. Con SPEC-10 (Perfil 1, aval U1): vista previa en el alta, miniaturas y vista por locker MOMENTÁNEA (M-03), y `Modal` movido a `components/ui` (PR \#29). Sin historial por unidad ni aviso de reservas afectadas |
+| Frontend `loans` | Carrito conectado: `App.tsx` pasa `onAddToCart={puedePedir ? carrito.agregar : undefined}` (D-12). La bandeja cruza los ids de `GET /ordenes/{id}/unidades-libres` con el stock de `inventory` para mostrar "CAM-S-01 · locker 3" al aprobar (`loans/services/bandeja.ts`, `etiquetasDelStock`; responde Q1, D-18) |
+| Tests | Backend en `develop`: INV-26, INV-29 e INV-30 con test anotado; INV-28 parcial e INV-31 sin test. **B-22 (2026-11-23, backend PR #46 y frontend PR #33, en revisión):** INV-28 completo, INV-31 y READMEs; arregla `bloquear_unidad` para que `liberar_unidad` + `marcar_unidad_mantenimiento` funcione en una transacción sin `flush`. 992 tests en verde, cobertura de `inventory` 99 %. Frontend: `calendario.test.ts`, `botonAgregar.test.ts` y los de SPEC-10 |
 
 ## 4. Reglas de negocio
 
@@ -107,7 +108,18 @@ Matriz de transiciones del admin (`PATCH /unidades/{id}/estado`):
 
 Una unidad `prestado` sólo la libera `loans` (devolución, PRE-13). Pasar a `mantenimiento` o `baja` una unidad con reservas futuras aprobadas no se bloquea en `inventory`.
 
-**Fase C — `reservas_afectadas`.** La respuesta de `PATCH /unidades/{id}/estado` pasa a ser `UnidadEstadoResponse` = `UnidadFisicaResponse` + `reservas_afectadas: int | null`. Cuando el estado nuevo es `mantenimiento` o `baja`, vale la cantidad de reservas aprobadas de la unidad que empiezan desde ahora (`loans.reservas_futuras_de_unidad(db, unidad_id, desde=ahora_lab())`), calculada **después** del `commit` del cambio de estado (la lectura no debe demorar el bloqueo). En otro caso, o si el cambio es idempotente, vale `null`. `inventory` sólo informa: la cancelación forzada es de `loans` (PRE-17).
+**Fase C — `reservas_afectadas` (PRE-14, PRE-17).** La respuesta de `PATCH /unidades/{id}/estado` pasa a ser `UnidadEstadoResponse` = `UnidadFisicaResponse` + dos campos:
+
+| Campo | Tipo | Valor |
+| :---- | :---- | :---- |
+| `reservas_afectadas` | `int \| null` | Cantidad de reservas aprobadas de la unidad que empiezan desde ahora |
+| `ordenes_afectadas` | `list[int] \| null` | Ids de las órdenes de esas reservas, sin repetir y en el orden de retiro (D-16) |
+
+- **Fuente.** `loans.reservas_futuras_de_unidad(db, unidad_id, desde=ahora_lab()) -> list[ReservaFutura]` (firma real en `develop`, PR \#23): líneas `reservado` de la unidad con `retiro_pactado >= desde`, ordenadas por retiro, con `orden_id`, `detalle_id`, `retiro` y `devolucion`, sin solicitante ni sede. `reservas_afectadas = len(lista)`; `ordenes_afectadas` = sus `orden_id` sin repetir. Una línea `entregado` ya empezó y no cuenta (el equipo está en manos del solicitante y la unidad está `prestado`, que el admin no puede cambiar).
+- **Cuándo.** Sólo si el estado **cambió** a `mantenimiento` o `baja` (también `mantenimiento → baja`). Si el estado nuevo es `disponible`, o el pedido es idempotente (mismo estado), los dos campos valen `null`.
+- **Orden.** Se calcula **después** del `commit` del cambio de estado, para que la lectura no alargue el bloqueo `FOR UPDATE` (RN-I8). Si la lectura falla, el cambio de estado ya quedó hecho: el error se propaga como `500` y el admin ve el estado real al recargar (caso no esperado; no se compensa).
+- **Privacidad.** Ni nombres ni datos de solicitantes: sólo cantidad e ids de órdenes, que el admin ya ve en la bandeja de su sede (RN-I7, P6). La jurisdicción la valida `inventory` antes (unidad de otra sede → `404`).
+- **Alcance de `inventory`.** Sólo informa: la cancelación forzada con motivo y el aviso al afectado son de `loans` (PRE-17, CU-L06 de SPEC-05) y `notifications`.
 
 ### 5.4 Disponibilidad por fechas (PRE-01) — Fase B
 
@@ -135,19 +147,31 @@ Respuesta `200` — `DisponibilidadResponse`:
 
 `DiaDisponibilidad`: `fecha: date`, `unidades_libres: int`, `disponible: bool` (`unidades_libres > 0`).
 
-### 5.5 Historial de usuarios por unidad (PRE-12) — Fase C, bloqueada
+### 5.5 Historial de usuarios por unidad (PRE-12) — Fase C
 
 `GET /unidades/{id}/historial?limit=20&offset=0`
 
 | Aspecto | Contrato |
 | :---- | :---- |
 | Roles | Admins (`require_roles`); estudiante y docente → `403 PERMISO_INSUFICIENTE` (como el resto de las rutas de gestión, INV-11) |
-| Alcance | Unidad inexistente o de otra sede → `404 UNIDAD_NO_ENCONTRADA` (lo valida `inventory` con `puede_ver_sede` antes de llamar a `loans`) |
-| Datos | `loans.historial_de_unidad(db, unidad_id, actor)` (SPEC-05 §10.2). `inventory` no importa modelos de `loans` |
-| Paginación | `limit` 1–100 (por defecto 20) y `offset ≥ 0`. Si la función de `loans` no pagina, `inventory` recorta la lista |
-| Respuesta | `list[MovimientoUnidadResponse]`, del más reciente al más antiguo. Campos **indicativos** hasta que `loans` publique su firma: `orden_id`, `solicitante` (`id`, `nombre`, `apellido`, de `users.datos_publicos_por_ids` vía `loans`), `estado` de la línea, `retiro_pactado`, `devolucion_pactada`, `entregado_en`, `devuelto_en`, `observacion_devolucion`. Nunca DNI, email ni teléfono (P6) |
+| Alcance | Unidad inexistente o de otra sede → `404 UNIDAD_NO_ENCONTRADA` (lo valida `inventory` con `puede_ver_sede` antes de llamar a `loans`). Además, `loans` filtra por la sede de la **orden** (`ADMIN_LOCAL`: la suya; `SUPERADMIN`: todas). Las dos coinciden, porque `loans` sólo asigna unidades de la sede de la orden (`unidad_es_asignable`) |
+| Datos | `loans.historial_de_unidad(db, unidad_id, actor, *, limit, offset) -> list[MovimientoUnidad]` (firma real en `develop`, PR \#23). Se llama desde el router, como `reservas_futuras_de_unidad` (RN-I16); `inventory` no importa modelos de `loans` |
+| Paginación | `limit` 1–100 (por defecto 20) y `offset ≥ 0`, validados con `Query` (fuera de rango → `422`) y pasados tal cual a `loans`, que pagina en la consulta. Sin total: el cliente pide la página siguiente mientras reciba `limit` elementos |
+| Orden | Del más reciente al más antiguo por `retiro_pactado` (y por `detalle_id` ante un empate), como lo devuelve `loans` |
+| Respuesta | `200` con `list[MovimientoUnidadResponse]`; lista vacía si la unidad nunca se asignó |
 
-Si al publicarse la firma de `loans` difiere de esta tabla, se ajusta este contrato en una revisión del spec antes de implementar (AGENTS.md §4).
+`MovimientoUnidadResponse` (espejo de `MovimientoUnidad`):
+
+| Campo | Tipo | Nota |
+| :---- | :---- | :---- |
+| `orden_id`, `detalle_id` | `int` | La línea de la orden que usó la unidad |
+| `solicitante` | `SolicitanteResumen \| null` | `id`, `nombre`, `apellido` (de `users.datos_publicos_por_ids` vía `loans`). `null` si `users` no devuelve al usuario. Nunca DNI, email ni teléfono (P6) |
+| `estado` | `str` | Estado de la línea en `loans` (`pendiente`, `reservado`, `entregado`, `devuelto`, `cancelado`, `rechazado`, `no_retirado`), tal como lo define SPEC-05. `inventory` no lo reinterpreta |
+| `retiro_pactado`, `devolucion_pactada` | `datetime` | — |
+| `entregado_en`, `devuelto_en` | `datetime \| null` | `null` hasta que `loans` sume la migración `0012` (Fase 3 de SPEC-05). El contrato no cambia cuando lleguen |
+| `observacion_devolucion` | `str \| null` | Ídem |
+
+Si `loans` cambia la firma, falla `tests/inventory/test_historial.py` (es la alarma buscada) y se ajusta este contrato en una revisión del spec antes de tocar el código (AGENTS.md §4). El historial de **reparaciones** por unidad (requisito futuro, ADR-026 b) no entra acá: si se hace, va en otra ruta (D-17).
 
 ## 6. Interfaz de servicio hacia `loans` (DT-20)
 
@@ -195,7 +219,9 @@ Uso previsto por `loans` en una devolución con daño: `liberar_unidad` (`presta
 
 **Fase A — migración `0010_inventory_gestion`** (aplicada): `equipamientos.activo` y `equipamientos.es_notebook` (`BOOLEAN NOT NULL`), `CHECK locker IS NULL OR locker BETWEEN 1 AND 7` (DT-23). El `CHECK` 1–15 de `max_dias_prestamo` no cambió (D-05).
 
-**Fases B y C:** sin tablas ni columnas nuevas y **sin migración**, así que no compiten con la numeración de `0011`/`0012` (C19 de SPEC-05). El historial de cambios de estado de unidades no se persiste (D-08); el historial de PRE-12 es el de usuarios, que vive en `loans`.
+**Fase B:** sin tablas ni columnas nuevas. **Migración de datos `0019_inventory_categorias_base`** (backend PR \#37, 2026-11-11, a pedido del Perfil 2 para la demo; se registra acá en la v1.3.0 porque se mergeó sin pasar por el spec): carga las cinco categorías base (Audio, Cámaras, Iluminación, Notebooks, Trípodes) con `ON CONFLICT DO NOTHING`, y el `downgrade` borra sólo las que siguen intactas y sin equipos. Cuelga de `0017_config_sedes` (D-22 de SPEC-03).
+
+**Fase C:** sin tablas, columnas ni migraciones. El historial de cambios de estado de unidades no se persiste (D-08); el historial de PRE-12 es el de usuarios, que vive en `loans`.
 
 ## 8. Frontend (`src/features/inventory/`)
 
@@ -210,10 +236,11 @@ Catálogo conectado a la API con carga, error, "sin resultados", *debounce* y `A
 - **Botón "Agregar al pedido" (C11, D-12).** `inventory` **no importa nada de `loans`**. `CatalogPage` sigue exponiendo `onAddToCart?: (eq: Equipment) => void`; la tarjeta, la fila de la lista y el detalle muestran el botón sólo si se recibió `onAddToCart` y el rol es estudiante o docente. Está **deshabilitado** si el ítem no está activo, está en mantenimiento o `cantidad_disponible = 0` (con RN-I14, sin unidades disponibles hoy no hay ninguna fecha libre), con un `title` que explica el motivo. Al pulsarlo llama a `onAddToCart(eq)` y muestra "Agregado" un par de segundos. Quién conecta el *callback* con el carrito es el Perfil 3, en `App.tsx` (con la conformidad del Perfil 1), por ejemplo `onAddToCart={(eq) => carrito.agregar(eq)}`. Si el pedido falla por fechas sin unidades, el `409 EQUIPAMIENTO_NO_DISPONIBLE` lo muestra la pantalla de `loans` (F1.7 de SPEC-05).
 - **Rótulo.** "Disponibles" pasa a "Disponibles hoy" en tarjetas, lista y detalle (C16). La tabla de stock de los admins no cambia.
 
-### 8.3 Fase C (bloqueada)
+### 8.3 Fase C
 
-- **Historial por unidad (PRE-12).** En `UnidadesRow`, un botón "Historial" por unidad abre `HistorialUnidadModal` con la lista paginada de §5.5 (solicitante, fechas pactadas y reales, estado y observación de la devolución) y "Cargar más".
-- **Reservas afectadas (PRE-17).** Si `PATCH /unidades/{id}/estado` devuelve `reservas_afectadas > 0`, la tabla de stock muestra un aviso persistente: "Esta unidad tenía N reservas aprobadas. Resolvelas con una cancelación forzada en la bandeja de Préstamos". Sin enlace hasta que exista la pantalla del Perfil 3.
+- **Historial por unidad (PRE-12).** En `UnidadesRow` (Control de Stock, vista por equipo), un botón "Historial" por unidad abre `HistorialUnidadModal` (sobre `components/ui/Modal`) con el código de inventario en el título y la lista de §5.5: solicitante ("Nombre Apellido", o "—" si viene `null`), retiro y devolución pactados, entregado y devuelto ("—" mientras `loans` no los complete), estado de la línea como chip y observación de la devolución. Pide 20 por página y muestra "Cargar más" mientras la última página venga completa. Estados de carga, error (`ApiError.detail`) y vacío ("Esta unidad todavía no se prestó"). La vista por locker (M-03 de SPEC-10, MOMENTÁNEA) no suma el botón.
+- **Reservas afectadas (PRE-17).** `useGestion.cambiarEstado` lee la respuesta del `PATCH`. Si `reservas_afectadas > 0`, Control de Stock muestra un aviso persistente (se cierra a mano, no desaparece solo) arriba de la tabla: "La unidad CAM-S-01 tenía N reservas aprobadas (órdenes #12, #15). Resolvelas con una cancelación forzada en la Bandeja de Validaciones." Sin enlace hasta que exista la cancelación forzada del Perfil 3 (Fase 3 de SPEC-05). La confirmación previa de mantenimiento y baja (PRE-14) no cambia.
+- **Tipos.** `MovimientoUnidadDTO`, `SolicitanteResumenDTO` y `UnidadEstadoDTO` espejo de §5.3 y §5.5; `listarHistorialUnidad(id, {limit, offset}, signal)` en `inventoryApi.ts`. `inventory` no importa nada de `loans` (D-12): el texto de los estados de línea vive en `inventory`.
 
 ## 9. Criterios de aceptación
 
@@ -262,12 +289,13 @@ Prefijo `INV-` para no colisionar con AC-xx de SPEC-02 ni con AC-Lxx de SPEC-05.
 | INV-32 | Frontend: el detalle del equipo muestra descripción, reglas, video, locker y el mini-calendario; hace un pedido por mes con el rango recortado a la ventana; pinta días libres, sin unidades y fuera de ventana; no deja navegar fuera de la ventana; muestra errores de la API | PRE-01 |
 | INV-33 | Frontend: el botón "Agregar al pedido" sólo aparece con `onAddToCart` y rol estudiante o docente; se deshabilita con ítem inactivo, en mantenimiento o sin disponibles hoy; al pulsarlo llama a `onAddToCart` con el equipo; el rótulo dice "Disponibles hoy" | PRE-01, PRE-03, C11, C16 |
 
-### 9.3 Fase C (bloqueada)
+### 9.3 Fase C
 
 | ID | Criterio | Req. |
 | :---- | :---- | :---- |
-| INV-34 | `GET /unidades/{id}/historial`: admin con jurisdicción → `200` paginado y ordenado del más reciente al más antiguo; `ADMIN_LOCAL` de la otra sede o unidad inexistente → `404`; estudiante o docente → `403`; sin token → `401`; ninguna respuesta incluye DNI, email ni teléfono | PRE-12, P6 |
-| INV-35 | `PATCH /unidades/{id}/estado` a `mantenimiento` o `baja` devuelve `reservas_afectadas` igual a la cantidad de reservas aprobadas futuras de la unidad; a `disponible` o idempotente devuelve `null`; frontend: aviso persistente si es mayor que 0 | PRE-14, PRE-17 |
+| INV-34 | `GET /unidades/{id}/historial`: admin con jurisdicción → `200` con las líneas de la unidad en cualquier estado, del más reciente al más antiguo, con `orden_id`, `detalle_id`, solicitante (`id`, `nombre`, `apellido`) y `entregado_en`, `devuelto_en`, `observacion_devolucion` en `null`; `limit` y `offset` paginan (sin solapamientos entre páginas); `limit` 0 o 101 → `422`; unidad sin líneas → `200 []`; `ADMIN_LOCAL` de la otra sede o unidad inexistente → `404`; estudiante o docente → `403`; sin token → `401`; ninguna respuesta incluye DNI, email ni teléfono (buscar en `response.text`) | PRE-12, P5, P6 |
+| INV-35 | `PATCH /unidades/{id}/estado` a `mantenimiento` o `baja` devuelve `reservas_afectadas` y `ordenes_afectadas` según §5.3: cuenta sólo líneas `reservado` con retiro futuro (no `entregado`, `pendiente`, `cancelado` ni las de retiro pasado); `mantenimiento → baja` vuelve a contarlas; a `disponible` o idempotente → `null`; sin reservas → `0` y `[]`; el cambio de estado queda hecho aunque haya reservas; los tests de INV-18, 19 y 21 siguen en verde | PRE-14, PRE-17 |
+| INV-36 | Frontend: el botón "Historial" abre el modal con la lista, "Cargar más" pide la página siguiente y se oculta con una página incompleta, muestra "—" en los campos `null` y los errores de la API; el aviso de reservas afectadas aparece sólo con `reservas_afectadas > 0`, nombra las órdenes y queda hasta que el admin lo cierra | PRE-12, PRE-17 |
 
 Verificación del frontend: `npm run typecheck`, `npm run build`, `npm test` (Vitest para las funciones puras) y un recorrido manual de INV-32 e INV-33 contra el backend local.
 
@@ -275,14 +303,19 @@ Verificación del frontend: `npm run typecheck`, `npm run build`, `npm test` (Vi
 
 | Para | Pedido | Motivo | Estado |
 | :---- | :---- | :---- | :---- |
-| Perfil 1 | Aprobar esta versión (incluye el addendum §6.1 que ya está mergeado) | AGENTS.md §4 | Abierto |
-| Perfil 1 | **Se retira el pedido de la ventana del calendario** (D-07): es un tope técnico de la consulta, no una regla del reglamento | P8 | Al aprobar, cerrar el ítem de `MEMORY.md` §5 |
-| Perfil 1 | Conformidad para que el Perfil 3 pase `onAddToCart` a `CatalogPage` en `App.tsx` (una línea) | C11, D-12 | Abierto |
+| Perfil 1 | **Aprobar la v1.3.0** (Fase C: §5.3, §5.5, §8.3, §9.3 y D-15…D-18) | AGENTS.md §4 | Abierto |
+| Perfil 1 | Aprobación de la v1.2.0 (Fase B y addendum §6.1) | AGENTS.md §4 | Cerrado (2026-11-07, Docs `0af866d`) |
+| Perfil 1 | **Se retira el pedido de la ventana del calendario** (D-07): es un tope técnico de la consulta, no una regla del reglamento | P8 | Cerrado con la v1.2.0; se cierra el ítem del 2026-10-23 de `MEMORY.md` §5 |
+| Perfil 1 | Conformidad para que el Perfil 3 pase `onAddToCart` a `CatalogPage` en `App.tsx` (una línea) | C11, D-12 | Cerrado: cableado en `develop` |
 | Perfil 1 | El `CHECK` 1–15 de `max_dias_prestamo` sigue fijo (D-05) | P8 | Abierto (sin cambios) |
-| Perfil 3 | `bloquear_unidad` es API pública con el contrato de §6.2 (C14) y `marcar_unidad_mantenimiento` queda disponible al mergear la Fase B (C17): destraba AC-L59 | RN-L11, RN-L20 | Se avisa al mergear |
-| Perfil 3 | El carrito (F1.3) recibe un `Equipment` de `inventory` por el *callback* `onAddToCart` que el Perfil 3 conecta en `App.tsx`; `inventory` no importa `loans` (D-12) | C11 | Abierto |
-| Perfil 3 | C16 y C18 respondidos (RN-I4, RN-I13, RN-I14); D-13 explica por qué no se cambia `max_dias_prestamo` a nulo | SPEC-05 §16 | Se avisa al aprobar |
-| Perfil 3 | Publicar `historial_de_unidad` y `reservas_futuras_de_unidad` (SPEC-05 §10.2, Fases 2–3) con su firma definitiva; desbloquean la Fase C | PRE-12, PRE-17 | Abierto |
+| Perfil 1 | **Importación desde CSV o Excel descartada** (D-15): no está en el ERS; la carga del piloto usa el alta de PRE-19 | AGENTS.md §4, P10 | Cerrado: confirmado por el Perfil 1 (2026-11-23) |
+| Perfil 1 | **Aval U1 de SPEC-10, con dos correcciones** en los cambios locales de la entrega 2: (a) `EquipmentDetailModal` importa `REGLAMENTO_USO` de `loans/components/TerminosPrestamo` (contra D-12) y lo filtra por el comienzo del texto; mover el texto a un lugar compartido o recibirlo por prop; (b) `MiniCalendario` quita la leyenda "Orientativo: la confirmación llega al enviar el pedido", que piden §8.2 y RN-I15 | D-12, RN-I15 | Abierto |
+| Perfil 3 | `bloquear_unidad` es API pública con el contrato de §6.2 (C14) y `marcar_unidad_mantenimiento` está en `develop` (C17, PR \#24): destraba AC-L59 | RN-L11, RN-L20 | Cerrado (en `develop` desde el 2026-11-08) |
+| Perfil 3 | El carrito recibe un `Equipment` de `inventory` por el *callback* `onAddToCart`; `inventory` no importa `loans` (D-12) | C11 | Cerrado (`App.tsx` en `develop`) |
+| Perfil 3 | C16 y C18 respondidos (RN-I4, RN-I13, RN-I14); D-13 explica por qué no se cambia `max_dias_prestamo` a nulo | SPEC-05 §16 | Cerrado con la v1.2.0 |
+| Perfil 3 | Publicar `historial_de_unidad` y `reservas_futuras_de_unidad` | PRE-12, PRE-17 | Cerrado (PR \#23); la Fase C las usa con sus firmas reales |
+| Perfil 3 | **Q1 respondida** (D-18): alcanza con cruzar los ids de `unidades-libres` con el stock, como ya hace `etiquetasDelStock`; no hace falta `datos_unidades_por_ids`. Cerrar Q1 en el plan de SPEC-05 | SPEC-05 plan §Q1 | Cerrado por el Perfil 2; falta el cierre en SPEC-05 (Perfil 3) |
+| Perfil 3 | `ordenes_afectadas` (§5.3) le da a la cancelación forzada (CU-L06) las órdenes a resolver; si su pantalla agrega un enlace por orden, el aviso de §8.3 lo usa | PRE-17 | Informativo |
 | Perfil 5 | El asistente puede usar `GET /equipamiento/{id}/disponibilidad` para responder "¿hay X libre el jueves?"; no hay endpoints especiales para IA | IA-02 | Informativo |
 
 ## 11. Casos de borde
@@ -297,7 +330,11 @@ Verificación del frontend: `npm run typecheck`, `npm run build`, `npm test` (Vi
 - **Disponibilidad:** una unidad hoy `prestado` y con devolución pactada la semana próxima **no** aparece libre después de esa fecha (RN-I14, D-L16 de SPEC-05): recién cuenta cuando se registra la devolución.
 - **Disponibilidad:** dos unidades libres en días alternados dan `unidades_libres = 1` todos los días, aunque ninguna esté libre el rango entero; el `409` de `POST /ordenes` cubre ese caso (RN-I15).
 - **Disponibilidad:** el cambio de horario de verano no aplica en Argentina, pero los límites del día se calculan con `ZONA_HORARIA_LAB` igual.
-- **Mantenimiento con reservas:** la unidad pasa a `mantenimiento` igual; la entrega de esas reservas fallará con `409` en `loans` hasta que el admin las resuelva (PRE-17). En la Fase C el admin lo ve en `reservas_afectadas`.
+- **Mantenimiento con reservas:** la unidad pasa a `mantenimiento` igual; la entrega de esas reservas fallará con `409` en `loans` hasta que el admin las resuelva (PRE-17). En la Fase C el admin lo ve en `reservas_afectadas` y `ordenes_afectadas`.
+- **Reserva con retiro ya vencido y sin entregar** (línea `reservado` con `retiro_pactado` pasado): no cuenta en `reservas_afectadas`, porque `reservas_futuras_de_unidad` sólo trae retiros desde ahora. Su cierre como `no_retirado` es de `loans` (Fase 3 de SPEC-05).
+- **Dos reservas de la misma orden sobre la unidad:** no ocurre, porque las líneas de una orden comparten período y el `EXCLUDE` de `loans` impide asignar dos veces la misma unidad en períodos solapados. Igual, `reservas_afectadas` cuenta líneas y `ordenes_afectadas` no repite órdenes.
+- **Historial de una unidad dada de baja:** se sigue viendo (P7.3: la unidad se conserva para no perder su historial, PRE-14).
+- **Historial de una unidad que cambió de sede:** no puede pasar (la sede de una unidad no se edita, §5.3).
 
 ## 12. Decisiones
 
@@ -317,6 +354,10 @@ Verificación del frontend: `npm run typecheck`, `npm run build`, `npm test` (Vi
 | D-12 | ¿Cómo se conecta el botón del catálogo con el carrito? | **Propuesta v1.2.0:** por el *callback* `onAddToCart` que ya existe. `inventory` no importa `loans` y el Perfil 3 hace el cableado en `App.tsx`. Alternativa descartada: que `inventory` llame a `useCarrito()` de `loans`, que acopla las dos *features* y obliga a montar el provider antes de que el catálogo funcione |
 | D-13 | C18: ¿`max_dias_prestamo` debería "seguir" al parámetro? | **Propuesta v1.2.0:** no por ahora. Se mantiene la copia al crear, más RN-I13. Alternativa para más adelante: columna nula = "usa el parámetro del tipo" (`loans._limite_dias` ya acepta `None`); cambia el contrato de `DatosEquipamiento`, el `CHECK` y las respuestas, y necesita migración, así que se evalúa después de la demo |
 | D-14 | Granularidad del calendario | **Propuesta v1.2.0:** por día (RN-I15), sin horas: es lo que pide PRE-01 ("mini-calendario") y alcanza para elegir fechas; las horas las valida el formulario de `loans` |
+| D-15 | ¿Importar el inventario real desde CSV o Excel? | **Fuera de alcance (v1.3.0; decisión del Perfil 2, confirmada por el Perfil 1 el 2026-11-23).** Ningún requisito ni caso de uso del ERS lo pide (PRE-19 describe el alta individual) y sin spec aprobado no se escribe código (AGENTS.md §4). La carga del piloto se hace con el alta existente, que admite varias unidades por equipo. Si el laboratorio lo necesita, el Perfil 1 lo suma al ERS y se especifica aparte |
+| D-16 | ¿`reservas_afectadas` sólo cuenta o también identifica las reservas? | **Propuesta v1.3.0:** cantidad **y** `ordenes_afectadas` (ids de orden), porque el admin necesita saber qué órdenes resolver con la cancelación forzada y esos ids ya los ve en su bandeja (sin datos personales). Alternativa: sólo la cantidad, como decía la v1.2.0; obliga al admin a buscar las órdenes a mano |
+| D-17 | ¿El historial de la Fase C cubre las reparaciones (ADR-026 b)? | **No.** `GET /unidades/{id}/historial` es el historial **de usuarios** de PRE-12 y se arma con `loans`. Las reparaciones son un requisito futuro, necesitarían persistir los cambios de estado (hoy no, D-08) e irían en otra ruta (por ejemplo `/unidades/{id}/reparaciones`) y en otra pestaña del mismo modal; nada de esta fase lo impide |
+| D-18 | Q1 de SPEC-05: ¿función `datos_unidades_por_ids` para mostrar el código de inventario al aprobar? | **No hace falta.** La bandeja del Perfil 3 ya cruza los ids de `unidades-libres` con el stock de admin (`GET /equipamiento`, que trae las unidades con `codigo_inventario` y `locker`), sin consultas extra por unidad. Se reconsidera sólo si el stock de una sede crece tanto que traerlo entero sea lento |
 
 ## 13. Trazabilidad
 
@@ -325,9 +366,9 @@ Verificación del frontend: `npm run typecheck`, `npm run build`, `npm test` (Vi
 | PRE-01 | `GET /equipamiento`, `GET /equipamiento/{id}`, `GET /equipamiento/{id}/disponibilidad` (B) | INV-02, 05, 07, 08, 24, 26, 30, 31, 32, 33 |
 | PRE-02 | `GET /equipamiento`, `GET /categorias` | INV-02, 03, 04, 24 |
 | PRE-03 (lado del catálogo) | Botón "Agregar al pedido" (B) | INV-31, 33 |
-| PRE-12 | `GET /equipamiento`, `GET /unidades`, `PATCH /equipamiento/{id}`, `PATCH /equipamiento/{id}/estado`, `PATCH /unidades/{id}`, `GET /unidades/{id}/historial` (C) | INV-06, 15, 16, 17, 20, 24, 29, 34 |
+| PRE-12 | `GET /equipamiento`, `GET /unidades`, `PATCH /equipamiento/{id}`, `PATCH /equipamiento/{id}/estado`, `PATCH /unidades/{id}`, `GET /unidades/{id}/historial` (C) | INV-06, 15, 16, 17, 20, 24, 29, 34, 36 |
 | PRE-14 | `PATCH /unidades/{id}/estado`, `marcar_unidad_mantenimiento` (B) | INV-18, 19, 21, 22, 28, 35 |
-| PRE-17 (aviso al admin) | `reservas_afectadas` (C) | INV-35 |
+| PRE-17 (aviso al admin) | `reservas_afectadas`, `ordenes_afectadas` (C) | INV-35, 36 |
 | PRE-19 | `POST /equipamiento`, `POST /equipamiento/{id}/unidades` | INV-09, 10, 11, 12, 13, 25 |
 | DT-20 | §6 | INV-22, 27, 28 |
 | DT-22 / DT-23 | Frontend §8.1 / migración `0010` | INV-24 / INV-14, 23 |
@@ -336,7 +377,8 @@ Verificación del frontend: `npm run typecheck`, `npm run build`, `npm test` (Vi
 
 | Versión | Fecha | Cambio |
 | :---- | :---- | :---- |
-| 1.2.0 | 2026-11-07 | **`BORRADOR`** (Perfil 2, con asistencia de IA). Planifica todo lo que queda: Fase B (disponibilidad por fechas con `loans.ocupacion_de_unidades`, detalle con mini-calendario, botón "Agregar al pedido", C14, C17, C16, C18) y Fase C (historial y `reservas_afectadas`, bloqueada por `loans`). Somete a aprobación el addendum v1.1.0 (§6.1). Nuevas RN-I13…RN-I16, INV-26 redefinido e INV-28…INV-35, decisiones D-11…D-14 y propuesta para D-07. Limpieza: encabezado y nota de numeración, §3 al día con `develop`, tabla de §12 corregida |
+| 1.3.0 | 2026-11-23 | **`BORRADOR`** (Perfil 2, con asistencia de IA). Fase C desbloqueada y ajustada a las firmas reales de `loans` (backend PR \#23, tarea C-01): §5.3 con `ordenes_afectadas` (D-16) y reglas de cuándo se calcula; §5.5 con `detalle_id`, paginación en `loans`, doble control de sede y campos `null` hasta la `0012` de `loans`; §8.3 detallado; INV-34 e INV-35 precisados e INV-36 nuevo (frontend). Fase B marcada `IMPLEMENTADO` con tres pendientes de cierre (B-22). §3 al día con `develop`; §7 registra la `0019`; §10 cierra lo resuelto y suma el aval U1 de SPEC-10 con dos correcciones; nuevas D-15 (importación por CSV fuera de alcance), D-17 (reparaciones, ADR-026 b) y D-18 (Q1 de SPEC-05) |
+| 1.2.0 | 2026-11-07 | **`APROBADO` para la Fase B** (OK del Perfil 1, Docs `0af866d`); la Fase C quedó en `BORRADOR`. Redactada por el Perfil 2, con asistencia de IA. Planifica todo lo que queda: Fase B (disponibilidad por fechas con `loans.ocupacion_de_unidades`, detalle con mini-calendario, botón "Agregar al pedido", C14, C17, C16, C18) y Fase C (historial y `reservas_afectadas`, bloqueada por `loans`). Somete a aprobación el addendum v1.1.0 (§6.1). Nuevas RN-I13…RN-I16, INV-26 redefinido e INV-28…INV-35, decisiones D-11…D-14 y propuesta para D-07. Limpieza: encabezado y nota de numeración, §3 al día con `develop`, tabla de §12 corregida |
 | 1.1.0 | 2026-11-06 | `BORRADOR` (addendum §6.1): `datos_equipamiento_por_ids` a pedido del Perfil 3 (C8 de SPEC-05). El código se escribió antes de redactar el addendum, a pedido explícito del usuario, y se mergeó en `develop` (PR \#19). Queda incluido en la v1.2.0 |
 | 1.0.1 | 2026-10-23 | Fase A implementada. §8: la categoría se filtra en la pantalla, no en la API. Se agregan en el frontend el alta y edición de unidades desde la tabla de stock. Hallazgo en la migración `0010`: `NAMING_CONVENTION` duplica el prefijo de los `CHECK` en bases creadas con Alembic; la migración usa SQL directo y tolera ambos nombres (DT-26) |
 | 1.0.0 | 2026-10-23 | Aprobado con todas las recomendaciones de §12. Se agrega `equipamientos.es_notebook` (D-05) y se corrige §3 |
