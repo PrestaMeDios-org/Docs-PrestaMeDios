@@ -1,7 +1,7 @@
 # TASKS-05 — Préstamos (`loans`): Fases 1 y 2
 
-> **Estado:** `BORRADOR` · **Versión:** 0.4.5 · **Fecha:** 2026-11-11 · **Perfil:** 3
-> **Spec:** `specs/05-loans-prestamos/spec.md` v1.0.2 (`APROBADO`) · **Plan:** `specs/05-loans-prestamos/plan.md` v0.4.5
+> **Estado:** `BORRADOR` · **Versión:** 0.4.6 · **Fecha:** 2026-11-24 · **Perfil:** 3
+> **Spec:** `specs/05-loans-prestamos/spec.md` v1.0.2 (`APROBADO`) · **Plan:** `specs/05-loans-prestamos/plan.md` v0.4.6
 > Cada tarea es chica y verificable. Las tareas que dependen de otros perfiles (`files`, K10) se aíslan para que el resto avance.
 
 Leyenda: `[ ]` pendiente · `[~]` bloqueada o en curso · `[x]` hecha
@@ -26,7 +26,7 @@ Implementada y mergeada en `develop` (backend PR #21).
 | **T1.9** | Cierre: `ruff check`, `pytest -q` completo, revisar `/docs`, actualizar `MEMORY.md` y el estado del spec, abrir el PR | Plan §6 | Backend PR #21 mergeado en `develop` (151 tests de `loans`; 496 en la suite, con la DT-30 de `users` como único fallo) | `[x]` |
 | **T1.10** | Esquema: `pdf_aval_id: UUID \| None` y `renueva_detalle_id: int \| None` en `OrdenPedidoCreate`; una renovación lleva una sola línea | AC-L04, RN-L24 | `tests/loans/test_schemas.py`: sin aval ni renovación por defecto, UUID válido e inválido, renovación con una y con dos líneas, id no positivo | `[x]` |
 | **T1.11** | Usar `inventory.datos_equipamiento_por_ids` (C8) en `crear_orden` y borrar el adaptador provisorio | AC-L12 | `test_crear_orden.py` corre contra la base real, sin la función falsa; se borra el test del `501` sin C8 | `[x]` |
-| **T1.12** | Aval de alta gama: `vincular_archivo` en la misma transacción que la orden, `aval_archivo_id` en la orden (migración `0016_loans_aval`) y `GET /ordenes/{id}/aval` para el dueño y los administradores con jurisdicción | AC-L14, L60 | `tests/loans/test_aval.py` (estudiante y docente, ajeno, inexistente, ya usado, otra validación que falla, commit que falla, sin alta gama, descarga con y sin alcance) y `test_migracion_0016.py`; migración verificada contra una base temporal. En `feat/loans-aval`; la v1.0.2 se aprobó el 2026-11-11, PR del backend por abrir | `[~]` |
+| **T1.12** | Aval de alta gama: `vincular_archivo` en la misma transacción que la orden, `aval_archivo_id` en la orden (migración `0016_loans_aval`) y `GET /ordenes/{id}/aval` para el dueño y los administradores con jurisdicción | AC-L14, L60 | `tests/loans/test_aval.py` y `test_migracion_0016.py`; migración verificada contra una base temporal. Backend PR #34, mergeado el 2026-11-11 | `[x]` |
 | **T1.13** | Horario por sede en `GET /reglas` y en la franja de `crear_orden` (`sede` en `ReglasResponse`, `?sede=` para el `SUPERADMIN`) | AC-L63, RN-L04 | Depende de **K10** (claves por sede en `config`). Cambia solo la lectura de parámetros | `[~]` |
 | **T1.14** | Renovación (RN-L24): `renueva_detalle_id` debe ser una línea `entregado` propia de una notebook (si no, `422 RENOVACION_NO_PERMITIDA`), sin anticipación mínima, y la unidad renovada cuenta como libre para esa orden | PRE-11, RN-L24 | **Fuera de este corte.** Necesita su propio diseño de disponibilidad, porque la notebook está `prestado` y `unidades_asignables` no la devuelve | `[ ]` |
 | **T1.15** | `ocupacion_de_unidades(db, unidad_ids, desde, hasta)` (spec §10.2): por unidad, los períodos ocupados que se solapan con el rango, en una sola consulta y sin identidad, para el mini-calendario del Perfil 2 | PRE-01, INV-26 | `tests/loans/test_ocupacion.py`: períodos por unidad ordenados, estados que no ocupan, solapamiento semiabierto sin recorte, entrada vacía sin consulta, una sola consulta, repetidos, unidad inexistente, período inválido, resultado inmutable y sin identidad | `[x]` |
@@ -53,10 +53,10 @@ Dependen de que el contrato de `POST /ordenes` esté estable (después de T1.6) 
 | **F1.1** | Estructura `src/features/loans/{components,pages,services,types}` y DTOs `snake_case` espejo de los esquemas, con `mappers.ts` | — | Frontend PR #18 | `[x]` |
 | **F1.2** | Servicio `loansApi` sobre `src/lib/api.ts` (`reglas`, `crearOrden`, `misOrdenes`, `obtenerOrden`) con `ApiError {status, code, detail}` | — | Frontend PR #18 | `[x]` |
 | **F1.3** | Carrito (estado local con provider propio) | PRE-03 | Frontend PR #18: `CarritoContext` exportable, para el botón del catálogo | `[x]` |
-| **F1.4** | Formulario unificado: calendario de retiro y devolución con selectores de hora limitados por `GET /reglas`, asignatura (solo estudiante), casilla de normativa, errores en rojo y botón deshabilitado mientras se envía | PRE-03, 04, 06, 07, 09 | El backend sigue siendo la garantía (P2.2) | `[ ]` |
-| **F1.5** | Pantalla "Mis solicitudes" con estados y paginación | USR-06 | Lista las propias y muestra `demorado` | `[ ]` |
+| **F1.4** | Formulario unificado: calendario de retiro y devolución con selectores de hora limitados por `GET /reglas`, asignatura (solo estudiante), casilla de normativa, errores en rojo y botón deshabilitado mientras se envía | PRE-03, 04, 06, 07, 09 | Frontend PR #24 (2026-11-11); rediseño visual de SPEC-10 en el PR #28 (aval U2 del 2026-11-24). Fechas con el selector común y la disponibilidad del pedido; la asignatura es un código numérico provisorio (C3, D-L13); sábados y domingos sólo se avisan | `[x]` |
+| **F1.5** | Pantalla "Mis solicitudes" con estados y paginación | USR-06 | Frontend PR #24 (2026-11-11); rediseño visual de SPEC-10 en el PR #28 (aval U2 del 2026-11-24). Pestañas por estado; trae hasta 100 órdenes, sin paginar en pantalla | `[x]` |
 | **F1.6** | Botón "Solicitar" en el catálogo de `inventory`, deshabilitado sin unidades libres | PRE-03 | Frontend PR #18: carrito conectado al catálogo (C11) | `[x]` |
-| **F1.7** | Manejo de errores del servidor: `409 EQUIPAMIENTO_NO_DISPONIBLE` (volver al carrito), `422` de plazo (resaltar la línea) | PRE-04 | Mensajes en español, según `code` | `[ ]` |
+| **F1.7** | Manejo de errores del servidor: `409 EQUIPAMIENTO_NO_DISPONIBLE` (volver al carrito), `422` de plazo (resaltar la línea) | PRE-04 | Frontend PR #24 (2026-11-11); rediseño visual de SPEC-10 en el PR #28 (aval U2 del 2026-11-24). En lugar de volver al carrito o resaltar la línea, el mensaje nombra el equipo afectado (`mensajeDeErrorSolicitud`) | `[x]` |
 
 ---
 
@@ -102,11 +102,11 @@ Dependen de F1.1 y F1.2 (tipos y `loansApi`) y del contrato de la Fase 2 en `dev
 
 | ID | Tarea | Requisito | Verificación | Estado |
 | :---- | :---- | :---- | :---- | :---- |
-| **F2.1** | Bandeja del administrador: pendientes de su sede (el `SUPERADMIN` filtra por sede), paginación, solicitante con nombre y apellido, marca de retiro vencido | PRE-15 | Prueba con el servidor local | `[ ]` |
-| **F2.2** | Detalle para aprobar: una unidad por línea elegida de `GET …/unidades-libres` (con el código de inventario, ver Q1 del plan) | PRE-10 | Errores `UNIDAD_NO_ASIGNABLE` y `UNIDAD_NO_DISPONIBLE` en rojo, en la línea | `[ ]` |
-| **F2.3** | Rechazar con motivo obligatorio y, si entra T2.9, cancelar una aprobada | PRE-10 | El botón se habilita con el motivo escrito | `[ ]` |
-| **F2.4** | "Mis solicitudes": cancelar una orden propia `pendiente` | CU-L03 | La orden pasa a `cancelada` en la lista | `[ ]` |
-| **F2.5** | Ajuste horario al aprobar, si entra T2.10 | PRE-18 | Selectores de hora limitados por `GET /reglas` | `[ ]` |
+| **F2.1** | Bandeja del administrador: pendientes de su sede (el `SUPERADMIN` filtra por sede), paginación, solicitante con nombre y apellido, marca de retiro vencido | PRE-15 | Frontend PR #24 (2026-11-11); rediseño visual de SPEC-10 en el PR #28 (aval U2 del 2026-11-24). Tabla con resumen, pestañas por estado y por tipo; trae hasta 100 órdenes por lista | `[x]` |
+| **F2.2** | Detalle para aprobar: una unidad por línea elegida de `GET …/unidades-libres` (con el código de inventario, ver Q1 del plan) | PRE-10 | Frontend PR #24 (2026-11-11); rediseño visual de SPEC-10 en el PR #28 (aval U2 del 2026-11-24). Unidades preasignadas sin repetir, con el código de inventario tomado del stock (Q1) | `[x]` |
+| **F2.3** | Rechazar con motivo obligatorio y, si entra T2.9, cancelar una aprobada | PRE-10 | Frontend PR #24 (2026-11-11); rediseño visual de SPEC-10 en el PR #28 (aval U2 del 2026-11-24) | `[x]` |
+| **F2.4** | "Mis solicitudes": cancelar una orden propia `pendiente` | CU-L03 | Frontend PR #24 (2026-11-11); rediseño visual de SPEC-10 en el PR #28 (aval U2 del 2026-11-24) | `[x]` |
+| **F2.5** | Ajuste horario al aprobar, si entra T2.10 | PRE-18 | Frontend PR #24 (2026-11-11); rediseño visual de SPEC-10 en el PR #28 (aval U2 del 2026-11-24). Fechas con el selector común y horas de `GET /reglas` | `[x]` |
 
 ---
 
