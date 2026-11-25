@@ -1,8 +1,8 @@
-# PLAN-05 — Préstamos (`loans`): Fases 1 y 2
+# PLAN-05 — Préstamos (`loans`): Fases 1, 2 y 3
 
-> **Estado:** `BORRADOR` · **Versión:** 0.4.6 · **Fecha:** 2026-11-24 · **Perfil:** 3
-> **Spec:** `specs/05-loans-prestamos/spec.md` v1.0.2 (`APROBADO`) (§14, Fases 1 y 2) · **Tareas:** `specs/05-loans-prestamos/tasks.md`
-> Este plan define el **cómo** de la Fase 1, Solicitar (§1…§7, implementada en el backend PR #21), y de la Fase 2, Validar (§8, implementada en el backend PR #23 y #28, salvo las notificaciones). Las Fases 3 a 5 se planifican cuando se cierre cada fase anterior.
+> **Estado:** `BORRADOR` · **Versión:** 0.5.0 · **Fecha:** 2026-11-25 · **Perfil:** 3
+> **Spec:** `specs/05-loans-prestamos/spec.md` v1.0.2 (`APROBADO`), con la enmienda v1.0.3 en revisión (§14, Fases 1 a 3) · **Tareas:** `specs/05-loans-prestamos/tasks.md`
+> Este plan define el **cómo** de la Fase 1, Solicitar (§1…§7, implementada en el backend PR #21), de la Fase 2, Validar (§8, implementada en el backend PR #23 y #28, salvo las notificaciones), y de la Fase 3, Mostrador (§9). Las Fases 4 y 5 se planifican cuando se cierre la anterior.
 
 ---
 
@@ -195,7 +195,7 @@ El plan de la demo del Perfil 1 (`plan-demo-perfil-3.md`, paso 4) pide llegar a 
 | V5 | **Numeración de `0011` (C19).** `develop` termina en `0010_inventory_gestion`. La Fase A de SPEC-06 trae `0013_notifications_init`, también con `down_revision = "0010_inventory_gestion"` (backend PR #22, abierto) | Si las dos llegan a `develop` con la misma base, Alembic queda con dos cabezas. Regla: **la que se mergea segunda apunta su `down_revision` a la cabeza de `develop`** al abrir su PR (Alembic encadena por id, no por número). **Resuelto (2026-11-08):** entró primero el #22, y la `0011` pasó a colgar de `0013_notifications_init` (backend PR #23): `0010 → 0013 → 0011`, una sola cabeza, upgrade → downgrade → upgrade sin errores |
 | V6 | **`bloquear_unidad` como API pública (C14).** RN-L11 la usa para bloquear cada unidad al aprobar | Está en `develop`; SPEC-04 v1.2.0 (Fase B, rama `docs/spec-04-fase-b`) la declara pública |
 | V7 | `users.datos_publicos_por_ids` para el resumen del solicitante | En `develop` (backend PR #18) |
-| V8 | `inventory.marcar_unidad_mantenimiento` (C17) | Implementada en `feat/inventory-disponibilidad` (sin mergear). La usa la Fase 3, no esta |
+| V8 | `inventory.marcar_unidad_mantenimiento` (C17) | Implementada en `feat/inventory-disponibilidad` (sin mergear). La usa la Fase 3, no esta. **Hoy en `develop`** (ver V10 y V11 de §9.2) |
 
 ### 8.4 Archivos
 
@@ -287,7 +287,7 @@ Cuando `notifications.crear_notificacion` llegue a `develop` (SPEC-06 Fase B), c
 | C19 | Perfiles 1 y 5 | Numeración y cadena de `0011` frente a `0013` (V5) | T2.1 y el merge |
 | C12 / C-N01 | Perfil 5 | `crear_notificacion` en `develop` | T2.13 |
 | O1 | Perfil 1 y equipo | Lista provisoria de asignaturas para el formulario (C3, D-L13). No afecta al backend de esta fase, pero bloquea la demo para estudiantes | Frontend de la Fase 1 |
-| Q1 | Perfil 2 | Para elegir la unidad al aprobar, el administrador necesita ver el código de inventario. ¿Alcanza con que la interfaz cruce los ids con el stock de `inventory`, o conviene una función pública `datos_unidades_por_ids`? | Frontend de la Fase 2 |
+| Q1 | Perfil 2 | Para elegir la unidad al aprobar, el administrador necesita ver el código de inventario. ¿Alcanza con que la interfaz cruce los ids con el stock de `inventory`, o conviene una función pública `datos_unidades_por_ids`? | Frontend de la Fase 2. **Resuelta (2026-11-23, SPEC-04 D-18):** alcanza con cruzar los ids con el stock; no hace falta `datos_unidades_por_ids` |
 
 ### 8.8 Riesgos
 
@@ -308,10 +308,163 @@ Se planifica en `tasks.md` (tareas F2.x): bandeja del administrador, detalle con
 
 ---
 
-## 9. Historial
+## 9. Fase 3, Mostrador
+
+> Las Fases 1 y 2 están en `develop`. Esta sección define el **cómo** de la Fase 3: entrega y devolución en el mostrador (PRE-13) y cancelación forzada (PRE-17). Ramas: `feat/loans-mostrador` en el backend y `feat/loans-entregas` en el frontend. Se apoya en la spec v1.0.3 (§9.7), que precisa dos puntos del contrato.
+
+### 9.1 Alcance
+
+| Endpoint o función | Rol | Requisitos | Criterios (SPEC-05 §12) |
+| :---- | :---- | :---- | :---- |
+| `PATCH /api/v1/loans/ordenes/{orden_id}/detalles/{detalle_id}/estado` → `entregado` | ADMIN_LOCAL (su sede), SUPERADMIN | PRE-13 | AC-L36, L37, L39 |
+| Mismo endpoint → `devuelto` (con `observacion` y `a_mantenimiento`) | ADMIN_LOCAL (su sede), SUPERADMIN | PRE-13 | AC-L38, L39, L59 |
+| Mismo endpoint → `cancelado` (cancelación forzada) | ADMIN_LOCAL (su sede), SUPERADMIN | PRE-17 | AC-L35 y la parte de AC-L62 que no depende del no retiro |
+| `GET /api/v1/loans/ordenes?estado=aprobada&situacion=en_curso` | ADMIN_LOCAL, SUPERADMIN | PRE-13 | Lista del mostrador (spec v1.0.3, §9.4.4) |
+| `DetallePrestamoResponse` con `entregado_en`, `devuelto_en`, `observacion_devolucion` y `motivo_cancelacion` | — | PRE-13 | AC-L40 (`demorado` ya es derivado) |
+| `historial_de_unidad` devuelve los datos reales de entrega y devolución | — (la llama `inventory`) | PRE-12 | Sin cambio de firma (plan §8.5.7) |
+| Migración `0022_loans_ciclo_entrega` | — | P7.1 | AC-L54 |
+
+Reglas que se implementan: RN-L17, RN-L19…RN-L22, RN-L30 y RN-L16 con la precisión de la v1.0.3.
+
+**Fuera de la Fase 3:**
+
+| Tema | Por qué | Cuándo |
+| :---- | :---- | :---- |
+| AC-L62 completo (cancelación forzada **y** no retiro sobre la misma orden) | El no retiro lo produce `procesar-vencimientos` (PRE-08) | Fase 4. En esta fase, RN-L30 se prueba con dos cancelaciones forzadas y con una forzada junto a una línea devuelta |
+| Aviso de la cancelación forzada (`ORDEN_CANCELACION_FORZADA`, `CRITICA`) | `crear_notificacion` es de la Fase B de SPEC-06 y no está en `develop` | T3.10, con T2.13 (C12, C-N01) |
+| Llamados de atención por devoluciones demoradas (RN-L21) | Depende de C20 | Cuando el Perfil 1 responda C20 |
+| Reasignar la unidad de una línea aprobada (EC-L06) | Fuera del spec | — |
+| Aprobar renovaciones en el mostrador (PRE-11) | Depende de T1.14 | Con T1.14 |
+
+### 9.2 Verificaciones previas
+
+| # | Qué verificar | Resultado (2026-11-25) |
+| :---- | :---- | :---- |
+| V9 | **Numeración de la migración (C19).** La spec la llamaba `0012`, pero ese número ya se usó. `develop` termina en `0020_notifications_portada`, y los PRs del Perfil 1 `feat/produccion` y `fix/actualizar-imagenes` traen `0021_core_envios_correo` | La de esta fase se llama `0022_loans_ciclo_entrega`. Su `down_revision` apunta a la cabeza de `develop` al abrir el PR (regla de V5) y se comprueba con `alembic heads` |
+| V10 | `inventory.marcar_unidad_prestada`, `liberar_unidad` y `marcar_unidad_mantenimiento` | En `develop`. No hacen `commit` ni `flush`, bloquean la unidad con `bloquear_unidad` y responden `409 TRANSICION_ESTADO_INVALIDA` si el estado no corresponde. `marcar_unidad_mantenimiento` es idempotente y desde `prestado` responde `409`: en una devolución con daño, primero se llama a `liberar_unidad` |
+| V11 | `liberar_unidad` seguido de `marcar_unidad_mantenimiento` en la misma transacción (AC-L59) | Respondía `409`: `bloquear_unidad` volvía a leer la unidad y descartaba el cambio pendiente. **Corregido** por el Perfil 2 en el backend PR #46 (SPEC-04 B-22, 2026-11-23), sin `flush` entre las dos llamadas. C17 queda resuelto |
+| V12 | Filas en `entregado` o `devuelto` antes de la `0022` | Ningún endpoint las crea todavía. Por si una base de pruebas las tiene, la migración completa `entregado_en` y `devuelto_en` con las fechas pactadas antes de crear los `CHECK` |
+| V13 | Lugar de la pantalla | El menú ya tiene "Gestión de Entregas" (`deliveries` en `Sidebar.tsx` y `App.tsx`), hoy sin contenido; `manualDeUso.ts` marca PRE-13 como "próximamente" |
+
+### 9.3 Archivos
+
+| Archivo | Acción | Contenido |
+| :---- | :---- | :---- |
+| `alembic/versions/0022_loans_ciclo_entrega.py` | **Crear** | En `detalles_prestamo`: `entregado_en` y `devuelto_en` (`timestamptz`, nulos), `observacion_devolucion` y `motivo_cancelacion` (`String(500)`, nulos); completa las filas viejas (V12) y crea los `CHECK` `entrega_registrada` y `devolucion_registrada` (spec §7.2). `downgrade` completo |
+| `app/modules/loans/models.py` | Modificar | Columnas y `CHECK` nuevos en `DetallePrestamo` |
+| `app/modules/loans/schemas.py` | Modificar | `DetalleEstadoUpdate` (§9.4.5) y los cuatro campos nuevos en `DetallePrestamoResponse` |
+| `app/modules/loans/service.py` | Modificar | `cambiar_estado_detalle` (§9.4.1), `_cerrar_si_no_quedan_lineas` (§9.4.2), la precisión de RN-L16 (§9.4.3), el filtro `situacion` de la bandeja (§9.4.4) y `historial_de_unidad` con los datos reales |
+| `app/modules/loans/router.py` | Modificar | `PATCH /ordenes/{orden_id}/detalles/{detalle_id}/estado` con `error_responses(401, 403, 404, 409, 422)`; `situacion` en la bandeja |
+| `tests/loans/test_migracion_0022.py` | **Crear** | Upgrade → downgrade → upgrade (AC-L54) |
+| `tests/loans/test_mostrador.py` | **Crear** | Entrega, devolución y cancelación forzada |
+| `tests/loans/test_concurrencia.py` | Modificar | Dos entregas de la misma línea; entrega contra cancelación forzada |
+| `tests/loans/test_rechazar_cancelar.py`, `test_bandeja.py`, `test_lecturas_inventory.py` | Modificar | RN-L16 precisada, filtro `situacion` e historial con datos reales |
+
+### 9.4 Diseño de `service.py`
+
+#### 9.4.1 `cambiar_estado_detalle(db, actor, orden_id, detalle_id, payload)`
+
+Orden de los controles, el mismo que en §8.5.4: (1) rol, en el router con `require_roles` (403); (2) leer y bloquear la orden con alcance, `_orden_con_alcance(..., bloquear=True)`; si la línea no es de esa orden, también `404 ORDEN_NO_ENCONTRADA` (spec v1.0.3, §6.3); (3) transición válida desde el estado de la línea (409); (4) datos del pedido (422); (5) aplicar y `commit`.
+
+| Estado pedido | Estado actual de la línea | Efecto | Errores propios |
+| :---- | :---- | :---- | :---- |
+| `entregado` | `reservado` (la orden está `aprobada`) | `inventory.marcar_unidad_prestada(unidad)`; línea `entregado`; `entregado_en = ahora` | `409 TRANSICION_INVALIDA`; `409 TRANSICION_ESTADO_INVALIDA` de `inventory` si la unidad no está `disponible` (AC-L37, EC-L06, EC-L07) |
+| `devuelto` | `entregado` | `inventory.liberar_unidad(unidad)` y, con `a_mantenimiento`, `marcar_unidad_mantenimiento(unidad)`; línea `devuelto`; `devuelto_en = ahora`; `observacion_devolucion` | `409 TRANSICION_INVALIDA` |
+| `cancelado` | `reservado` | Línea `cancelado` con `motivo_cancelacion`; cierre de la orden (§9.4.2) | `422 MOTIVO_REQUERIDO`; `409 TRANSICION_INVALIDA` |
+
+- **Sin restricción horaria** para entregar (RN-L19): el control es presencial. La interfaz avisa si no es el día pactado, pero no lo impide.
+- La cancelación forzada **no** llama a `inventory`. La línea deja de ocupar la unidad (sale del `EXCLUDE`) y el estado físico de la unidad sigue siendo de `inventory`: si estaba en `mantenimiento`, sigue así.
+- `fin_ocupacion` no cambia en ningún caso (D-L16).
+- La entrega y la devolución no cambian el estado de la orden y no agregan filas a `ordenes_historial_estado`, que registra transiciones de la orden (D-L10). La fecha queda en la línea.
+- Ante un `AppError` después de bloquear, incluidos los de `inventory`, se hace `rollback` antes de propagarlo (RN-L14). No hay cambios parciales.
+- Responde `200` con la `OrdenPedidoResponse` completa, con el resumen del solicitante, para que la pantalla se actualice sin otra consulta.
+
+#### 9.4.2 Cierre de la orden (RN-L30)
+
+`_cerrar_si_no_quedan_lineas(orden, actor, motivo)` se llama después de una cancelación forzada y, en la Fase 4, después del no retiro. Si ninguna línea queda `reservado`, `entregado` o `devuelto`, la orden pasa a `cancelada`, con `resuelto_por_id`, `resuelto_en`, `motivo_resolucion` y una fila en `ordenes_historial_estado` (`aprobada` → `cancelada`). Si no, sigue `aprobada`.
+
+#### 9.4.3 Cancelación de una orden aprobada (RN-L16 precisada)
+
+Hoy el administrador cancela una orden `aprobada` "sin líneas `entregado`". Con entregas reales aparece un caso nuevo: una orden con una línea ya **devuelta** y otra `reservado`. Cancelarla la dejaría `cancelada` aunque el equipo se prestó, lo que contradice RN-L30. La v1.0.3 lo precisa: la cancelación de la orden exige que **ninguna línea se haya entregado** (ni `entregado` ni `devuelto`). Si no, `409 TRANSICION_INVALIDA`, y las líneas que siguen `reservado` se cancelan de a una con la cancelación forzada.
+
+#### 9.4.4 Lista del mostrador (`situacion` en la bandeja)
+
+`GET /ordenes` suma el filtro opcional `situacion` (`en_curso` o `finalizada`, RN-L31), con un `EXISTS` sobre las líneas en `ESTADOS_DETALLE_EN_CURSO`. Sin él, las órdenes `aprobada` ya terminadas se acumulan y, como la bandeja ordena de la más vieja a la más nueva, terminarían ocupando las primeras páginas del mostrador. Es un parámetro opcional: no cambia ninguna respuesta actual.
+
+#### 9.4.5 Esquemas
+
+- `DetalleEstadoUpdate` (`extra="forbid"`): `estado` ∈ {`entregado`, `devuelto`, `cancelado`}; `observacion` (≤ 500) y `a_mantenimiento` (por defecto `false`) solo con `devuelto`; `motivo` (≤ 500) solo con `cancelado`. Un campo que no corresponde al estado es un `422` de validación. La falta de `motivo` la detecta el servicio, para responder `MOTIVO_REQUERIDO` como en el rechazo (§6.3).
+- `DetallePrestamoResponse`: `entregado_en`, `devuelto_en`, `observacion_devolucion` y `motivo_cancelacion`, todos nulos por defecto (spec §6.2).
+
+#### 9.4.6 Historial de la unidad
+
+`historial_de_unidad` lee las columnas nuevas en lugar de devolver `None`. La firma no cambia (§8.5.7). Así la ficha de la unidad del Perfil 2 muestra la entrega, la devolución y la observación del estado físico (PRE-12).
+
+### 9.5 Concurrencia
+
+- Dos administradores entregan la misma línea: el `FOR UPDATE` sobre la orden los serializa, y el segundo recibe `409 TRANSICION_INVALIDA`.
+- Una entrega y una cancelación forzada de la misma línea: una prospera y la otra recibe `409 TRANSICION_INVALIDA`.
+- Orden de bloqueo: primero la orden y después la unidad, que bloquea `inventory`, igual que al aprobar (RN-L14). El cambio de estado de una unidad desde `inventory` bloquea solo la unidad, así que no hay ciclo.
+- Los tests usan pedidos en paralelo con sesiones independientes (AC-L55) y verifican el resultado, no el orden.
+
+### 9.6 Frontend: "Gestión de Entregas"
+
+- **Pantalla** `EntregasPage.tsx` en la entrada `deliveries` que ya tiene el menú (V13), solo para administradores. Trae `GET /ordenes?estado=aprobada&situacion=en_curso` (hasta 100), con el selector de sede del `SUPERADMIN` igual que la bandeja.
+- **Lógica pura** en `services/entregasVista.ts`, con tests de Vitest. Pasa de órdenes a filas por línea y las reparte en dos pestañas:
+  - **"Para entregar"**: líneas `reservado`, por retiro ascendente. Marca las de hoy y las que tienen el retiro vencido (el no retiro lo resuelve la Fase 4).
+  - **"En préstamo"**: líneas `entregado`, primero las demoradas, en rojo (RN-L21).
+- **Código de inventario** de cada unidad, cruzando con el stock de `inventory`, como la bandeja (Q1).
+- **Acciones:**
+  - "Entregar", con confirmación.
+  - "Recibir devolución", con un modal que tiene la observación (≤ 500) y la casilla "Vuelve con daño: pasar a mantenimiento".
+  - "Cancelación forzada", con el `MotivoModal` existente.
+  - Componentes de `components/ui` (SPEC-10).
+- **Errores:** si la entrega falla con `409 TRANSICION_ESTADO_INVALIDA`, el mensaje explica que la unidad no está en el estante (sigue prestada o está en mantenimiento) y que hay que esperar la devolución o hacer una cancelación forzada (EC-L06, EC-L07).
+- **Cliente:** `loansApi.cambiarEstadoDetalle(ordenId, detalleId, cambio)`, más los tipos y `mappers` con los campos nuevos y `situacion` en los filtros de la bandeja.
+- **Manual de uso:** `manualDeUso.ts` deja de marcar PRE-13 como "próximamente".
+
+### 9.7 Cambios a la spec (v1.0.3)
+
+Pedidos al Perfil 1 para aprobar junto con este plan. Ninguno cambia una respuesta que ya exista:
+
+1. **`situacion` en la bandeja** (§6.1): filtro opcional de `GET /ordenes` (§9.4.4).
+2. **RN-L16 y AC-L34**: la cancelación de una orden `aprobada` exige que ninguna línea se haya entregado (`entregado` o `devuelto`) (§9.4.3).
+3. **§6.3**: `ORDEN_NO_ENCONTRADA` también cuando la línea no pertenece a la orden. No se agrega un código nuevo.
+4. **§7.2, AC-L54 y §14**: la migración de la Fase 3 es la `0022_loans_ciclo_entrega` (V9).
+5. **C17 resuelto** (§16, AC-L59, §14 y §17): `marcar_unidad_mantenimiento` está en `develop` y el arreglo de `bloquear_unidad` (backend PR #46) permite llamarla después de `liberar_unidad` en la misma transacción.
+
+### 9.8 Bloqueos, coordinación y preguntas
+
+| # | Con | Qué | Afecta |
+| :---- | :---- | :---- | :---- |
+| v1.0.3 | Perfil 1 | Aprobar la enmienda de §9.7 | Merge del backend |
+| C19 | Perfil 1 | Cadena de la `0022` frente a la `0021_core_envios_correo` (V9) | T3.1 y el merge |
+| C12 / C-N01 | Perfil 5 | `crear_notificacion` en `develop` | T3.10 |
+| C20 | Perfil 1 | Llamados de atención por demoras | Fuera de la fase |
+| Fase C de SPEC-04 | Perfil 2 | Al pasar una unidad a mantenimiento, `inventory` devuelve `ordenes_afectadas`, calculadas con `reservas_futuras_de_unidad`. El administrador las resuelve con la cancelación forzada de esta fase. Informativo: si cambia la firma de `reservas_futuras_de_unidad` o de `historial_de_unidad`, se avisa antes | — |
+| Q2 | Perfil 1 y referente | ¿Hay que guardar **quién** entregó y quién recibió la devolución (auditoría, USR-08)? La spec no lo prevé. Si se pide antes de mergear, se suman dos columnas a la `0022` | No bloquea |
+
+### 9.9 Riesgos
+
+- **Dos cabezas de Alembic** si la `0021` del Perfil 1 y la `0022` se mergean con bases distintas: se resuelve con la regla de V5 y se comprueba con `alembic heads` antes del merge.
+- **`CHECK` sobre datos viejos:** la migración completa las fechas antes de crear las restricciones (V12). Si una base tiene datos que no se pueden completar, falla en el `upgrade` y no en producción a medias.
+- **Entregar lo que no está en el estante:** `inventory` lo rechaza (AC-L37), y la interfaz explica cómo resolverlo.
+
+### 9.10 Verificación de la fase
+
+1. `pytest -q` completo y `ruff check` sin errores; `alembic upgrade head`, `downgrade -1` y `upgrade head` contra una base temporal; una sola cabeza.
+2. `/docs` muestra el `PATCH …/detalles/{id}/estado` con sus respuestas de error y el filtro `situacion`.
+3. Cada criterio AC-L34…L39, L54, L55 y L59 tiene al menos un test anotado, y AC-L62 en la parte de la cancelación forzada.
+4. Frontend: tipos, Vitest y build en verde; recorrido manual de entregar, devolver con y sin daño y cancelar.
+5. `MEMORY.md`, `tasks.md` y la spec al día.
+
+---
+
+## 10. Historial
 
 | Versión | Fecha | Cambio |
 | :---- | :---- | :---- |
+| 0.5.0 | 2026-11-25 | Agrega la Fase 3, Mostrador (§9): entrega, devolución con y sin daño y cancelación forzada por línea, cierre de la orden (RN-L30), filtro `situacion` para la lista del mostrador, migración `0022_loans_ciclo_entrega` y la pantalla "Gestión de Entregas". Propone la enmienda v1.0.3 de la spec. Cierra Q1 (SPEC-04 D-18) y registra que C17 quedó resuelto (backend PR #46) |
 | 0.4.6 | 2026-11-24 | El aval (T1.12, backend PR #34) y el frontend de las Fases 1 y 2 (frontend PR #24, rediseñado por SPEC-10 en el PR #28) quedan implementados |
 | 0.4.5 | 2026-11-11 | La spec v1.0.2 queda aprobada (merge del PR #26 de Docs): el PR del backend de T1.12 se puede abrir |
 | 0.4.4 | 2026-11-11 | Revisión del Perfil 1 al PR #26 de Docs: T1.12 queda en curso (no mergeada) en lugar de hecha |
