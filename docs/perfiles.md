@@ -139,12 +139,12 @@ y no escribas código hasta que yo lo apruebe.
 | Estado | Detalle |
 | :---- | :---- |
 | Implementado (backend, en `develop`) | SPEC-05 `APROBADO` (v1.0.0 el 2026-11-07; v1.0.2 el 2026-11-11). **Fase 1** (PR \#21): reglas, crear orden con validaciones de franja, anticipación, plazo y unidades libres, y consulta de las propias. **Fase 2** (PR \#23 y \#28): bandeja, detalle para administradores, unidades libres por línea, aprobar con asignación de unidades y ajuste horario, rechazar y cancelar, con concurrencia probada y migración `0011`. Funciones públicas para `inventory`: `unidades_libres`, `ocupacion_de_unidades`, `historial_de_unidad` y `reservas_futuras_de_unidad` |
-| Implementado (frontend, en `develop`) | Tipos, `loansApi` y carrito conectado al catálogo (PR \#18) |
-| En curso | Aval de alta gama (PRE-05, T1.12) en `feat/loans-aval`, según la spec v1.0.2 (aprobada el 2026-11-11); PR del backend por abrir |
-| Pendiente | Frontend: formulario de solicitud, "Mis solicitudes" y las pantallas de la Fase 2. Backend: notificaciones de cada transición (espera `crear_notificacion`, SPEC-06 Fase B), horario por sede (K10), renovación (PRE-11), entrega y devolución y cancelación forzada (Fase 3: PRE-13, PRE-17), no retiro automático, calendario maestro y panel docente (Fase 4: PRE-08, PRE-16, PRE-20) |
+| Implementado (frontend, en `develop`) | Tipos, `loansApi` y carrito conectado al catálogo (PR \#18); formulario de solicitud con aval, "Mis solicitudes" y Bandeja de Validaciones (PR \#24), con el rediseño de SPEC-10 (PR \#28, aval U2 del 2026-11-24) |
+| En curso | Horario por sede (T1.13, H2 de SPEC-09) y plan de la Fase 3 (mostrador) |
+| Pendiente | Fase 3: entrega y devolución (PRE-13), cancelación forzada (PRE-17) y la pantalla "Gestión de Entregas". Fase 4: no retiro con `procesar-vencimientos` (PRE-08, con su línea en `deploy/crontab`, X1 de SPEC-11), calendario maestro (PRE-16) y panel docente (PRE-20, espera C3). Renovación de notebooks (PRE-11, T1.14). Notificaciones de cada transición (espera `crear_notificacion`, SPEC-06 Fase B) |
 | Deuda registrada | En `MEMORY.md` §4: DT-20 (estado de la unidad duplicado con `inventory`): ya se respeta al aprobar; se termina de cerrar en la Fase 3, cuando la entrega y la devolución usen `marcar_unidad_prestada` y `liberar_unidad`. DT-16 se cerró con la aprobación de SPEC-05 y DT-17 y DT-18 en el PR \#16 |
 
-**Siguiente:** plan y tareas de la Fase 3 (mostrador) en `specs/05-loans-prestamos/plan.md` y `tasks.md`, y el frontend de las Fases 1 y 2.
+**Siguiente:** horario por sede (T1.13) y plan y tareas de la Fase 3 (mostrador) en `specs/05-loans-prestamos/plan.md` y `tasks.md`.
 
 **Prompt de arranque:**
 
@@ -243,6 +243,7 @@ estado BORRADOR, y no escribas código hasta que yo lo apruebe.
 | Versión | Fecha | Cambio |
 | :---- | :---- | :---- |
 | 1.5.0 | 2026-11-22 | SPEC-11 (despliegue y CI) aprobado (Perfil 1): pendiente del Perfil 1 al día (§4) |
+| 1.4.1 | 2026-11-24 | Perfil 3 al día: aval y frontend de las Fases 1 y 2 en `develop`; siguen el horario por sede y la Fase 3 |
 | 1.4.0 | 2026-11-18 | Cierre de SPEC-09 (Perfil 1): teléfono obligatorio implementado; DT-33 y DT-34 como pendientes del Perfil 1 (§4). La interfaz del horario por sede (§5) sigue esperando H1…H3 |
 | 1.3.0 | 2026-11-12 | SPEC-09 Fase A en `develop` (Perfil 1): interfaz "Horario y correo de contacto por sede" publicada (§5) y en "Lo que ya existe" (§2); estado del Perfil 1 al día (§4). La cabecera vuelve a coincidir con el historial (decía 1.2.0) |
 | 1.2.1 | 2026-11-11 | Perfil 3 al día (SPEC-05 aprobado, Fases 1 y 2 en `develop`, aval en curso); el Perfil 2 ya no depende de `loans` para su Fase C |
