@@ -1308,7 +1308,7 @@ Ninguno de estos puntos modifica los requisitos aprobados para la regularidad: e
 
 Descripción técnica de los requerimientos y pasos necesarios para la instalación del software desarrollado.
 
-Se detallan en la guía de instalación del proyecto (`docs/instalacion.md`, a redactar con la Fase C de SPEC-11): computadora con Linux y Docker, dominio propio, túnel de publicación, proveedor de correo, almacenamiento externo de las copias y monitoreo.
+Se detallan en la [guía de instalación](instalacion.md) (`docs/instalacion.md`): computadora con Ubuntu Server 24.04 y Docker (4 núcleos, 8 GB de RAM recomendados, SSD de 120 GB o más, conexión por cable con salida HTTPS), dominio propio, túnel de publicación de Cloudflare, proveedor de correo transaccional, almacenamiento externo de las copias cifradas y monitoreo. La operación posterior (actualizaciones, copias, restauración y respuesta a avisos) está en el [manual de operación](operacion.md).
 
 Copia del software desarrollado al menos en un 80% de su funcionalidad, según los requerimientos definidos para dicho trabajo.
 
