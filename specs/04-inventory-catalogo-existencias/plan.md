@@ -1,8 +1,8 @@
 # PLAN-04 — Catálogo y existencias (`inventory`)
 
-> **Spec:** `specs/04-inventory-catalogo-existencias/spec.md` v1.2.0 (Fase B `APROBADO`) · **Estado del plan:** v2.0.0 `APROBADO` · **Fecha:** 2026-11-07 · **Perfil:** 2
+> **Spec:** `specs/04-inventory-catalogo-existencias/spec.md` v1.3.0 (Fase B `IMPLEMENTADO`, Fase C `BORRADOR`) · **Estado del plan:** v2.1.0 (Fase B `APROBADO` y ejecutada; §6 de la Fase C en `BORRADOR`) · **Fecha:** 2026-11-23 · **Perfil:** 2
 > **Base verificada:** `origin/develop` del backend (`3ffed99`, incluye `loans.ocupacion_de_unidades`, PR \#21) y del frontend (`0a5ff37`).
-> Tareas: `specs/04-inventory-catalogo-existencias/tasks.md`. **No se escribe código hasta que el spec v1.2.0 esté `APROBADO`.**
+> Tareas: `specs/04-inventory-catalogo-existencias/tasks.md`. **La Fase C no se programa hasta que el spec v1.3.0 esté `APROBADO`.** Los pendientes de cierre de la Fase B (tarea B-22) ya tienen spec aprobado.
 
 ---
 
@@ -227,19 +227,45 @@ class DisponibilidadResponse(BaseModel):
 - **Accesibilidad.** Cada celda lleva `aria-label` ("Martes 10 de noviembre: 2 unidades libres"); los colores se acompañan de la cantidad o de un guion, no sólo de color.
 - **Contrato con el Perfil 3.** `inventory` exporta el tipo `Equipment` (ya existe) y no importa nada de `loans`. El carrito recibe el `Equipment` completo (`id`, `name`, `altaGama`, `esNotebook`, `maxDays`, `image`); si necesita otro campo, se agrega al mapper en una tarea de `inventory`.
 
-## 6. Fase C (bloqueada por `loans`)
+## 6. Fase C (spec v1.3.0)
 
-Se ejecuta cuando `loans` publique en `develop` `historial_de_unidad` y `reservas_futuras_de_unidad`. **Primer paso obligatorio:** comparar sus firmas con §5.3 y §5.5 del spec y, si difieren, actualizar el spec antes de programar.
+**Desbloqueada:** `reservas_futuras_de_unidad` e `historial_de_unidad` están en `develop` (backend PR \#23). La comparación de firmas (tarea C-01) se hizo el 2026-11-23 y el spec v1.3.0 ya las refleja; si cambian antes de programar, se vuelve a revisar el spec. Base: backend `5243337`, frontend `e0740bc`. Ramas: `feat/inventory-historial` en ambos repos, desde `develop` actualizado y en un worktree aparte (los clones principales tienen trabajo de SPEC-10 sin commitear).
+
+### 6.1 Backend
 
 | Archivo | Acción | Contenido |
 | :---- | :---- | :---- |
-| `inventory/schemas.py` | Modificar | `SolicitanteResumen`, `MovimientoUnidadResponse`, `UnidadEstadoResponse(UnidadFisicaResponse)` con `reservas_afectadas: int \| None` |
-| `inventory/router.py` | Modificar | `GET /unidades/{id}/historial` (alcance con `puede_ver_sede` → `404`, luego `loans.historial_de_unidad`, recorte por `limit`/`offset`); `cambiar_estado_unidad` con `response_model=UnidadEstadoResponse` y, tras el `commit`, `reservas_futuras_de_unidad(db, unidad_id, desde=ahora_lab())` si el estado nuevo es `mantenimiento` o `baja` |
-| `tests/inventory/test_historial.py` | Crear | INV-34 (con líneas creadas por `crear_linea` en varios estados) |
-| `tests/inventory/test_gestion.py` | Modificar | INV-35 |
-| Frontend `types`, `inventoryApi.ts`, `mappers.ts` | Modificar | DTOs del historial y `reservas_afectadas`; `listarHistorialUnidad` |
-| `components/HistorialUnidadModal.tsx` | Crear | Lista paginada con "Cargar más" |
-| `components/UnidadesRow.tsx`, `hooks/useGestion.ts`, `components/StockTable.tsx` | Modificar | Botón "Historial"; aviso persistente de reservas afectadas |
+| `inventory/schemas.py` | Modificar | `SolicitanteResumen` (`id`, `nombre`, `apellido`, `from_attributes`), `MovimientoUnidadResponse` (campos de spec §5.5, `from_attributes` para leer el `dataclass` de `loans`) y `UnidadEstadoResponse(UnidadFisicaResponse)` con `reservas_afectadas: int \| None = None` y `ordenes_afectadas: list[int] \| None = None`. `Field(..., examples=[...])` en todos |
+| `inventory/router.py` | Modificar | (1) `GET /unidades/{unidad_id}/historial` con `_solo_admins`, `limit: int = Query(20, ge=1, le=100)`, `offset: int = Query(0, ge=0)`; carga la unidad (sin bloquear), `404` si no existe o `not puede_ver_sede`; devuelve `await historial_de_unidad(db, unidad_id, actor, limit=limit, offset=offset)`. (2) `cambiar_estado_unidad` con `response_model=UnidadEstadoResponse`: en la rama idempotente devuelve los campos en `None`; tras el `commit`, si el estado nuevo es `mantenimiento` o `baja`, `reservas = await reservas_futuras_de_unidad(db, unidad_id, desde=ahora_lab())` y arma la respuesta con `len(reservas)` y los `orden_id` sin repetir (`dict.fromkeys`). Import de `loans.service` **sólo** de esas dos funciones (RN-I16); `inventory/service.py` sigue sin importar `loans` |
+| `tests/inventory/test_historial.py` | Crear | INV-34 |
+| `tests/inventory/test_gestion.py` | Modificar | INV-35 (casos nuevos; los de INV-18, 19 y 21 sin tocar salvo que comparen la respuesta entera) |
+| `Backend-PrestaMeDios/README.md` | Modificar | Rutas nuevas y campos de la respuesta del cambio de estado |
+
+**Tests (fixtures existentes `client`, `db`, `crear_usuario`, `auth`, `crear_equipo`, `crear_linea`; fechas relativas a hoy, ver riesgos):**
+
+| Archivo | Casos |
+| :---- | :---- |
+| `test_historial.py` (INV-34) | Unidad con cuatro líneas (`devuelto` pasada, `cancelado`, `reservado` futura, `pendiente`): admin local → `200`, cuatro elementos ordenados por retiro descendente, solicitante con `id`, `nombre`, `apellido` y nada más, `entregado_en`/`devuelto_en`/`observacion_devolucion` en `null`; `limit=2` + `offset=2` sin repetidos; `limit=0`, `limit=101`, `offset=-1` → `422`; unidad sin líneas → `[]`; `SUPERADMIN` → `200`; admin local de la otra sede e id inexistente → `404 UNIDAD_NO_ENCONTRADA`; estudiante y docente → `403`; sin token → `401`; `response.text` sin `dni`, `email` ni `telefono` |
+| `test_gestion.py` (INV-35) | Dos órdenes con líneas `reservado` futuras sobre la unidad más una `pendiente` y una `reservado` con retiro pasado: a `mantenimiento` → `2` y los dos ids en orden de retiro; luego a `baja` → `2` otra vez; a `disponible` desde `mantenimiento` → `null`; repetir el mismo estado → `null`; unidad sin reservas → `0` y `[]`; la unidad queda en el estado pedido en todos los casos |
+
+### 6.2 Frontend (`src/features/inventory/`)
+
+| Archivo | Acción | Contenido |
+| :---- | :---- | :---- |
+| `types/index.ts` | Modificar | `SolicitanteResumenDTO`, `MovimientoUnidadDTO`, `UnidadEstadoDTO` (espejo 1:1) y el modelo de vista `MovimientoUnidad` |
+| `services/inventoryApi.ts` (+ test) | Modificar | `listarHistorialUnidad(id, {limit, offset}, signal?)`; `cambiarEstadoUnidad` y sus atajos devuelven `UnidadEstadoDTO` |
+| `services/historial.ts` (+ test) | **Crear** | Funciones puras: `aMovimiento(dto)` (fechas, "—" en `null`, "Nombre Apellido"), `TEXTO_ESTADO_LINEA` (rótulos de los estados de línea de §5.5, sin importar `loans`), `hayMas(pagina, limit)` y `textoReservasAfectadas(codigo, n, ordenes)` |
+| `components/HistorialUnidadModal.tsx` | **Crear** | Sobre `components/ui/Modal`; lista, "Cargar más", carga, error y vacío (spec §8.3); `AbortController` al cerrar |
+| `components/UnidadesRow.tsx` | Modificar | Botón "Historial" por unidad (mismo estilo que las acciones de estado, `aria-label` con el código) |
+| `hooks/useGestion.ts` | Modificar | `cambiarEstado` guarda el aviso si `reservas_afectadas > 0` y expone `aviso` y `cerrarAviso` |
+| `pages/StockPage.tsx` | Modificar | Muestra el aviso persistente arriba de la tabla |
+| `Frontend-PrestaMeDios/README.md` | Modificar | Detalle y calendario (Fase B, pendiente) e historial y aviso (Fase C) |
+
+Estos archivos también los tocó SPEC-10 (aval U1). Antes de abrir la rama, confirmar con el Perfil 1 que la entrega 2 de SPEC-10 no está cambiando `UnidadesRow`, `useGestion` ni `StockPage`, o esperar a que se mergee, para no pisarse.
+
+### 6.3 Verificación de la Fase C
+
+`pytest -q` completo, `pytest --cov=app/modules/inventory` (≥ 90 %), `python -c "import app.main"` (sin import circular), `npm run typecheck`, `npm run build`, `npm test`, y recorrido manual con las cuentas demo locales: el admin local de Ushuaia abre el historial de una unidad con préstamos, pasa a mantenimiento una unidad con una reserva aprobada y ve el aviso con la orden.
 
 ## 7. Verificación
 
@@ -258,7 +284,7 @@ Se ejecuta cuando `loans` publique en `develop` `historial_de_unidad` y `reserva
 | `loans.ocupacion_de_unidades`, `PeriodoOcupado` | Perfil 3 | Se usan tal cual (públicas, SPEC-05 §10.2). Si cambian de firma, se rompe `test_disponibilidad.py`: es la alarma buscada |
 | Cableado `onAddToCart` en `App.tsx` | Perfil 3 (con conformidad del Perfil 1) | `inventory` no lo hace (D-12). Hasta entonces el botón no se muestra |
 | `marcar_unidad_mantenimiento` | Perfil 2 → Perfil 3 | Avisar en `MEMORY.md` §5 al mergear: destraba AC-L59 |
-| `historial_de_unidad`, `reservas_futuras_de_unidad` | Perfil 3 | Bloquean la Fase C |
+| `historial_de_unidad`, `reservas_futuras_de_unidad` | Perfil 3 | En `develop` (PR \#23); la Fase C las usa tal cual. Si cambian de firma, fallan `test_historial.py` y los casos de INV-35 |
 | Datos de demo | Perfil 1 | Ítems con unidades en varios estados y alguna reserva aprobada para que el calendario muestre rojo |
 
 ## 9. Riesgos
@@ -275,6 +301,7 @@ Se ejecuta cuando `loans` publique en `develop` `historial_de_unidad` y `reserva
 
 | Versión | Fecha | Cambio |
 | :---- | :---- | :---- |
+| 2.1.0 | 2026-11-23 | Perfil 2, con asistencia de IA. §6 reescrito para la Fase C del spec v1.3.0 (desbloqueada, firmas de `loans` verificadas): archivos, tests y verificación. Encabezado al día |
 | 2.0.0 | 2026-11-07 | `BORRADOR` (Perfil 2, con asistencia de IA). Plan de las Fases B y C según el spec v1.2.0; la Fase A queda resumida en §3 |
 | 1.0.0 | 2026-10-23 | Plan ejecutado (Fase A). Desviaciones: (1) la categoría se filtra en la pantalla y no en la API; (2) la migración `0010` usa SQL directo para los `CHECK` por el prefijo duplicado de `NAMING_CONVENTION`; (3) `UnidadFormModal` agrega alta y edición de unidades desde la tabla de stock; (4) las ramas de T-00 se crearon al cierre, con pedido explícito: `feat/inventory-gestion` (backend, `b93017f`) y `feat/inventory-catalogo` (frontend, `128b749`), publicadas por `Farvi-1986` |
 | 0.1.0 | 2026-10-23 | Borrador inicial (Perfil 2) |
