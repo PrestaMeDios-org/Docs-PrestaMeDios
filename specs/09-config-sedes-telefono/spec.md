@@ -4,8 +4,8 @@
 | --- | --- |
 | **ID** | SPEC-09 |
 | **Perfil responsable** | Perfil 1 — Identidad, Usuarios, Permisos, Configuración Global y Despliegue |
-| **Estado** | `IMPLEMENTADO` — 2026-11-18, todo en `develop`: Fase A (backend PR #35, frontend PR #26) y Fase B (backend PR #38, frontend PR #27). Trazabilidad en §12. Aprobado el 2026-11-11 por el Perfil 1, con las recomendaciones de §10 (D-01…D-12). La adopción del horario por sede en `spaces`, `loans` y el portal (H1…H3) sigue pendiente en esos módulos (DT-33) |
-| **Versión** | 1.0.0 |
+| **Estado** | `IMPLEMENTADO` — 2026-11-18, todo en `develop`: Fase A (backend PR #35, frontend PR #26) y Fase B (backend PR #38, frontend PR #27). Trazabilidad en §12. Aprobado el 2026-11-11 por el Perfil 1, con las recomendaciones de §10 (D-01…D-12). `loans` ya adoptó el horario por sede (H2, backend PR #47, 2026-11-25); faltan `spaces` (H1) y el portal (H3), y con ellos DT-33 |
+| **Versión** | 1.0.1 |
 | **Requisitos cubiertos** | Fase A: GLO-03 (horario de cada sede y correo de contacto del laboratorio) y el dato que necesita GLO-02 ("según el horario de atención de esa sede"); ADR-022 (a) y (c) · Fase B: USR-05 (teléfono obligatorio), ADR-022 (b), D-16 de SPEC-03 |
 | **Responde a** | K10 de SPEC-03; C19 (la parte del horario) y C1 de SPEC-05; C-N05 de SPEC-06; pedido (b) al Perfil 4 del 2026-11-02 (`MEMORY.md` §5) |
 | **Depende de** | SPEC-01 v1.0.0 (`config`, `users`) y SPEC-03 v1.1.0 (D-16), `IMPLEMENTADO`, en `develop` |
@@ -336,7 +336,7 @@ Cada criterio de backend tiene al menos un test anotado `# AC-NN`, con `pytestma
 | ID | Para | Pedido | Origen |
 | --- | --- | --- | --- |
 | H1 | Perfil 4 (ya adoptado en la Fase 2 de SPEC-08, T2.1…T2.3) | Cambiar `spaces/service.horario(db)` por `datos_de_sede(db, espacio.sede)` en la validación de franja y en la disponibilidad. En el aviso de anticipación mínima (CU de reserva, FA-02), mostrar el correo de la sede: sumándolo al `422 ANTICIPACION_INSUFICIENTE` o desde `GET /config/sedes` en el frontend. Avisar cuando esté en `develop`, para borrar las claves globales | K10 de SPEC-03, pedido (b) del 2026-11-02 |
-| H2 | Perfil 3 | Cambiar las tres lecturas de `horario.apertura` y `horario.cierre` de `loans/service.py` (alta de orden con la sede del solicitante, ajuste horario con la sede de la orden y `GET /loans/reglas`) por `datos_de_sede`; es la T1.13 de SPEC-05, que ya define `?sede=` para el `SUPERADMIN` (EC-57). Opcional: el correo en el `422 ANTICIPACION_INSUFICIENTE`. **C1:** las demás claves de `config` alcanzan, no hacen falta claves nuevas. **C19:** la parte del horario se resuelve con este spec | C1 y C19 de SPEC-05, RN-L04 |
+| H2 | Perfil 3 (**hecho** el 2026-11-25, backend PR #47) | Cambiar las tres lecturas de `horario.apertura` y `horario.cierre` de `loans/service.py` (alta de orden con la sede del solicitante, ajuste horario con la sede de la orden y `GET /loans/reglas`) por `datos_de_sede`; es la T1.13 de SPEC-05, que ya define `?sede=` para el `SUPERADMIN` (EC-57). Opcional: el correo en el `422 ANTICIPACION_INSUFICIENTE`. **C1:** las demás claves de `config` alcanzan, no hacen falta claves nuevas. **C19:** la parte del horario se resuelve con este spec | C1 y C19 de SPEC-05, RN-L04 |
 | H3 | Perfil 5 | El portal pasa de leer `horario.apertura` y `horario.cierre` a `GET /config/sedes` (con `obtenerDatosSedes()` de `features/config`), y muestra el horario de cada sede en lugar de "en ambas sedes" | C-N05 de SPEC-06, RN-N1 |
 | H4 | Equipo | Hacer las preguntas de §10.1 a la referente | D-03, D-04, D-05, D-08, D-09 |
 
@@ -358,7 +358,7 @@ Verificada el 2026-11-18 contra `develop` (backend `d5c38f7`, frontend `5d1278d`
 
 **Bordes sin test propio.** EC-51 y EC-52 describen lo que pasa en `spaces` y `loans` mientras no adopten el horario por sede (H1, H2): no hay código de este spec que probar. EC-57 lo define y lo prueba SPEC-05 (T1.13, AC-L63). **Criterios de frontend:** AC-120 y AC-121 se verificaron con los recorridos manuales registrados en las tareas AF-02, BF-01 y BF-02; los tests de Vitest cubren la lógica (`obtenerDatosSedes`, `validarTelefono`) y no llevan la anotación `AC-NN`.
 
-**Adopción por los otros perfiles (al 2026-11-18).** `loans/service.py` y `spaces/service.py` siguen leyendo `horario.apertura` y `horario.cierre`, y el portal de `notifications` muestra "en ambas sedes": H1, H2 y H3 siguen abiertos, y con ellos DT-33.
+**Adopción por los otros perfiles (al 2026-11-25).** H2 está hecho: `loans` usa `datos_de_sede` en `GET /reglas` (con `?sede=` para el `SUPERADMIN`, EC-57), en el alta de una orden y en el ajuste al aprobar (backend PR #47, `1ba78ce`; tests en `tests/loans/test_reglas.py`, `test_crear_orden.py` y `test_aprobar.py`). Siguen abiertos H1 (`spaces/service.py:116-117` lee `horario.apertura` y `horario.cierre`) y H3 (el portal de `notifications` las lee en `notificationsApi.ts` y muestra "en ambas sedes"), y con ellos DT-33.
 
 ---
 
@@ -366,6 +366,7 @@ Verificada el 2026-11-18 contra `develop` (backend `d5c38f7`, frontend `5d1278d`
 
 | Versión | Fecha | Autor | Cambio |
 | --- | --- | --- | --- |
+| 1.0.1 | 2026-11-25 | Perfil 1 (con asistencia de IA) | Seguimiento, sin cambios de contrato: H2 hecho por el Perfil 3 (backend PR #47, revisado y aprobado por el Perfil 1); EC-51 ya no aplica a `loans`. Siguen H1 y H3 (DT-33) |
 | 1.0.0 | 2026-11-18 | Perfil 1 (con asistencia de IA) | **`IMPLEMENTADO`**, sin cambios de contrato. Cierre (C-01): §12 con los archivos de test de cada fila, los bordes sin test propio y el estado de H1…H3, verificada contra `develop` (backend `d5c38f7`, frontend `5d1278d`) |
 | 1.0.0 | 2026-11-11 | Perfil 1 | **Aprobado**, con las recomendaciones de §10 (D-01…D-12). Suma la respuesta parcial a la pregunta 1 de §10.1: Ushuaia extiende su horario y Río Grande lo mantiene, lo que confirma la necesidad de horarios distintos por sede (G-1). Plan y tareas en `plan.md` y `tasks.md` |
 | 0.2.0 | 2026-11-11 | Perfil 1 (con asistencia de IA) | Revisión antes de aprobar, sin cambiar las decisiones. **RN-79 corregida:** bloquear "las dos filas en orden alfabético" después de que `actualizar` ya bloqueó la editada podía terminar en *deadlock*; ahora se bloquean la editada y su par en una sola consulta ordenada por clave, para todos los pares de `_REGLAS_CRUZADAS` (G-5 nueva; AC-106 y EC-53 más precisos). RN-80 aclara que el `""` sólo lo escribe la migración. Alineado con SPEC-08 v1.0.0 (H1 ya adoptado en su Fase 2) y con la T1.13 de SPEC-05 (EC-57, H2). §2.1 verificado de nuevo sobre `develop` |
