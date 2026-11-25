@@ -140,11 +140,11 @@ y no escribas código hasta que yo lo apruebe.
 | :---- | :---- |
 | Implementado (backend, en `develop`) | SPEC-05 `APROBADO` (v1.0.0 el 2026-11-07; v1.0.2 el 2026-11-11). **Fase 1** (PR \#21): reglas, crear orden con validaciones de franja, anticipación, plazo y unidades libres, y consulta de las propias. **Fase 2** (PR \#23 y \#28): bandeja, detalle para administradores, unidades libres por línea, aprobar con asignación de unidades y ajuste horario, rechazar y cancelar, con concurrencia probada y migración `0011`. Funciones públicas para `inventory`: `unidades_libres`, `ocupacion_de_unidades`, `historial_de_unidad` y `reservas_futuras_de_unidad` |
 | Implementado (frontend, en `develop`) | Tipos, `loansApi` y carrito conectado al catálogo (PR \#18); formulario de solicitud con aval, "Mis solicitudes" y Bandeja de Validaciones (PR \#24), con el rediseño de SPEC-10 (PR \#28, aval U2 del 2026-11-24) |
-| En curso | Horario por sede (T1.13, H2 de SPEC-09) y plan de la Fase 3 (mostrador) |
+| En curso | Fase 3, mostrador: plan y tareas en `specs/05-loans-prestamos/plan.md` §9 (v0.5.0) y enmienda v1.0.3 de la spec en revisión. Horario por sede (T1.13): backend en `develop` (PR \#47), falta el frontend |
 | Pendiente | Fase 3: entrega y devolución (PRE-13), cancelación forzada (PRE-17) y la pantalla "Gestión de Entregas". Fase 4: no retiro con `procesar-vencimientos` (PRE-08, con su línea en `deploy/crontab`, X1 de SPEC-11), calendario maestro (PRE-16) y panel docente (PRE-20, espera C3). Renovación de notebooks (PRE-11, T1.14). Notificaciones de cada transición (espera `crear_notificacion`, SPEC-06 Fase B) |
 | Deuda registrada | En `MEMORY.md` §4: DT-20 (estado de la unidad duplicado con `inventory`): ya se respeta al aprobar; se termina de cerrar en la Fase 3, cuando la entrega y la devolución usen `marcar_unidad_prestada` y `liberar_unidad`. DT-16 se cerró con la aprobación de SPEC-05 y DT-17 y DT-18 en el PR \#16 |
 
-**Siguiente:** horario por sede (T1.13) y plan y tareas de la Fase 3 (mostrador) en `specs/05-loans-prestamos/plan.md` y `tasks.md`.
+**Siguiente:** backend de la Fase 3 (`feat/loans-mostrador`, migración `0022_loans_ciclo_entrega`) y pantalla "Gestión de Entregas" (`feat/loans-entregas`).
 
 **Prompt de arranque:**
 

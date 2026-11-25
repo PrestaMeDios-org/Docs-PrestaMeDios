@@ -1,7 +1,7 @@
-# TASKS-05 — Préstamos (`loans`): Fases 1 y 2
+# TASKS-05 — Préstamos (`loans`): Fases 1, 2 y 3
 
-> **Estado:** `BORRADOR` · **Versión:** 0.4.6 · **Fecha:** 2026-11-24 · **Perfil:** 3
-> **Spec:** `specs/05-loans-prestamos/spec.md` v1.0.2 (`APROBADO`) · **Plan:** `specs/05-loans-prestamos/plan.md` v0.4.6
+> **Estado:** `BORRADOR` · **Versión:** 0.5.0 · **Fecha:** 2026-11-25 · **Perfil:** 3
+> **Spec:** `specs/05-loans-prestamos/spec.md` v1.0.2 (`APROBADO`), con la enmienda v1.0.3 en revisión · **Plan:** `specs/05-loans-prestamos/plan.md` v0.5.0
 > Cada tarea es chica y verificable. Las tareas que dependen de otros perfiles (`files`, K10) se aíslan para que el resto avance.
 
 Leyenda: `[ ]` pendiente · `[~]` bloqueada o en curso · `[x]` hecha
@@ -27,7 +27,7 @@ Implementada y mergeada en `develop` (backend PR #21).
 | **T1.10** | Esquema: `pdf_aval_id: UUID \| None` y `renueva_detalle_id: int \| None` en `OrdenPedidoCreate`; una renovación lleva una sola línea | AC-L04, RN-L24 | `tests/loans/test_schemas.py`: sin aval ni renovación por defecto, UUID válido e inválido, renovación con una y con dos líneas, id no positivo | `[x]` |
 | **T1.11** | Usar `inventory.datos_equipamiento_por_ids` (C8) en `crear_orden` y borrar el adaptador provisorio | AC-L12 | `test_crear_orden.py` corre contra la base real, sin la función falsa; se borra el test del `501` sin C8 | `[x]` |
 | **T1.12** | Aval de alta gama: `vincular_archivo` en la misma transacción que la orden, `aval_archivo_id` en la orden (migración `0016_loans_aval`) y `GET /ordenes/{id}/aval` para el dueño y los administradores con jurisdicción | AC-L14, L60 | `tests/loans/test_aval.py` y `test_migracion_0016.py`; migración verificada contra una base temporal. Backend PR #34, mergeado el 2026-11-11 | `[x]` |
-| **T1.13** | Horario por sede en `GET /reglas` y en la franja de `crear_orden` (`sede` en `ReglasResponse`, `?sede=` para el `SUPERADMIN`) | AC-L63, RN-L04 | Depende de **K10** (claves por sede en `config`). Cambia solo la lectura de parámetros | `[~]` |
+| **T1.13** | Horario por sede en `GET /reglas` y en la franja de `crear_orden` (`sede` en `ReglasResponse`, `?sede=` para el `SUPERADMIN`) | AC-L63, RN-L04 | Backend PR #47, mergeado el 2026-11-25 (`test_reglas.py`, más los tests de la franja por sede en `test_crear_orden.py` y `test_aprobar.py`). Falta mergear el frontend (`feat/loans-horario-sede`: `sede` en las reglas y la bandeja las pide con la sede de la orden) | `[~]` |
 | **T1.14** | Renovación (RN-L24): `renueva_detalle_id` debe ser una línea `entregado` propia de una notebook (si no, `422 RENOVACION_NO_PERMITIDA`), sin anticipación mínima, y la unidad renovada cuenta como libre para esa orden | PRE-11, RN-L24 | **Fuera de este corte.** Necesita su propio diseño de disponibilidad, porque la notebook está `prestado` y `unidades_asignables` no la devuelve | `[ ]` |
 | **T1.15** | `ocupacion_de_unidades(db, unidad_ids, desde, hasta)` (spec §10.2): por unidad, los períodos ocupados que se solapan con el rango, en una sola consulta y sin identidad, para el mini-calendario del Perfil 2 | PRE-01, INV-26 | `tests/loans/test_ocupacion.py`: períodos por unidad ordenados, estados que no ocupan, solapamiento semiabierto sin recorte, entrada vacía sin consulta, una sola consulta, repetidos, unidad inexistente, período inválido, resultado inmutable y sin identidad | `[x]` |
 
@@ -108,6 +108,47 @@ Dependen de F1.1 y F1.2 (tipos y `loansApi`) y del contrato de la Fase 2 en `dev
 | **F2.4** | "Mis solicitudes": cancelar una orden propia `pendiente` | CU-L03 | Frontend PR #24 (2026-11-11); rediseño visual de SPEC-10 en el PR #28 (aval U2 del 2026-11-24) | `[x]` |
 | **F2.5** | Ajuste horario al aprobar, si entra T2.10 | PRE-18 | Frontend PR #24 (2026-11-11); rediseño visual de SPEC-10 en el PR #28 (aval U2 del 2026-11-24). Fechas con el selector común y horas de `GET /reglas` | `[x]` |
 
+## Fase 3, Mostrador — Backend
+
+Plan §9. Rama `feat/loans-mostrador`. Se mergea después de la aprobación de la spec v1.0.3.
+
+| ID | Tarea | Criterios | Verificación | Estado |
+| :---- | :---- | :---- | :---- | :---- |
+| **T3.0** | Verificaciones V9…V13 del plan §9.2; acordar la cadena de la `0022` con el Perfil 1 (C19) y la aprobación de la v1.0.3 | — | Notas en el PR; `alembic heads` con una sola cabeza | `[ ]` |
+| **T3.1** | Migración `0022_loans_ciclo_entrega` y modelos: `entregado_en`, `devuelto_en`, `observacion_devolucion`, `motivo_cancelacion` y los `CHECK` `entrega_registrada` y `devolucion_registrada`; los cuatro campos en `DetallePrestamoResponse` | AC-L54 | `tests/loans/test_migracion_0022.py`: upgrade → downgrade → upgrade; las filas viejas se completan (V12) | `[ ]` |
+| **T3.2** | `DetalleEstadoUpdate` y `PATCH /ordenes/{orden_id}/detalles/{detalle_id}/estado`: solo administradores, orden con alcance y bloqueada, línea de la orden | AC-L52, L53 | `test_mostrador.py`: estudiante y docente `403`; admin de otra sede `404`; línea de otra orden `404`; campos que no corresponden al estado `422` | `[ ]` |
+| **T3.3** | Entregar (RN-L19): `marcar_unidad_prestada` en la misma transacción y `entregado_en` | AC-L36, L37, L39 | `test_mostrador.py`: línea `entregado` y unidad `prestado`; unidad en `mantenimiento` o todavía `prestado` por otra línea (EC-L07) `409 TRANSICION_ESTADO_INVALIDA` sin cambios; entregar una línea que no está `reservado` `409 TRANSICION_INVALIDA` | `[ ]` |
+| **T3.4** | Devolver (RN-L20): `liberar_unidad`, `devuelto_en`, observación y, con `a_mantenimiento`, `marcar_unidad_mantenimiento` en la misma transacción | AC-L38, L39, L59 | `test_mostrador.py`: unidad `disponible` y asignable a un pedido nuevo; con daño, unidad `mantenimiento` leída desde otra sesión; devolver una línea no entregada `409` | `[ ]` |
+| **T3.5** | Cancelación forzada (RN-L17) y cierre de la orden con `_cerrar_si_no_quedan_lineas` (RN-L30), reutilizable por la Fase 4 | AC-L35, L62 (parte forzada) | `test_mostrador.py`: sin motivo `422 MOTIVO_REQUERIDO`; con motivo, la unidad queda libre; la última línea vigente cierra la orden (`cancelada`, historial y `resuelto_*`); con otra línea `devuelto`, la orden sigue `aprobada` | `[ ]` |
+| **T3.6** | RN-L16 precisada (v1.0.3): cancelar una orden `aprobada` con una línea `devuelto` responde `409 TRANSICION_INVALIDA` | AC-L34 | `test_rechazar_cancelar.py` | `[ ]` |
+| **T3.7** | Filtro `situacion` en `GET /ordenes` (v1.0.3) | AC-L61 | `test_bandeja.py`: `en_curso` deja afuera las aprobadas terminadas; sin filtro no cambia nada | `[ ]` |
+| **T3.8** | `historial_de_unidad` con los datos reales de entrega y devolución | PRE-12 | `test_lecturas_inventory.py`: después de entregar y devolver, el movimiento trae `entregado_en`, `devuelto_en` y la observación | `[ ]` |
+| **T3.9** | Concurrencia: dos entregas de la misma línea, y entrega contra cancelación forzada | AC-L55 | `test_concurrencia.py` con pedidos en paralelo y sesiones independientes: uno gana y el otro recibe `409 TRANSICION_INVALIDA` | `[ ]` |
+| **T3.10** | Notificación `ORDEN_CANCELACION_FORZADA` (`CRITICA`) dentro de la transacción | §10.3, C-N01 | Depende de `crear_notificacion` (SPEC-06 Fase B) en `develop`; va con T2.13 | `[~]` |
+| **T3.11** | Cierre: `ruff check`, `pytest -q` completo, `/docs`, `MEMORY.md`, este archivo, la spec y el PR | Plan §9.10 | PR de `feat/loans-mostrador` contra `develop` | `[ ]` |
+
+**Orden sugerido:** T3.0 → T3.1 → T3.2 → T3.3 → T3.4 → T3.5 → T3.6 → T3.7 → T3.8 → T3.9 → T3.11. T3.10 cuando llegue `crear_notificacion`.
+
+**Commits sugeridos** (Conventional Commits en español):
+
+- `feat(loans): migración 0022 con el ciclo de entrega (SPEC-05, PRE-13)`
+- `feat(loans): entregar y devolver en el mostrador (SPEC-05, AC-L36, AC-L38, AC-L59)`
+- `feat(loans): cancelación forzada por línea y cierre de la orden (SPEC-05, PRE-17, RN-L30)`
+- `feat(loans): filtro situacion en la bandeja y cancelación sin entregas (SPEC-05 v1.0.3)`
+- `test(loans): concurrencia de entregas y cancelaciones forzadas (SPEC-05, AC-L55)`
+
+## Fase 3, Mostrador — Frontend
+
+Plan §9.6. Rama `feat/loans-entregas`. Depende del contrato de la Fase 3 en `develop`.
+
+| ID | Tarea | Requisito | Verificación | Estado |
+| :---- | :---- | :---- | :---- | :---- |
+| **F3.1** | Tipos, `mappers` y `loansApi`: `cambiarEstadoDetalle`, los campos nuevos de la línea y `situacion` en los filtros de la bandeja | PRE-13 | `mappers.test.ts` y `loansApi.test.ts` | `[ ]` |
+| **F3.2** | `services/entregasVista.ts`: filas por línea, pestañas "Para entregar" y "En préstamo", orden, marcas de hoy, retiro vencido y demora | PRE-13, RN-L21 | `entregasVista.test.ts` | `[ ]` |
+| **F3.3** | `EntregasPage` en la entrada `deliveries` del menú: tabla con solicitante, equipo, código de la unidad y fechas; selector de sede del `SUPERADMIN` | PRE-13 | Recorrido manual como `ADMIN_LOCAL` y `SUPERADMIN` | `[ ]` |
+| **F3.4** | Acciones: entregar con confirmación, recibir devolución (observación y "vuelve con daño") y cancelación forzada con motivo; mensajes para `409 TRANSICION_ESTADO_INVALIDA` y `TRANSICION_INVALIDA` | PRE-13, PRE-17 | Recorrido manual; tests de los mensajes en `services/` | `[ ]` |
+| **F3.5** | `manualDeUso.ts` sin "próximamente" en PRE-13; tipos, Vitest y build en verde; PR | — | PR de `feat/loans-entregas` contra `develop` | `[ ]` |
+
 ---
 
 ## Riesgos
@@ -115,3 +156,4 @@ Dependen de F1.1 y F1.2 (tipos y `loansApi`) y del contrato de la Fase 2 en `dev
 - **Dos cabezas de Alembic:** `0011` (esta fase) y `0013` (SPEC-06) parten de `0010`. La que se mergea segunda reapunta su `down_revision` (plan §8.3, V5).
 - **Concurrencia:** los tests de AC-L23, AC-L24 y EC-L10 verifican el resultado (uno gana, el otro recibe el código esperado), no el orden.
 - **Parámetros fuera de rango:** `config` ya valida plazos y horarios coherentes; los tests usan `set_parametro` para probar los bordes.
+- **Migración de la Fase 3:** la `0022` cuelga de la cabeza de `develop` al abrir el PR; si entra antes la `0021` del Perfil 1, se reapunta (plan §9.2, V9).
