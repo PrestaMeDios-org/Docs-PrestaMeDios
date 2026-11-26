@@ -1,8 +1,8 @@
 # PLAN-04 — Catálogo y existencias (`inventory`)
 
-> **Spec:** `specs/04-inventory-catalogo-existencias/spec.md` v1.3.0 (Fase B `IMPLEMENTADO`, Fase C `BORRADOR`) · **Estado del plan:** v2.1.0 (Fase B `APROBADO` y ejecutada; §6 de la Fase C en `BORRADOR`) · **Fecha:** 2026-11-23 · **Perfil:** 2
+> **Spec:** `specs/04-inventory-catalogo-existencias/spec.md` v1.3.0 (Fase B `IMPLEMENTADO`, Fase C `APROBADO` el 2026-11-25) · **Estado del plan:** v2.1.0 (Fase B ejecutada; §6 de la Fase C `APROBADO` con el spec) · **Fecha:** 2026-11-25 · **Perfil:** 2
 > **Base verificada:** `origin/develop` del backend (`3ffed99`, incluye `loans.ocupacion_de_unidades`, PR \#21) y del frontend (`0a5ff37`).
-> Tareas: `specs/04-inventory-catalogo-existencias/tasks.md`. **La Fase C no se programa hasta que el spec v1.3.0 esté `APROBADO`.** Los pendientes de cierre de la Fase B (tarea B-22) ya tienen spec aprobado.
+> Tareas: `specs/04-inventory-catalogo-existencias/tasks.md`. **El spec v1.3.0 está `APROBADO` (2026-11-25): la Fase C se puede programar.** El cierre de la Fase B (B-22) está en `develop` (backend PR \#46, frontend PR \#33).
 
 ---
 
