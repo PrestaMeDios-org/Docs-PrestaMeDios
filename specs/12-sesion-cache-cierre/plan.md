@@ -3,7 +3,7 @@
 | Campo | Valor |
 | --- | --- |
 | **Spec** | `specs/12-sesion-cache-cierre/spec.md` (v1.0.1, `APROBADO` el 2026-11-24) |
-| **Estado del plan** | `EN CURSO` — v1.0.1. Fase A implementada en `fix/api-sin-cache` (2026-11-26), sin PR; Fase B sin iniciar |
+| **Estado del plan** | `EN CURSO` — v1.0.1. Fase A implementada en `fix/api-sin-cache` (2026-11-26), en revisión (backend PR #51, frontend PR #35); Fase B sin iniciar |
 | **Perfil** | 1 |
 | **Entrega** | Dos PRs de backend y dos de frontend: primero la Fase A y después la B (D-06) |
 

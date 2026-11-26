@@ -1,6 +1,6 @@
 # TASKS-12 — Sesión aislada por pestaña: API sin caché y cierre de sesión en el servidor
 
-> **Spec:** `specs/12-sesion-cache-cierre/spec.md` v1.0.1 (`APROBADO` el 2026-11-24) · **Plan:** `specs/12-sesion-cache-cierre/plan.md` v1.0.1 · **Estado:** `EN CURSO` — Fase A implementada y verificada en local, en `fix/api-sin-cache` (backend y frontend), sin PR
+> **Spec:** `specs/12-sesion-cache-cierre/spec.md` v1.0.1 (`APROBADO` el 2026-11-24) · **Plan:** `specs/12-sesion-cache-cierre/plan.md` v1.0.1 · **Estado:** `EN CURSO` — Fase A implementada y verificada en local, en `fix/api-sin-cache` (backend y frontend), en revisión: backend PR #51 y frontend PR #35
 > Marcar `[x]` al cerrar. Cada tarea tiene su verificación; no se pasa a la siguiente con tests en rojo. Cada bloque es un PR (plan §2). **Orden de merge: A antes que B (D-06).**
 > Comandos de backend desde `Backend-PrestaMeDios/` (venv activo, `TEST_DATABASE_URL` definida); de frontend desde `Frontend-PrestaMeDios/`.
 
@@ -24,7 +24,7 @@
   ✔ 2026-11-26: registrado después de CORS y antes de `ProxyHeadersMiddleware` (SPEC-11), que sigue siendo el más externo. Los 8 tests en verde. En el navegador, contra el backend local: el `GET /auth/me` del estudiante con `cache: "force-cache"`, después de uno del superadministrador, ahora devuelve `ESTUDIANTE` (antes, `SUPERADMIN`; spec §2.3).
 - [ ] **A-03 · Cierre del backend A.** README ("Seguridad transversal"); PR hacia `develop` con la trazabilidad de spec §12.
   *Verificación:* `curl -i http://localhost:8000/api/v1/auth/me` con token → `cache-control: no-store`.
-  ⏳ 2026-11-26: README actualizado; suite completa con el middleware: 1034 pasados (1026 + 8 nuevos) en 10:47. Desde el navegador, `/auth/me` responde `cache-control: no-store`. Falta abrir el PR (sin commit todavía).
+  ⏳ 2026-11-26: README actualizado; suite completa con el middleware: 1034 pasados (1026 + 8 nuevos) en 10:47. Desde el navegador, `/auth/me` responde `cache-control: no-store`. Backend PR #51 hacia `develop` (2026-11-26).
 
 ## Bloque A-F — API sin caché (frontend `fix/api-sin-cache`)
 
