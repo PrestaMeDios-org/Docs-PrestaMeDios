@@ -1,6 +1,6 @@
 # SPEC-06 — Comunicaciones y notificaciones (`notifications`)
 
-> **Estado:** `APROBADO` (2026-11-07, con todas las recomendaciones de §12) · **Fase A `IMPLEMENTADA`** (2026-11-27); Fases B y C pendientes · **Versión:** 1.0.1 · **Perfil:** 5 (Comunicaciones e IA)
+> **Estado:** `APROBADO` (2026-11-07, con todas las recomendaciones de §12) · **Fase A `IMPLEMENTADA`** (2026-11-27); Fases B y C pendientes · **Versión:** 1.1.0 · **Perfil:** 5 (Comunicaciones e IA)
 > **Plan y tareas:** `specs/06-notifications-comunicaciones/plan.md` · `specs/06-notifications-comunicaciones/tasks.md`
 > **Requisitos:** NOV-01, NOV-02, NOV-04 (Fases A y B) · NOV-03 (Fase C, contrato diferido) · **Responde a:** C12 de SPEC-05, S7 de la revisión del Perfil 4, K6 de SPEC-03
 > **Precedencia:** `docs/constitution.md` → `AGENTS.md` → `docs/perfiles.md` → este spec → `MEMORY.md`.
@@ -375,10 +375,20 @@ Las fases A y B pueden ir en PRs separados, en las ramas `feat/notifications-com
 | GLO-01 (aplicado a comunicados) | RN-N2, RN-N3 | NTF-02, 03, 05, 07, 09 |
 | NOV-03 | §6.4 (diferido) | Fase C |
 
-## 15. Historial
+## 15. Addendum v1.1.0 — Portada del comunicado (adopción de M-02 de SPEC-10) · `APROBADO`
+
+El 2026-11-27 el Perfil 5 **adopta tal cual** la portada elegible que SPEC-10 implementó como MOMENTÁNEA (M-02, U5), y da su aval a los cambios de presentación de Novedades (V-01, V-10, V-11, U4).
+
+- **Alcance (NOV-02):** quien puede editar un comunicado (RN-N5) elige uno de cuatro temas de color o sube una foto. Sin elección, el color sale del alcance y del vencimiento (V-10).
+- **Contrato:** el de SPEC-10 §4.7, sin cambios: tabla `comunicados_portada` (migración `0020_notifications_portada`), endpoints en `notifications/portada.py` y frontend en `features/notifications/portada/`. Reusa `filtro_lectura` (RN-N3) y `bloquear_para_editar` (RN-N5), públicas desde el backend PR \#53 (U4).
+- **Criterio:** AC-U20 de SPEC-10, cubierto por `tests/notifications/test_portada.py` y `test_migracion_0020.py`, pasa a contar como criterio de este spec.
+- **Pendiente:** (a) sumar la portada a NOV-02 en el ERS, con el equipo o la referente (pedido al Perfil 1 en `MEMORY.md` §5); (b) quitar las marcas `MOMENTÁNEO (SPEC-10 M-02)` del código, ya que deja de ser provisoria. Se hace en la Fase B, sin cambiar el comportamiento.
+
+## 16. Historial
 
 | Versión | Fecha | Autor | Cambio |
 | :---- | :---- | :---- | :---- |
+| 1.1.0 | 2026-11-27 | Perfil 5 (con asistencia de IA) | **Addendum §15 `APROBADO`:** adopción tal cual de la portada M-02 de SPEC-10 (U5) y aval a los cambios de presentación de Novedades (U4). `filtro_lectura` y `bloquear_para_editar` públicas (backend PR \#53). ADR-028 |
 | 1.0.1 | 2026-11-27 | Perfil 5 (con asistencia de IA) | **Fase A implementada** (NOV-01, NOV-02; NTF-01…NTF-12 y NTF-23…NTF-25). Backend PR \#22 (2026-11-08), frontend PR \#12 (2026-11-09) y Docs PR \#12. Verificada sobre `develop` el 2026-11-22 (backend: 987 tests en verde, cobertura de `notifications` 97 %; frontend: 266 tests, `typecheck` y `build`) y con el recorrido manual en el navegador del 2026-11-27 (`SUPERADMIN`, `ADMIN_LOCAL` y estudiante de las dos sedes). **Desvío:** las fechas de las respuestas se normalizan a la zona del laboratorio (§5.1). **Cambios de otros specs sobre este módulo:** SPEC-10 cambió la presentación de Novedades (V-01, V-10, V-11) y sumó la portada MOMENTÁNEA M-02 (migración `0020`, `notifications/portada.py`); siguen abiertos U4 y U5 de SPEC-10 y H3 de SPEC-09 (horario por sede en el portal). Sin cambios de contrato |
 | 1.0.0 | 2026-11-07 | Perfil 5 | **Aprobado** con todas las recomendaciones de §12 (D-N01…D-N10). Coordinación de §10 registrada en `MEMORY.md` §5; decisiones en ADR-023 |
 | 0.1.0 | 2026-11-06 | Perfil 5 (con asistencia de IA) | Borrador inicial a partir de la revisión del Perfil 1. Fases A y B completas, Fase C como contrato diferido. Responde K6 (D-N01), C12 y S7 |
