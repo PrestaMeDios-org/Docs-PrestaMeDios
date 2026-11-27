@@ -1,6 +1,6 @@
 # TASKS-06 — Comunicaciones y notificaciones (`notifications`)
 
-> **Spec:** `specs/06-notifications-comunicaciones/spec.md` v1.0.0 · **Plan:** `specs/06-notifications-comunicaciones/plan.md` v1.0.0 · **Estado:** `APROBADO` (2026-11-07) · **Fecha:** 2026-11-07 · **Perfil:** 5
+> **Spec:** `specs/06-notifications-comunicaciones/spec.md` v1.0.0 · **Plan:** `specs/06-notifications-comunicaciones/plan.md` v1.0.0 · **Estado:** `APROBADO` (2026-11-07); **Fase A cerrada** (2026-11-27) · **Fecha:** 2026-11-07 · **Perfil:** 5
 > Alcance: Fases A y B. Marcar `[x]` al cerrar. Cada tarea tiene su verificación; no se pasa a la siguiente con tests en rojo.
 > Comandos de backend desde `Backend-PrestaMeDios/` (venv con **Python 3.12** activo, `TEST_DATABASE_URL` definida); de frontend desde `Frontend-PrestaMeDios/`.
 
@@ -16,6 +16,8 @@
   *Cerrada 2026-11-07:* el Perfil 1 dio conformidad (la informó el Perfil 5). Cubre también los cambios de una línea en `app/main.py` y `alembic/env.py` (plan §6).
 
 ## Fase A — Comunicados y portal (NOV-01, NOV-02)
+
+> **Cierre 2026-11-27.** Fase A terminada: PRs mergeados (backend \#22 el 2026-11-08, frontend \#12 el 2026-11-09, Docs \#12). Verificada otra vez sobre `develop` el 2026-11-22, después de los cambios de SPEC-09, SPEC-10 y SPEC-11: backend 987 tests en verde (cobertura de `notifications` 97 %; la portada M-02 de SPEC-10 es la que baja el promedio), frontend 266 tests, `typecheck` y `build`. Recorrido manual en el navegador del 2026-11-27 sin observaciones.
 
 > **Resumen al 2026-11-07.** Backend completo: 54 tests nuevos de `notifications` (cobertura 100 %); suite completa 550 pasan y 1 falla (DT-30, ajeno). Migración `0013` probada con `upgrade` → `downgrade -1` → `upgrade` y una sola cabeza. Frontend: 17 tests nuevos (69 en total), `typecheck` y `build` en verde. Prueba punta a punta contra la API local (login, alta global, listado, horario de `config`, `422 SEDE_REQUERIDA`). Desvío: las fechas de las respuestas se normalizan a la zona del laboratorio (antes salían en UTC o en `-03:00` según de dónde vinieran). Pendiente: recorrido manual en el navegador de NTF-24 y NTF-25 con estudiante, `ADMIN_LOCAL` y `SUPERADMIN`.
 
@@ -49,18 +51,18 @@
   *Verificación:* `npm run typecheck`; `mappers.test.ts` (alcance "Global" o sede, autor `null` → "Laboratorio", fechas).
 - [x] **F-A02 · Reglas del formulario.** `services/alcance.ts` con `mostrarSelectorAlcance` y `validarComunicado`.
   *Verificación:* `alcance.test.ts` (selector oculto para `ADMIN_LOCAL`, obligatorio para `SUPERADMIN`, título y contenido obligatorios, vencimiento pasado). *Cubre:* NTF-25 (lógica).
-- [ ] **F-A03 · Lista de comunicados.** `hooks/useComunicados.ts` y `ComunicadosList` con carga, error, "No hay comunicados" y texto con `pre-line`.
+- [x] **F-A03 · Lista de comunicados.** `hooks/useComunicados.ts` y `ComunicadosList` con carga, error, "No hay comunicados" y texto con `pre-line`.
   *Verificación:* `npm run build`; recorrido manual con estudiante. *Cubre:* NTF-24 (comunicados).
-  *Estado 2026-11-07:* código listo; `typecheck`, `build` y `npm test` en verde, y la API probada punta a punta. **Falta el recorrido manual en el navegador** (ver resumen de la Fase A).
-- [ ] **F-A04 · Formulario y acciones de admin.** `ComunicadoForm` (alta y edición) y botones de archivar y reactivar, con confirmación y errores de `ApiError`.
+  *Cerrada 2026-11-27:* recorrido manual en el navegador hecho por el Perfil 5 sobre `develop` (ya con los cambios visuales de SPEC-10), con `SUPERADMIN`, `ADMIN_LOCAL` y estudiante de las dos sedes: todo correcto.
+- [x] **F-A04 · Formulario y acciones de admin.** `ComunicadoForm` (alta y edición) y botones de archivar y reactivar, con confirmación y errores de `ApiError`.
   *Verificación:* recorrido con `ADMIN_LOCAL` y `SUPERADMIN`. *Cubre:* NTF-25.
-  *Estado 2026-11-07:* código listo; `typecheck`, `build` y `npm test` en verde, y la API probada punta a punta. **Falta el recorrido manual en el navegador** (ver resumen de la Fase A).
-- [ ] **F-A05 · Portal.** `services/portal.ts` y `PortalInfo`, con el horario leído de `config`.
+  *Cerrada 2026-11-27:* recorrido manual en el navegador hecho por el Perfil 5 sobre `develop` (ya con los cambios visuales de SPEC-10), con `SUPERADMIN`, `ADMIN_LOCAL` y estudiante de las dos sedes: todo correcto.
+- [x] **F-A05 · Portal.** `services/portal.ts` y `PortalInfo`, con el horario leído de `config`.
   *Verificación:* cambiar `horario.apertura` desde la pantalla de parámetros y ver el cambio en el portal. *Cubre:* NTF-24 (portal).
-  *Estado 2026-11-07:* código listo; `typecheck`, `build` y `npm test` en verde, y la API probada punta a punta. **Falta el recorrido manual en el navegador** (ver resumen de la Fase A).
-- [ ] **F-A06 · `NewsPage` e integración.** Pestañas en `NewsPage` y montaje en `App.tsx` (requiere T-01).
+  *Cerrada 2026-11-27:* recorrido manual en el navegador hecho por el Perfil 5 sobre `develop` (ya con los cambios visuales de SPEC-10), con `SUPERADMIN`, `ADMIN_LOCAL` y estudiante de las dos sedes: todo correcto.
+- [x] **F-A06 · `NewsPage` e integración.** Pestañas en `NewsPage` y montaje en `App.tsx` (requiere T-01).
   *Verificación:* el ítem "Novedades" del menú abre la pantalla; el resto de las pantallas no cambia. Sin conformidad, se omite y se registra.
-  *Estado 2026-11-07:* código listo; `typecheck`, `build` y `npm test` en verde, y la API probada punta a punta. **Falta el recorrido manual en el navegador** (ver resumen de la Fase A).
+  *Cerrada 2026-11-27:* recorrido manual en el navegador hecho por el Perfil 5 sobre `develop` (ya con los cambios visuales de SPEC-10), con `SUPERADMIN`, `ADMIN_LOCAL` y estudiante de las dos sedes: todo correcto.
 - [x] **F-A07 · Cierre del frontend A.** `npm run typecheck`, `npm run build`, `npm test`; README del frontend.
   *Verificación:* los tres comandos en verde.
 
@@ -100,8 +102,10 @@
 
 - [ ] **D-01 · `MEMORY.md`.** Al cerrar cada fase: snapshot de `notifications` (backend y frontend), conteo de tests, bitácora y, en la Fase B, aviso a los Perfiles 3 y 4 de que el contrato ya está en `develop` (C-N01, C-N02).
   *Verificación:* revisión del Perfil 1.
+  *Fase A, 2026-11-27:* snapshot de `notifications`, conteo de tests y bitácora actualizados. Queda abierta para la Fase B.
 - [ ] **D-02 · Estado de los documentos.** Pasar el spec a `IMPLEMENTADO` (Fases A y B), registrar en su historial el desvío de la navegación desde `referencia` y pedir al Perfil 1 que actualice la fila del Perfil 5 en `AGENTS.md` §3 y `docs/perfiles.md` §4.
   *Verificación:* PR de documentación o aprobación del Perfil 1.
+  *Fase A, 2026-11-27:* spec v1.0.1 con la Fase A `IMPLEMENTADA` y su desvío (fechas) en el historial. Pedido al Perfil 1 en `MEMORY.md` §5 para actualizar `AGENTS.md` §3 y `docs/perfiles.md` §4. El desvío de la navegación desde `referencia` queda para el cierre de la Fase B.
 - [ ] **D-03 · PRs.** Un PR por fase y por repo, con la tabla requisito → endpoint → test, el resultado de las pruebas y de la migración, y los puntos de integración tocados (plan §6). Sin commit, push ni merge salvo pedido explícito.
   *Fase A, 2026-11-07:* PRs abiertos hacia `develop` desde `feat/daniel-notificaciones-comunicados`: backend [\#22](https://github.com/PrestaMeDios-org/Backend-PrestaMeDios/pull/22) (5 commits) y frontend [\#12](https://github.com/PrestaMeDios-org/Frontend-PrestaMeDios/pull/12) (4 commits, depende del \#22). La documentación va en la rama `docs/daniel-notificaciones-spec-06`. Queda abierta para la Fase B.
 
@@ -136,5 +140,6 @@ El frontend de cada fase puede arrancar contra el OpenAPI en cuanto estén los e
 
 | Versión | Fecha | Cambio |
 | :---- | :---- | :---- |
+| 1.0.1 | 2026-11-27 | Fase A cerrada: F-A03…F-A06 con el recorrido manual; D-01 y D-02 actualizadas para la Fase A |
 | 1.0.0 | 2026-11-07 | Aprobado por el Perfil 5 |
 | 0.1.0 | 2026-11-07 | Borrador inicial (Perfil 5) |
