@@ -1,6 +1,6 @@
 # TASKS-06 — Comunicaciones y notificaciones (`notifications`)
 
-> **Spec:** `specs/06-notifications-comunicaciones/spec.md` v1.0.0 · **Plan:** `specs/06-notifications-comunicaciones/plan.md` v1.0.0 · **Estado:** `APROBADO` (2026-11-07); **Fase A cerrada** (2026-11-27) · **Fecha:** 2026-11-07 · **Perfil:** 5
+> **Spec:** `specs/06-notifications-comunicaciones/spec.md` v1.0.0 · **Plan:** `specs/06-notifications-comunicaciones/plan.md` v1.1.0 · **Estado:** `APROBADO` (2026-11-07); **Fase A cerrada** (2026-11-27) · **Fecha:** 2026-11-07 · **Perfil:** 5
 > Alcance: Fases A y B. Marcar `[x]` al cerrar. Cada tarea tiene su verificación; no se pasa a la siguiente con tests en rojo.
 > Comandos de backend desde `Backend-PrestaMeDios/` (venv con **Python 3.12** activo, `TEST_DATABASE_URL` definida); de frontend desde `Frontend-PrestaMeDios/`.
 
@@ -68,34 +68,42 @@
 
 ## Fase B — Centro de notificaciones (NOV-04)
 
+> **Resumen al 2026-11-27.** Backend en `feat/daniel-notificaciones-campanita` (sobre el PR \#53): plantillas, contrato público, 4 endpoints y marcas de la portada quitadas, sin migración. `tests/notifications`: 106 tests en verde, cobertura 100 % en todo lo de este spec (`portada.py` sigue en 90 %). Frontend en `feat/daniel-notificaciones-campanita`: `NotificationBell` en el `Navbar`, sondeo cada 60 s; 272 tests, `typecheck` y `build` en verde. Prueba punta a punta contra la API local con 5 notificaciones de ejemplo: orden con críticas primero, `leer-todas` sólo sobre las normales y aislamiento entre usuarios. Pendiente: recorrido manual de la campanita (NTF-26) y PRs.
+
 > Rama `feat/notifications-campanita`, desde `develop` con la Fase A mergeada (o desde `feat/notifications-comunicados` si todavía no se mergeó).
 
 ### Backend
 
-- [ ] **B-B01 · Plantillas.** `plantillas.py` con los 10 tipos de spec §6.2, su severidad y sus claves, y `renderizar`.
+- [x] **B-B01 · Plantillas.** `plantillas.py` con los 10 tipos de spec §6.2, su severidad y sus claves, y `renderizar`.
   *Verificación:* `tests/notifications/test_plantillas.py`: todos los tipos tienen plantilla y se arman sin variables sueltas; clave faltante o sobrante → `ValueError`; ninguna clave es `dni`, `email`, `telefono` ni `password`; las tres críticas son `CRITICA`. *Cubre:* NTF-14, NTF-15, NTF-16.
-- [ ] **B-B02 · Contrato público.** `crear_notificacion` y `crear_notificaciones` en la sección pública de `service.py`, sin `commit` ni `flush`. Esquema `ReferenciaNotificacion`.
+- [x] **B-B02 · Contrato público.** `crear_notificacion` y `crear_notificaciones` en la sección pública de `service.py`, sin `commit` ni `flush`. Esquema `ReferenciaNotificacion`.
   *Verificación:* `tests/notifications/test_service.py`: con `commit` la fila queda; con `rollback` no; ids repetidos → una por destinatario; lista vacía → `[]`; destinatario `SUSPENDIDO`. *Cubre:* NTF-13, NTF-21, NTF-22.
-- [ ] **B-B03 · Lectura.** `GET /notificaciones` (orden de plan §3.3, punto 10; `solo_no_leidas`; paginación) y `GET /notificaciones/resumen`.
+- [x] **B-B03 · Lectura.** `GET /notificaciones` (orden de plan §3.3, punto 10; `solo_no_leidas`; paginación) y `GET /notificaciones/resumen`.
   *Verificación:* `tests/notifications/test_notificaciones_api.py`: sólo las propias, críticas no leídas primero, conteos correctos. *Cubre:* NTF-17, NTF-18.
-- [ ] **B-B04 · Marcado.** `PATCH /notificaciones/{id}/leida` y `POST /notificaciones/leer-todas` (plan §3.3, puntos 12 y 13).
+- [x] **B-B04 · Marcado.** `PATCH /notificaciones/{id}/leida` y `POST /notificaciones/leer-todas` (plan §3.3, puntos 12 y 13).
   *Verificación:* tests: dos marcados conservan el primer `leida_en`; una ajena → `404`; `leer-todas` deja las críticas sin leer y devuelve `marcadas`. *Cubre:* NTF-17, NTF-19, NTF-20.
-- [ ] **B-B05 · Sesión.** `401` sin token en todas las rutas de notificaciones; verificar en `/docs` que no exista `POST /notificaciones`.
+- [x] **B-B05 · Sesión.** `401` sin token en todas las rutas de notificaciones; verificar en `/docs` que no exista `POST /notificaciones`.
   *Verificación:* tests. *Cubre:* NTF-01 (notificaciones).
+- [x] **B-B07 · Portada oficial (ADR-028).** Quitar las marcas `MOMENTÁNEO (SPEC-10 M-02)` de `portada.py`, la migración `0020`, sus tests, `app/main.py` y `alembic/env.py`, sin cambiar el comportamiento.
+  *Verificación:* `grep -rn "MOMENTÁNEO (SPEC-10 M-02" app alembic tests` sin resultados; `pytest tests/notifications` en verde. *Cubre:* SPEC-06 §15.
 - [ ] **B-B06 · Cierre del backend B.** `pytest -q` completo, cobertura de `notifications` ≥ 90 %, README con el contrato de `crear_notificacion` y un ejemplo de uso (spec §6.3).
   *Verificación:* suite en verde; NTF-13…22 con test anotado.
 
 ### Frontend
 
-- [ ] **F-B01 · API y mappers.** Funciones de notificaciones en `notificationsApi.ts` y `toNotificacion`.
+- [x] **F-B01 · API y mappers.** Funciones de notificaciones en `notificationsApi.ts` y `toNotificacion`.
   *Verificación:* `npm run typecheck`; casos nuevos en `mappers.test.ts`.
-- [ ] **F-B02 · Consulta periódica.** `hooks/useResumenNotificaciones.ts` (60 s, pausa con la pestaña oculta, `refrescar()`).
-  *Verificación:* `useResumenNotificaciones.test.ts` con timers falsos: consulta al montar, a los 60 s, no consulta con la pestaña oculta y vuelve a consultar al recuperar el foco.
+- [x] **F-B02 · Consulta periódica.** `services/sondeo.ts` (lógica pura) y `hooks/useResumenNotificaciones.ts` (60 s, pausa con la pestaña oculta, `refrescar()`), plan §7.1.
+  *Verificación:* `sondeo.test.ts` con timers falsos: consulta al montar, a los 60 s, no consulta con la pestaña oculta y vuelve a consultar al recuperar el foco.
 - [ ] **F-B03 · `NotificationBell`.** Número de no leídas, panel con las últimas 20, críticas arriba y destacadas, marcado de las normales al abrir y de las críticas al hacer clic, "Marcar todas como leídas". Sin enlace desde `referencia` (desvío del plan §4.3).
   *Verificación:* recorrido manual con notificaciones creadas desde un script o fixture (normales y críticas). *Cubre:* NTF-26.
+  *Estado 2026-11-27:* código listo; `typecheck`, `build` y `npm test` en verde, y la API probada punta a punta con notificaciones de ejemplo. **Falta el recorrido manual en el navegador.**
 - [ ] **F-B04 · Integración en `Navbar.tsx`.** Reemplazar la maqueta (`NOTIFICATIONS_DATA` y su estado) por `<NotificationBell />` (C-N06).
   *Verificación:* `grep NOTIFICATIONS_DATA` sin resultados; el resto del `Navbar` se ve y funciona igual.
-- [ ] **F-B05 · Cierre del frontend B.** `npm run typecheck`, `npm run build`, `npm test`; README.
+  *Estado 2026-11-27:* código listo; `typecheck`, `build` y `npm test` en verde, y la API probada punta a punta con notificaciones de ejemplo. **Falta el recorrido manual en el navegador.**
+- [x] **F-B06 · Portada oficial (ADR-028).** Quitar las marcas `MOMENTÁNEO (SPEC-10 M-02)` de `features/notifications`.
+  *Verificación:* `grep -rn "MOMENTÁNEO (SPEC-10 M-02" src/features/notifications` sin resultados; `npm test` en verde.
+- [x] **F-B05 · Cierre del frontend B.** `npm run typecheck`, `npm run build`, `npm test`; README.
   *Verificación:* los tres comandos en verde.
 
 ## Bloque D — Documentación y registro
@@ -140,6 +148,7 @@ El frontend de cada fase puede arrancar contra el OpenAPI en cuanto estén los e
 
 | Versión | Fecha | Cambio |
 | :---- | :---- | :---- |
+| 1.1.0 | 2026-11-27 | Fase B: B-B07 y F-B06 (portada oficial, ADR-028); F-B02 con la lógica del sondeo en una función pura (plan §7.1) |
 | 1.0.1 | 2026-11-27 | Fase A cerrada: F-A03…F-A06 con el recorrido manual; D-01 y D-02 actualizadas para la Fase A |
 | 1.0.0 | 2026-11-07 | Aprobado por el Perfil 5 |
 | 0.1.0 | 2026-11-07 | Borrador inicial (Perfil 5) |

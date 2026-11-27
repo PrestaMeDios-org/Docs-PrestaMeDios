@@ -146,6 +146,19 @@ Los comunicados se muestran como texto con `white-space: pre-line`, nunca con `d
 | Suite con Python 3.13 o superior | Usar 3.12 (DT-30); el fallo de `users` no es de este módulo |
 | El Perfil 1 no da conformidad a tiempo para `conftest.py` o `App.tsx` | Se avisa al pedirla con el diff exacto; `App.tsx` puede esperar, `conftest.py` no (sin él no hay tests) |
 
+## 7.1 Actualización para la Fase B (v1.1.0, 2026-11-27)
+
+El plan se escribió el 2026-11-07. Antes de implementar la Fase B se revisó el código de `develop` y se ajusta así:
+
+| Tema | Ajuste |
+| :---- | :---- |
+| Migración | **No hace falta.** La tabla `notificaciones` y sus índices ya existen desde la `0013` (decisión 3.3.1) y `tests/conftest.py` ya la limpia |
+| Ramas | Backend `feat/daniel-notificaciones-campanita`, creada **sobre** `feat/daniel-notificaciones-funciones-publicas` (PR \#53, U4), porque las dos tocan `service.py`. Frontend `feat/daniel-notificaciones-campanita` desde `develop` |
+| Prueba de la consulta periódica | El frontend no tiene `@testing-library/react`. La lógica de la consulta cada 60 s va en una función pura (`services/sondeo.ts`) que se prueba con los *timers* falsos de Vitest; el hook sólo la conecta con React. Sin dependencias nuevas |
+| `Navbar.tsx` | Cambió con SPEC-10 (avatar con foto). El reemplazo se limita al bloque de la campanita (`NOTIFICATIONS_DATA`, `notifOpen`, `notifs`, `notifColors` y su JSX) |
+| Portada (ADR-028) | Se adopta tal cual: se quitan las marcas `MOMENTÁNEO (SPEC-10 M-02)` del backend y del frontend de `notifications`, más las dos líneas de `app/main.py` y `alembic/env.py`. Sin cambios de comportamiento. Las marcas de otros `MOMENTÁNEO` de SPEC-10 (manual de uso, lockers, términos) no se tocan |
+| Llamadas desde `loans` y `spaces` | Hoy no hay ninguna. Las suman los Perfiles 3 y 4 cuando la Fase B esté en `develop` (C-N01, C-N02); los tests de este plan crean notificaciones con `crear_notificacion` desde fixtures (3.5) |
+
 ## 8. Fase C (fuera de este plan)
 
 Se planifica en una revisión de este documento cuando estén: `loans` implementado (SPEC-05), `app/core/email.py` (SPEC-03 B1) y la ejecución periódica (C5). Trabajo previsto: tipos `PRESTAMO_POR_VENCER`, `LLAMADO_ATENCION` y `SANCION`; parámetro `por_correo` en `crear_notificacion`; columnas `correo_pendiente`, `correo_enviado_en` y `correo_error` (migración nueva); comando `python -m app.modules.notifications.cli enviar-correos`, idempotente; y la versión 0.2.0 del spec con sus criterios.
@@ -154,5 +167,6 @@ Se planifica en una revisión de este documento cuando estén: `loans` implement
 
 | Versión | Fecha | Cambio |
 | :---- | :---- | :---- |
+| 1.1.0 | 2026-11-27 | §7.1: ajustes para la Fase B (sin migración, ramas, prueba del sondeo sin dependencias, alcance del cambio en `Navbar.tsx` y marcas de la portada) |
 | 1.0.0 | 2026-11-07 | Aprobado por el Perfil 5 |
 | 0.1.0 | 2026-11-07 | Borrador inicial (Perfil 5) |
