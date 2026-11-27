@@ -4,8 +4,8 @@
 | --- | --- |
 | **ID** | SPEC-10 |
 | **Perfil responsable** | Perfil 1 — Identidad, Usuarios, Permisos, Configuración Global y Despliegue (transversal al frontend) |
-| **Estado** | `EN REVISIÓN` — 2026-11-14. Entrega 1 enviada por PR (plan §2); falta el aval de los Perfiles 2 a 5 (U1…U4) y la aprobación. Lo que queda sin hacer está en §1.5 (entrega 2) |
-| **Versión** | 0.23.2 |
+| **Estado** | `EN REVISIÓN` — 2026-11-26. Entrega 1 mergeada (frontend PR #28). **Entrega 2 enviada** (frontend PR #36; el Control de Stock va en el PR #34): rediseño estético de V-22…V-28 (§2.3) con el aval de los perfiles dueños (U8). Lo que queda sin hacer está en §1.5 |
+| **Versión** | 0.25.0 |
 | **Requisitos cubiertos** | GLO-06 (tema claro/oscuro, menú lateral colapsable y accesibilidad de la interfaz) y la parte de usabilidad del diagnóstico del ERS (§ problemática) |
 | **Responde a** | Recorrido funcional con la cliente del 2026-11-10 (DT-31 y DT-32, ya resueltas, mostraron que faltaba una base visual común) |
 | **Depende de** | Frontend `develop` (`6ae5db4`) y backend `develop` (`1c89c53`, cabeza `0019`). El backend sólo se toca por la portada MOMENTÁNEA M-02 (§4.7) |
@@ -139,6 +139,13 @@ Este spec es **estético**: no agrega requisitos funcionales ni casos de uso al 
 | V-19 | Casilla de Términos y Condiciones de la solicitud (`loans/components/SolicitudForm.tsx`, `loans/components/TerminosPrestamo.tsx`) | Estudiante, Docente | "Acepto la normativa de préstamos del laboratorio." sin ver qué se acepta | Según la opción del Figma con globo: "Acepto los **Términos y Condiciones**" (texto de PRE-03); el enlace muestra el "Reglamento de uso" numerado y la referencia a la Resolución CICSE N° 056/2023 al pasar el mouse o al tocarlo (se cierra con Escape o tocando afuera). Misma validación y mismo envío. **MOMENTÁNEO el texto** de las cuatro reglas (`REGLAMENTO_USO`): sale del diseño, no del Reglamento, que no está cargado en el sistema; se reemplaza cuando se tengan sus artículos | A3 | Hecho en local |
 | V-20 | Directorio de Gestión de Usuarios (`users/pages/UsersPage.tsx`) | Admin local, Superadmin | Todas las cuentas mezcladas en una tabla plana; rol y estado en desplegables dentro de una tarjeta; sin forma de elegir el orden | Pestañas subrayadas (Pendientes, Directorio, Nueva cuenta) como en el resto. En Directorio: chips por rol con su cantidad (Todos, Estudiantes, Docentes, Administradores locales y, para el superadmin, Superadministradores), buscador, estado en un desplegable chico y "Ordenar" por apellido (A→Z o Z→A) o por fecha de alta, que el backend ya acepta (`ordenar_por`, `direccion`). Tabla con iniciales, rol y estado como chips de color. Mismos filtros de USR-04, mismo alcance de sede y mismas acciones | A3 | Hecho en local |
 | V-21 | Reservas de Espacios, vista de administrador (`spaces/SpacesPage.tsx`, `spaces/components/SolicitudesPendientesEspacios.tsx`, `spaces/services/reservasDelDia.ts`, `spaces/services/pendientesVista.ts`, `spaces/components/CalendarGrid.tsx`) | Admin local, Superadmin | El admin veía "Ocupado" sin saber quién ni para qué; una solicitud pendiente de otra persona aparecía como "Libre"; "Solicitudes pendientes (aprobación manual)" era una lista de renglones chicos con el motivo pegado ("si — si") | Cada turno reservado muestra el apellido del solicitante y la materia. "Solicitudes pendientes" con su cantidad, agrupadas por día ("Jueves, 19 de noviembre · 5 solicitudes") y ordenadas por hora, con letra más grande: horario, solicitante y espacio, materia y descripción por separado, y Aprobar/Rechazar más grandes (RES-05). **Para muchas solicitudes:** cada día del calendario muestra cuántas pendientes tiene el espacio; al tocarlo, la lista muestra sólo las de ese día y espacio, con una barra "Mostrando las de … del … · Ver todas →". Sin día elegido, chips de período (Próximos 7 días · Próximos 14 días · Todas) y selector de espacio, y la lista se pagina de a 10 ("1–10 de 18", ‹ ›). Se probaron y descartaron días plegables, chips por espacio y un tope de 6 por día. Hoy filtra y pagina lo que ya devuelve `GET /reservas?estado=Pendiente` (ver U7). Se probó también una lista "Reservas del día" en el panel del día y se sacó por repetir esta. Los datos ya llegaban al admin (SPEC-08 AC-S14). **El estudiante no ve nada de esto** (RN-30: ni identidad ni materia de otros) | A3 | Hecho en local |
+| V-22 | Mis Solicitudes (`loans/pages/MisSolicitudesPage.tsx`) | Estudiante, Docente | Títulos sin íconos; "Retiro → Devolución" en un solo renglón apretado; sólo las solicitudes con varios equipos se desplegaban y mostraban "Pedida el…"; detalle en texto plano sin tipo | Íconos en pestañas y títulos (iconografía de §4.8); retiro y devolución en columnas, con el día arriba y la hora abajo (también en Espacios); todas las solicitudes se despliegan; detalle en un "panel suave" con categoría y tipo (Alta Gama o Común); separador más marcado entre solicitudes | §4.8 | **Hecho (entrega 2)** |
+| V-23 | Bandeja de Validaciones (`loans/pages/BandejaPage.tsx`, `loans/components/BandejaTabla.tsx`) | Admin local, Superadmin | Resumen en cajas grandes; filtro por tipo con chips desproporcionados; tabla "chata y estirada"; la asignatura como etiqueta; "+N más" abría una ventanita flotante y la celda del equipo listaba todas las unidades con su locker | Resumen en tarjetas con barra de color; filtro por tipo en sub-pestañas; íconos en los títulos; período con día y hora en dos líneas; asignatura en texto plano; chips y botones más chicos; equipos y unidades asignadas en un desplegable bajo la fila | §4.8 | **Hecho (entrega 2)** |
+| V-24 | Aval de alta gama en la Bandeja (`loans/components/AvalModal.tsx`) | Admin local, Superadmin | El botón "Aval" descargaba el PDF directo | Vista previa del PDF en un diálogo, con "Descargar" y "Abrir en otra pestaña" | `Modal` | **Hecho (entrega 2)** |
+| V-25 | Panel del pedido (`loans/components/CarritoPanel.tsx`) | Estudiante, Docente | Avisos en texto suelto | Íconos en "Quitar", en la línea de unidades y en los avisos de alta gama y de disponibilidad | §4.8 | **Hecho (entrega 2)** |
+| V-26 | Reservas de Espacios y su confirmación (`spaces/pages/SpacesPage.tsx`) | Todos | Etiquetas, día, turnos y confirmación sin íconos | Íconos en sede, espacio, día, horario, turnos, turnos elegidos y "Revisar solicitud"; en la confirmación, íconos de espacio, fecha, horarios, materia y descripción | §4.8 | **Hecho (entrega 2)** |
+| V-27 | Ficha del equipo (`inventory/components/EquipmentDetailModal.tsx`) | Todos | Datos y secciones sin íconos | Íconos en plazo, disponibles hoy, locker, reglas de cuidado, video y reglas del laboratorio. El reglamento pasa a `src/lib/reglamento.ts` para que `inventory` no importe `loans` (SPEC-04 D-12) | §4.8 | **Hecho (entrega 2)** |
+| V-28 | Control de Stock (`inventory/components/StockTable.tsx`, `UnidadesRow.tsx`) | Admin local, Superadmin | Títulos sin íconos; despliegue de unidades con fondo gris y franjas que se veían toscas | Íconos en los títulos; unidades en pestañas por sede, con resumen en píldoras y "Agregar unidad" en la misma línea; bloque blanco a todo el ancho con el locker en una cajita y acciones como botones de ícono | §4.8 | **Hecho (entrega 2, frontend PR #34)** |
 | V-03 | Mensajes de validación de formularios | Todos | Sin relevar | Ver §1.5, P-2 <!-- PENDIENTE SPEC-10 (P-2) --> | A3 | **Entrega 2** |
 
 ---
@@ -191,17 +198,10 @@ _Entrega 2 (§1.5, P-3)._
 **Estructura del modal** (según las capturas de referencia):
 
 1. Encabezado: título **"Manual de Uso"** y subtítulo "Vista activa: \<rol\>", con el botón X a la derecha; separador debajo.
-2. Recuadro del rol, con fondo y borde del color del rol: título "Vista \<rol\>" y una lista numerada; cada número va en un cuadrado redondeado del color del rol, con el número en blanco.
-3. Nota informativa en gris con ícono ⓘ (texto en D-04).
-4. Botón principal "Entendido", de ancho completo, bordó (`Button` `primary`).
+2. Recuadro del rol, con la paleta de la página (igual para todos los roles): fondo `C.bg`, borde `C.border`, título "Vista \<rol\>" en `C.text` y una lista con viñetas: un punto bordó (`C.crimson`) por tarea, sin numeración (0.24.0).
+3. Botón principal "Entendido", de ancho completo, bordó (`Button` `primary`).
 
-**Colores por rol** (tokens existentes de `theme.ts`, ya resueltos para claro y oscuro):
-
-| Rol de UI | Roles del backend | Título y números | Fondo del recuadro |
-| --- | --- | --- | --- |
-| Estudiante | `ESTUDIANTE` | `C.mine` (azul) | `C.mineBg` |
-| Docente | `DOCENTE` | `C.available` (verde) | `C.availableBg` |
-| Admin | `ADMIN_LOCAL`, `SUPERADMIN` | `C.crimson` (bordó) | `C.crimsonLight` |
+**Colores** (tokens existentes de `theme.ts`, ya resueltos para claro y oscuro): desde 0.24.0 el recuadro no cambia de color según el rol. El azul y el verde de las primeras versiones (`C.mine`, `C.available`) son colores de estado en el resto de la app, y usarlos para el rol los confundía. El rol se distingue por el título "Vista \<rol\>".
 
 **Contenido.** Las tareas de referencia, cada una contrastada con el ERS (RN-U01) y con su estado en `develop`:
 
@@ -209,13 +209,13 @@ _Entrega 2 (§1.5, P-3)._
 | --- | --- | --- | --- | --- | --- |
 | Estudiante | 1 | Explorar el catálogo de equipos disponibles | PRE-01, PRE-02 | Catálogo de Equipos | Implementado |
 | | 2 | Ver ficha completa y specs de cada equipo | PRE-01 | Detalle del equipo | Implementado |
-| | 3 | Solicitar préstamo con aprobación docente | PRE-03, PRE-06, PRE-20 | Carrito / solicitud | Implementado |
-| | 4 | Reservar Isla de Edición | RES-01, RES-02 | Reservas de Espacios | Implementado |
+| | 3 | Solicitar préstamo con aprobación del administrador | PRE-03, PRE-06, PRE-07 | Carrito / solicitud | Implementado |
+| | 4 | Reservar espacios | RES-01, RES-02 | Reservas de Espacios | Implementado |
 | | 5 | Hacer seguimiento de tus solicitudes activas | USR-06 | Mis Solicitudes | Implementado |
 | | 6 | Cancelar solicitudes pendientes o aprobadas | USR-06, RES-03 | Mis Solicitudes | Implementado |
 | | 7 | Consultar novedades e información institucional | NOV-01, NOV-02 | Novedades | Implementado |
 | Docente | 1 | Revisar solicitudes de estudiantes pendientes | PRE-20 | Validaciones Pendientes | Implementado |
-| | 2 | Aprobar o rechazar préstamos de tu materia | PRE-20 | Validaciones Pendientes | Implementado |
+| | 2 | Revisar y observar préstamos de tu materia | PRE-20 | Validaciones Pendientes | Implementado |
 | | 3 | Ver historial de solicitudes procesadas | PRE-20, USR-07 | Historial Solicitudes | Implementado |
 | | 4 | Acceder al catálogo para referencia | PRE-01 | Catálogo de Equipos | Implementado |
 | | 5 | Consultar reservas de espacios del instituto | RES-01 | Reservas de Espacios | Implementado |
@@ -230,7 +230,7 @@ _Entrega 2 (§1.5, P-3)._
 
 Ninguna tarea agrega funcionalidad: todas describen requisitos que ya están en el ERS. Las pendientes o parciales se muestran según D-05.
 
-**Implementación.** El contenido vive en un solo archivo de datos (`components/layout/manualDeUso.ts`: rol → título, color y tareas), para que cada perfil actualice sus tareas sin tocar el componente. El modal (`components/layout/ManualDeUsoModal.tsx`) es **autocontenido**: el `Modal` de `inventory` no tiene subtítulo ni botón X, y depender de él ataría un elemento MOMENTÁNEO a un módulo del Perfil 2. Cuando exista el `Modal` común de A2 (D-06), se puede pasar a usarlo. `App.tsx` reemplaza `onHelp={() => {}}` por la apertura del modal. No hay llamadas a la API.
+**Implementación.** El contenido vive en un solo archivo de datos (`components/layout/manualDeUso.ts`: rol → título y tareas), para que cada perfil actualice sus tareas sin tocar el componente. El modal (`components/layout/ManualDeUsoModal.tsx`) es **autocontenido**: el `Modal` de `inventory` no tiene subtítulo ni botón X, y depender de él ataría un elemento MOMENTÁNEO a un módulo del Perfil 2. Cuando exista el `Modal` común de A2 (D-06), se puede pasar a usarlo. `App.tsx` reemplaza `onHelp={() => {}}` por la apertura del modal. No hay llamadas a la API.
 
 ### 4.6 Calendario común (A2, V-01)
 
@@ -274,6 +274,13 @@ Fuera de alcance o inexistente → `404` (P4.5); un estudiante o docente que int
 
 ---
 
+### 4.8 Iconografía (entrega 2)
+
+- **Estilo:** íconos de línea de 24 × 24 dibujados como SVG en el código, con `stroke="currentColor"`, trazo 2,25 (≈ 1,5 px a 16 px), puntas redondeadas, al estilo de Lucide (licencia ISC). Mismo estilo que los íconos del menú lateral. **Sin dependencias nuevas.**
+- **Tamaños:** 12–15 px junto a texto; el ícono toma el color del texto o `C.textFaint` cuando acompaña, y `C.crimson` cuando marca la sección.
+- **Un archivo por módulo**, para no importar de otro módulo: `loans/components/IconosLinea.tsx` (también exporta los formatos cortos de día y hora), `inventory/components/IconosStock.tsx` y `IconosFicha.tsx`, `spaces/components/IconosEspacios.tsx`.
+- **Dónde no van:** en el título de los diálogos (`Modal` sólo recibe texto; cambiarlo tocaría todas las ventanas) ni donde el control ya se entiende solo (`−`, `+`).
+
 ## 5. Fase B — Adopción por pantalla
 
 Todo cambio en pantallas ajenas es **de presentación**: no cambia servicios, tipos ni llamadas a la API, salvo lo indicado en la última columna. Cada perfil revisa sus archivos en el PR de frontend (plan §2) y da su aval (§11).
@@ -305,9 +312,9 @@ Se verifican con `npm run typecheck`, `npm run build`, Vitest y capturas antes/d
 | --- | --- |
 | AC-U01 | El botón "?" abre el modal "Manual de Uso"; la X, "Entendido", `Esc` y el clic fuera lo cierran |
 | AC-U02 | El subtítulo dice "Vista activa: \<rol\>" según la sesión: Estudiante, Docente, Administrador local o Superadministrador (D-07) |
-| AC-U03 | Cada rol ve sus tareas de §4.5 en orden, con el color de su rol; el `SUPERADMIN` ve las de Admin más gestión de usuarios (USR-04) y parámetros (GLO-03) (D-07) |
+| AC-U03 | Cada rol ve sus tareas de §4.5 en orden, con la misma paleta para todos los roles; el `SUPERADMIN` ve las de Admin más gestión de usuarios (USR-04) y parámetros (GLO-03) (D-07) |
 | AC-U04 | Las tareas pendientes o parciales llevan la marca "Próximamente" (D-05) |
-| AC-U05 | La nota al pie dice el texto de D-04 y no menciona un selector de vista |
+| AC-U05 | ~~La nota al pie dice el texto de D-04~~ Sin nota al pie desde 0.24.0 (D-04) |
 | AC-U06 | Se lee bien en tema claro y oscuro (texto sobre fondo del recuadro) |
 | AC-U07 | No hace llamadas a la API (RN-U03) y está marcado como MOMENTÁNEO en sus archivos y en la línea de `App.tsx` (RN-U02) |
 
@@ -365,7 +372,7 @@ Se verifican con `npm run typecheck`, `npm run build`, Vitest y capturas antes/d
 | D-01 | Numeración propia (`AC-U…`) | Propia / seguir la del Perfil 1 | Propia, por ser transversal | Propuesta |
 | D-02 | Técnica de estilos | Inline + tokens / Tailwind | Inline + tokens (menor diff sobre módulos ajenos) | Acordada con el Perfil 1 (2026-11-12) |
 | D-03 | Dirección visual | Pulir la identidad actual / cambio fuerte | Pulir la actual | Acordada con el Perfil 1 (2026-11-12) |
-| D-04 | Nota al pie del manual. La referencia dice "Para cambiar de rol usá el selector Vista:", pero ese selector era del prototipo y ya no existe: el rol sale de la sesión | (a) Quitarla · (b) Reemplazarla por "Lo que ves depende de tu rol. Si necesitás otro acceso, consultá con el laboratorio de tu sede." | (b) | Aceptada por el Perfil 1 (2026-11-12) |
+| D-04 | Nota al pie del manual. La referencia dice "Para cambiar de rol usá el selector Vista:", pero ese selector era del prototipo y ya no existe: el rol sale de la sesión | (a) Quitarla · (b) Reemplazarla por "Lo que ves depende de tu rol. Si necesitás otro acceso, consultá con el laboratorio de tu sede." | (b) → (a) | Aceptada por el Perfil 1 (2026-11-12); desde 0.24.0 se quita la nota (a), a pedido del Perfil 1 |
 | D-05 | Tareas que todavía no existen (docente 6, admin 4; admin 1 parcial) | (a) Mostrarlas igual · (b) Ocultarlas hasta que existan · (c) Mostrarlas con la marca "Próximamente" | (c): el manual queda completo y no promete algo que hoy no funciona | Aceptada por el Perfil 1 (2026-11-12) |
 | D-06 | Modal del manual | (a) Reusar `features/inventory/components/Modal.tsx` (Perfil 2) · (b) Llevarlo antes a `components/ui/Modal.tsx` (A2) | (b), con el aval U1 del Perfil 2; mientras tanto, (a) | Aceptada por el Perfil 1 (2026-11-12). **Hecho (b)** en el frontend PR #29, mergeado en `develop` el 2026-11-21 con el aval U1: `components/ui/Modal.tsx`, con los imports de `inventory` y `loans` actualizados |
 | D-08 | Código de la entrega 1 antes de aprobar el spec | (a) Esperar la aprobación para escribir código · (b) Escribirlo durante el relevamiento y no mergear hasta aprobar | (b) sólo para la entrega 1, como desvío explícito de `AGENTS.md` §4 (nota de modo de trabajo); la entrega 2 vuelve a (a) | Decidida por el Perfil 1; observada en la revisión del Docs PR #40 y pendiente de que el equipo la acepte |
@@ -383,6 +390,7 @@ Se verifican con `npm run typecheck`, `npm run build`, Vitest y capturas antes/d
 | U4 | Perfil 5 | Aval para la Fase B en `notifications`. Además, exponer como públicas `_filtro_lectura` y `_bloquear_para_editar` de `notifications/service.py`, que usa la portada M-02 (§4.7) |
 | U5 | Perfil 5 | **Confirmar la excepción M-02 y decidir si se adopta.** La portada elegible ya está implementada como MOMENTÁNEO (§4.7): tabla aislada `comunicados_portada` (migración `0020`) y router propio `notifications/portada.py`, sin tocar `comunicados`, sus esquemas ni `files`. Se le pide al Perfil 5: (1) confirmar la excepción a RN-U03, ya que el backend queda dentro de su módulo; (2) decidir si la adopta tal como está, la reescribe dentro de su spec o se saca (§1.4). Si se adopta, hay que sumarla a NOV-02 en el ERS con el equipo o la referente. Sin la portada, el color sale del alcance y el vencimiento (V-10) |
 | U7 | Perfil 4 | **Propuesta, sin implementar:** paginar en el backend `GET /spaces/reservas?estado=Pendiente` (`limit`/`offset`, y opcionalmente `desde`/`hasta` e `id_espacio`), para que la lista de pendientes del admin (V-21) no traiga todas de una vez cuando sean cientos. Hoy el frontend pagina en memoria; el cambio no altera qué datos ve cada rol |
+| U8 | Perfiles 2 a 5 | **Aval para los cambios estéticos y de diseño de la entrega 2 (V-22…V-28) en sus pantallas.** El 2026-11-26 se informó que los perfiles dueños aprobaron que se hagan cambios estéticos y de diseño en sus pantallas, sin cambiar servicios, tipos de la API ni reglas. Cubre U2 (`loans`) y U3 (`spaces`) para esta entrega; `inventory` es del Perfil 2 |
 | U6 | Perfil 2 | **Propuesta, sin implementar:** administrar los lockers desde la vista por locker (V-17): alta pidiendo sólo el nombre, edición y baja. Hoy PRE-12 fija el locker como un número del 1 al 7 dentro de cada unidad (`unidades_fisicas.locker`), así que esto necesita una tabla `lockers` por sede, una migración que convierta los números actuales, endpoints en `inventory` y decidir qué pasa al borrar un locker con unidades (impedirlo o pedir a dónde moverlas). No está en el ERS: requiere sumarlo con el equipo o la referente y un spec del Perfil 2. Mientras tanto la vista por locker sigue mostrando los lockers 1 a 7 |
 
 ---
@@ -408,6 +416,8 @@ Se verifican con `npm run typecheck`, `npm run build`, Vitest y capturas antes/d
 
 | Versión | Fecha | Autor | Cambio |
 | --- | --- | --- | --- |
+| 0.25.0 | 2026-11-26 | Perfil 2 (con asistencia de IA) | Entrega 2, rediseño estético: hallazgos V-22…V-28 (Mis Solicitudes, Bandeja, aval, panel del pedido, Reservas de Espacios, ficha del equipo y Control de Stock), §4.8 iconografía, aval U8 de los perfiles para cambios estéticos y estado con los PRs (frontend #36 y #34). Incluye el cambio 0.24.0 del Manual de uso, que estaba sin commitear |
+| 0.24.0 | 2026-11-23 | Perfil 1 (con asistencia de IA) | Entrega 2, ajustes de presentación: el Manual de uso (§4.5) usa la paleta de la página para todos los roles, sin azul ni verde por rol (AC-U03), y viñetas en vez de números; se quita el test de colores por rol. Tareas del estudiante corregidas: la solicitud la aprueba el administrador (PRE-07; PRE-20 da al docente sólo lectura) y "Reservar espacios" en vez de "Reservar Isla de Edición". Tarea del docente: "Revisar y observar préstamos de tu materia" en vez de "Aprobar o rechazar" (PRE-20). Sin la nota al pie "Lo que ves depende de tu rol…" (D-04 pasa a la opción (a), AC-U05). Ficha del equipo: recuadro en el calendario, sin la nota "Orientativo", video con texto aclaratorio (sólo si hay video) y reglas del laboratorio generales (M-04) en la columna derecha |
 | 0.23.2 | 2026-11-21 | Perfil 1 (con asistencia de IA) | Aval U1 del Perfil 2 para mover `Modal`; frontend PR #29 mergeado en `develop`. P-4 sin `Modal`, D-06 hecha y U1 con el aval registrado |
 | 0.23.1 | 2026-11-21 | Perfil 1 (con asistencia de IA) | `Modal` a `components/ui` adelantado de la entrega 2 en el frontend PR #29 (en revisión): P-4, D-06 y U1 lo registran; el merge espera el aval U1 del Perfil 2. Sin cambios de alcance |
 | 0.23.0 | 2026-11-17 | Perfil 1 (con asistencia de IA) | Revisión del Docs PR #40: U5 describe la portada tal como está implementada y pide al Perfil 5 confirmar la excepción M-02; U1 pide sólo lo de la entrega 1; AC-U20 distingue `403` y `404`; desvío del flujo SDD explícito (nota de modo de trabajo y D-08); el ciclo de la migración `0020` se probó a mano en 0.11.1 y tiene test desde 0.22.1. Ajustes del frontend PR #28 por su revisión: motivo con sólo descripción, `Dialogo` con dos pedidos, portada al editar, portadas en tandas de 50, "100+" en la Bandeja, conteo del directorio aparte y "Próximos N días" desde hoy |
