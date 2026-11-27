@@ -1,6 +1,6 @@
 # SPEC-06 — Comunicaciones y notificaciones (`notifications`)
 
-> **Estado:** `APROBADO` (2026-11-07, con todas las recomendaciones de §12) · **Versión:** 1.0.0 · **Perfil:** 5 (Comunicaciones e IA)
+> **Estado:** `APROBADO` (2026-11-07, con todas las recomendaciones de §12) · **Fase A `IMPLEMENTADA`** (2026-11-27); Fases B y C pendientes · **Versión:** 1.0.1 · **Perfil:** 5 (Comunicaciones e IA)
 > **Plan y tareas:** `specs/06-notifications-comunicaciones/plan.md` · `specs/06-notifications-comunicaciones/tasks.md`
 > **Requisitos:** NOV-01, NOV-02, NOV-04 (Fases A y B) · NOV-03 (Fase C, contrato diferido) · **Responde a:** C12 de SPEC-05, S7 de la revisión del Perfil 4, K6 de SPEC-03
 > **Precedencia:** `docs/constitution.md` → `AGENTS.md` → `docs/perfiles.md` → este spec → `MEMORY.md`.
@@ -379,5 +379,6 @@ Las fases A y B pueden ir en PRs separados, en las ramas `feat/notifications-com
 
 | Versión | Fecha | Autor | Cambio |
 | :---- | :---- | :---- | :---- |
+| 1.0.1 | 2026-11-27 | Perfil 5 (con asistencia de IA) | **Fase A implementada** (NOV-01, NOV-02; NTF-01…NTF-12 y NTF-23…NTF-25). Backend PR \#22 (2026-11-08), frontend PR \#12 (2026-11-09) y Docs PR \#12. Verificada sobre `develop` el 2026-11-22 (backend: 987 tests en verde, cobertura de `notifications` 97 %; frontend: 266 tests, `typecheck` y `build`) y con el recorrido manual en el navegador del 2026-11-27 (`SUPERADMIN`, `ADMIN_LOCAL` y estudiante de las dos sedes). **Desvío:** las fechas de las respuestas se normalizan a la zona del laboratorio (§5.1). **Cambios de otros specs sobre este módulo:** SPEC-10 cambió la presentación de Novedades (V-01, V-10, V-11) y sumó la portada MOMENTÁNEA M-02 (migración `0020`, `notifications/portada.py`); siguen abiertos U4 y U5 de SPEC-10 y H3 de SPEC-09 (horario por sede en el portal). Sin cambios de contrato |
 | 1.0.0 | 2026-11-07 | Perfil 5 | **Aprobado** con todas las recomendaciones de §12 (D-N01…D-N10). Coordinación de §10 registrada en `MEMORY.md` §5; decisiones en ADR-023 |
 | 0.1.0 | 2026-11-06 | Perfil 5 (con asistencia de IA) | Borrador inicial a partir de la revisión del Perfil 1. Fases A y B completas, Fase C como contrato diferido. Responde K6 (D-N01), C12 y S7 |
